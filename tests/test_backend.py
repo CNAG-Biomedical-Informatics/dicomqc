@@ -42,3 +42,21 @@ def test_pydicom_backend_normalizes_metadata_and_omits_pixel_data(tmp_path):
     assert "(7FE0,0010)" not in record.tags
     assert record.by_keyword("PatientID").value_state == ValueState.PRESENT
     assert record.tags["(0029,0010)"].is_private is True
+
+
+def test_pydicom_backend_reports_missing_dependency(monkeypatch, tmp_path):
+    import builtins
+
+    from dicomqc.backend.base import DicomReadError
+
+    real_import = builtins.__import__
+
+    def blocked_import(name, *args, **kwargs):
+        if name == "pydicom":
+            raise ImportError("blocked")
+        return real_import(name, *args, **kwargs)
+
+    monkeypatch.setattr(builtins, "__import__", blocked_import)
+
+    with pytest.raises(DicomReadError, match="pydicom is required"):
+        PydicomBackend().read_metadata(tmp_path / "image.dcm")

@@ -83,3 +83,16 @@ def test_cli_scan_invalid_file_is_fatal(tmp_path):
     bad.write_text("not a dicom", encoding="utf-8")
 
     assert main(["scan", str(bad), "--quiet"]) == 2
+
+
+def test_cli_without_subcommand_prints_help(capsys):
+    assert main([]) == 2
+    assert "Validate DICOM metadata" in capsys.readouterr().out
+
+
+def test_cli_rejects_unknown_profile(tmp_path, capsys):
+    dicom_path = tmp_path / "image.dcm"
+    _write_dicom(dicom_path, PatientID="SUBJ001")
+
+    assert main(["scan", str(dicom_path), "--profile", "missing-profile"]) == 2
+    assert "Unknown profile" in capsys.readouterr().err

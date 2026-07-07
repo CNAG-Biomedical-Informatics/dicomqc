@@ -1,6 +1,7 @@
 from pathlib import Path
 
 from dicomqc.model.metadata import DicomTag, MetadataRecord, ValueState
+from dicomqc.model.metadata import value_state
 from dicomqc.rules.builtin import evaluate_record
 
 
@@ -61,3 +62,10 @@ def test_private_tags_are_summarized_per_record():
     assert len(findings) == 1
     assert findings[0].rule_id.endswith(".private_tags.present")
     assert "2 private DICOM tag" in findings[0].message
+
+
+def test_value_state_handles_absent_bytes_and_empty_sequences():
+    assert value_state(None) == ValueState.ABSENT
+    assert value_state(b"") == ValueState.EMPTY
+    assert value_state([]) == ValueState.EMPTY
+    assert value_state(123) == ValueState.PRESENT
