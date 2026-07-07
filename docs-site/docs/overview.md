@@ -29,3 +29,10 @@ later releases.
 DICOMQC never modifies original DICOM files. It also does not claim DICOM
 PS3.15, BIDS, HIPAA, or GDPR compliance in v0.1. Those standards are future
 profile targets that require audited rule packs.
+
+When DICOMQC reports required changes, apply them with an external
+anonymization or pseudonymization workflow and rerun the audit. See
+[Remediation](usage/remediation.md) for practical examples.
+
+For the initial large-scale multiple sclerosis MRI use case, see
+[MS MRI Workflow](usage/ms-mri-workflow.md).

@@ -21,6 +21,16 @@ const sidebars: SidebarsConfig = {
           id: 'usage/reports',
           label: 'Reports',
         },
+        {
+          type: 'doc',
+          id: 'usage/remediation',
+          label: 'Remediation',
+        },
+        {
+          type: 'doc',
+          id: 'usage/ms-mri-workflow',
+          label: 'MS MRI Workflow',
+        },
       ],
     },
     {

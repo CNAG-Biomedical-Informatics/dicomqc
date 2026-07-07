@@ -32,3 +32,12 @@ files do not need a `.dcm` extension.
 The default profile is `research-release-v0.1`. It flags direct PHI fields,
 warns on risky pseudonym fields, and reports private tags as release-risk
 evidence.
+
+## Fixing findings
+
+DICOMQC does not modify DICOM files. If it reports required changes, apply them
+with an anonymization or pseudonymization tool, then rerun the scan. See
+[Remediation](remediation.md) for examples with external tools.
+
+For the intended multiple sclerosis MRI use case, see
+[MS MRI Workflow](ms-mri-workflow.md).

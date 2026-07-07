@@ -9,6 +9,15 @@ readiness.
 
 It is not an anonymizer. It never modifies the original DICOM files.
 
+If DICOMQC reports required changes, apply them with an external anonymization
+or pseudonymization tool and rerun the audit. The docs include remediation
+examples for tools such as DCMTK `dcmodify`, Orthanc, XNAT workflows, and custom
+pipeline steps.
+
+The initial real-world target is a large multiple sclerosis MRI dataset where
+DICOMQC acts as the release gate after anonymization/pseudonymization and before
+research sharing.
+
 ## Quick Start
 
 ```bash
