@@ -54,7 +54,7 @@ const config: Config = {
       title: 'dicomqc',
       logo: {
         alt: 'dicomqc logo',
-        src: 'img/dicomqc-logo.svg',
+        src: 'img/dicomqc-logo.png',
       },
       items: [
         {

@@ -8,7 +8,7 @@ export default function Home() {
       description="Quality control and validation of DICOM metadata for research release">
       <main className="dicomqcHome">
         <section className="dicomqcHero">
-          <img src="/dicomqc/img/dicomqc-logo.svg" alt="dicomqc" className="dicomqcHeroLogo" />
+          <img src="/dicomqc/img/dicomqc-logo.png" alt="dicomqc" className="dicomqcHeroLogo" />
           <p className="dicomqcKicker">DICOM metadata audit</p>
           <h1>dicomqc</h1>
           <p>
