@@ -9,14 +9,19 @@ readiness.
 
 It is not an anonymizer. It never modifies the original DICOM files.
 
-If DICOMQC reports required changes, apply them with an external anonymization
-or pseudonymization tool and rerun the audit. The docs include remediation
-examples for tools such as DCMTK `dcmodify`, Orthanc, XNAT workflows, and custom
-pipeline steps.
+If DICOMQC reports required changes, apply them with an external
+pseudonymization or anonymization tool and rerun the audit. The docs include
+remediation examples for tools such as DCMTK `dcmodify`, Orthanc, XNAT
+workflows, and custom pipeline steps.
 
 The initial real-world target is a large multiple sclerosis MRI dataset where
-DICOMQC acts as the release gate after anonymization/pseudonymization and before
-research sharing.
+DICOMQC acts as the release gate after pseudonymization and before research
+sharing. A linkage file may exist on the data provider side, but it must remain
+outside the released dataset and outside DICOMQC reports.
+
+The intended operating mode is DICOM-in and DICOM-out: raw `.dcm` files are
+pseudonymized into release-candidate `.dcm` files, and DICOMQC audits those
+outputs.
 
 ## Quick Start
 

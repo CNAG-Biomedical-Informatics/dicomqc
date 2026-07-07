@@ -36,7 +36,7 @@ evidence.
 ## Fixing findings
 
 DICOMQC does not modify DICOM files. If it reports required changes, apply them
-with an anonymization or pseudonymization tool, then rerun the scan. See
+with a pseudonymization or anonymization tool, then rerun the scan. See
 [Remediation](remediation.md) for examples with external tools.
 
 For the intended multiple sclerosis MRI use case, see

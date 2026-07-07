@@ -8,13 +8,13 @@ DICOMQC is a validator for DICOM de-identification policies. Like a schema
 validator, it reports non-compliance but does not rewrite the source files.
 
 When DICOMQC finds a problem, fix the candidate release dataset with an
-anonymization or pseudonymization tool, then run DICOMQC again.
+pseudonymization or anonymization tool, then run DICOMQC again.
 
 ```text
 raw DICOMs
     |
     v
-anonymizer / pseudonymizer
+pseudonymizer / anonymizer
     |
     v
 candidate release DICOMs
@@ -29,22 +29,22 @@ pass/fail report + recommendations
 ## Safe working pattern
 
 Never modify the only copy of a DICOM dataset. Work on a copy or on the output
-of a controlled anonymization pipeline.
+of a controlled pseudonymization/de-identification pipeline.
 
 ```bash
-cp -a raw_study anonymized_study
+cp -a raw_study pseudonymized_study
 ```
 
 Run the audit:
 
 ```bash
-dicomqc scan anonymized_study/ --json report.json --csv findings.csv --multiqc
+dicomqc scan pseudonymized_study/ --json report.json --csv findings.csv --multiqc
 ```
 
 Apply fixes with your chosen tool, then rerun the audit:
 
 ```bash
-dicomqc scan anonymized_study/ --json report-after-fix.json --csv findings-after-fix.csv --multiqc
+dicomqc scan pseudonymized_study/ --json report-after-fix.json --csv findings-after-fix.csv --multiqc
 ```
 
 ## DCMTK `dcmodify`
@@ -55,7 +55,7 @@ command can remove or replace metadata tags.
 Example: remove direct PHI fields from all `.dcm` files in a working copy:
 
 ```bash
-find anonymized_study -name '*.dcm' -print0 \
+find pseudonymized_study -name '*.dcm' -print0 \
   | xargs -0 dcmodify \
       -e PatientBirthDate \
       -e PatientAddress \
@@ -72,7 +72,7 @@ Example: replace pseudonym fields:
 dcmodify \
   -i PatientName=SUBJ001 \
   -i PatientID=SUBJ001 \
-  anonymized_study/image.dcm
+  pseudonymized_study/image.dcm
 ```
 
 Private tags require project-specific judgment. Removing all private tags may be
@@ -80,7 +80,7 @@ appropriate for some releases but may also remove scanner- or research-relevant
 metadata.
 
 ```bash
-dcmodify -e "(0029,0010)" anonymized_study/image.dcm
+dcmodify -e "(0029,0010)" pseudonymized_study/image.dcm
 ```
 
 Use your installed DCMTK version's documented options for broad private-tag

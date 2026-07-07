@@ -7,7 +7,7 @@ title: Overview
 **DICOMQC: a policy-driven, standards-aware audit framework for validating
 DICOM de-identification and research-release readiness.**
 
-DICOMQC validates DICOM metadata after anonymization or pseudonymization. It is
+DICOMQC validates DICOM metadata after pseudonymization or anonymization. It is
 an independent audit layer for research-release readiness, not another DICOM
 anonymizer.
 
@@ -31,7 +31,7 @@ PS3.15, BIDS, HIPAA, or GDPR compliance in v0.1. Those standards are future
 profile targets that require audited rule packs.
 
 When DICOMQC reports required changes, apply them with an external
-anonymization or pseudonymization workflow and rerun the audit. See
+pseudonymization or anonymization workflow and rerun the audit. See
 [Remediation](usage/remediation.md) for practical examples.
 
 For the initial large-scale multiple sclerosis MRI use case, see
