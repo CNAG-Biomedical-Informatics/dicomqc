@@ -3,12 +3,12 @@
 from __future__ import annotations
 
 from dataclasses import dataclass, field
-from enum import StrEnum
+from enum import Enum
 
 from dicomqc.model.metadata import MetadataRecord, ValueState
 
 
-class Severity(StrEnum):
+class Severity(str, Enum):
     INFO = "info"
     WARNING = "warning"
     ERROR = "error"
