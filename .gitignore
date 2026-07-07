@@ -9,3 +9,5 @@ __pycache__/
 docs-site/.docusaurus/
 docs-site/build/
 docs-site/node_modules/
+
+tests/fixtures/dicom/generated/
