@@ -61,6 +61,11 @@ const sidebars: SidebarsConfig = {
         },
         {
           type: 'doc',
+          id: 'about/prior-work',
+          label: 'Prior Work',
+        },
+        {
+          type: 'doc',
           id: 'about/disclaimer',
           label: 'Disclaimer',
         },

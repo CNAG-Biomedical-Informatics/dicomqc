@@ -89,6 +89,10 @@ const config: Config = {
               label: 'CLI Reference',
               to: '/docs/reference/cli',
             },
+            {
+              label: 'Prior Work',
+              to: '/docs/about/prior-work',
+            },
           ],
         },
         {

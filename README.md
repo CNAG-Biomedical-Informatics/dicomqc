@@ -31,3 +31,17 @@ cd docs-site
 npm install
 npm run build
 ```
+
+## Prior Work
+
+DICOMQC is intended to build on and complement related work, not duplicate it.
+Known related projects include:
+
+- [`SPMIC-UoN/xnat-dicomqc`](https://github.com/SPMIC-UoN/xnat-dicomqc): an XNAT
+  container script for configurable tag-based QC on scan DICOMs.
+- [`IUSCA/SQAN`](https://github.com/IUSCA/SQAN): Scalable Quality Assurance for
+  Neuroimaging, a broader DICOM metadata ETL and QC verification system.
+
+The initial DICOMQC direction is a backend-independent, policy-driven audit
+framework focused on de-identification validation, release-readiness evidence,
+and future standards-aware rule packs.
