@@ -1,0 +1,300 @@
+{
+  "findings": [
+    {
+      "keyword": "PrivateTags",
+      "message": "1 private DICOM tag(s) are present.",
+      "path": "examples/multiqc/output/dicom/private_tags.dcm",
+      "profile_id": "research-release-v0.1",
+      "recommendation": "Review vendor-specific private tags before release; private tags can contain site, protocol, or operator identifiers.",
+      "rule_id": "research-release-v0.1.private_tags.present",
+      "severity": "warning",
+      "standard_refs": [],
+      "tag": null,
+      "value_state": "present"
+    },
+    {
+      "keyword": "PatientBirthDate",
+      "message": "PatientBirthDate is populated and may contain direct PHI.",
+      "path": "examples/multiqc/output/dicom/raw_phi.dcm",
+      "profile_id": "research-release-v0.1",
+      "recommendation": "Remove this value or verify that the upstream anonymizer removes it for research release.",
+      "rule_id": "research-release-v0.1.direct_phi.PatientBirthDate",
+      "severity": "error",
+      "standard_refs": [],
+      "tag": "(0010,0030)",
+      "value_state": "present"
+    },
+    {
+      "keyword": "PatientID",
+      "message": "PatientID is populated but does not match the built-in research pseudonym pattern.",
+      "path": "examples/multiqc/output/dicom/raw_phi.dcm",
+      "profile_id": "research-release-v0.1",
+      "recommendation": "Use a non-identifying research identifier such as sub-001, SUBJ001, participant-123, or anon-001.",
+      "rule_id": "research-release-v0.1.pseudonym_format.PatientID",
+      "severity": "warning",
+      "standard_refs": [],
+      "tag": "(0010,0020)",
+      "value_state": "present"
+    },
+    {
+      "keyword": "PatientName",
+      "message": "PatientName is populated but does not match the built-in research pseudonym pattern.",
+      "path": "examples/multiqc/output/dicom/raw_phi.dcm",
+      "profile_id": "research-release-v0.1",
+      "recommendation": "Use a non-identifying research identifier such as sub-001, SUBJ001, participant-123, or anon-001.",
+      "rule_id": "research-release-v0.1.pseudonym_format.PatientName",
+      "severity": "warning",
+      "standard_refs": [],
+      "tag": "(0010,0010)",
+      "value_state": "present"
+    },
+    {
+      "keyword": "PrivateTags",
+      "message": "1 private DICOM tag(s) are present.",
+      "path": "examples/multiqc/output/dicom/raw_phi.dcm",
+      "profile_id": "research-release-v0.1",
+      "recommendation": "Review vendor-specific private tags before release; private tags can contain site, protocol, or operator identifiers.",
+      "rule_id": "research-release-v0.1.private_tags.present",
+      "severity": "warning",
+      "standard_refs": [],
+      "tag": null,
+      "value_state": "present"
+    }
+  ],
+  "profile_id": "research-release-v0.1",
+  "records": [
+    {
+      "manufacturer": "SIEMENS",
+      "modality": "MR",
+      "path": "examples/multiqc/output/dicom/private_tags.dcm",
+      "patient_id_present": true,
+      "series_uid": "1.2.826.0.1.3680043.10.54321.5.3",
+      "study_uid": "1.2.826.0.1.3680043.10.54321.4.1",
+      "tags": [
+        {
+          "is_private": false,
+          "keyword": "SOPClassUID",
+          "tag": "(0008,0016)",
+          "value_state": "present",
+          "vr": "UI"
+        },
+        {
+          "is_private": false,
+          "keyword": "SOPInstanceUID",
+          "tag": "(0008,0018)",
+          "value_state": "present",
+          "vr": "UI"
+        },
+        {
+          "is_private": false,
+          "keyword": "Modality",
+          "tag": "(0008,0060)",
+          "value_state": "present",
+          "vr": "CS"
+        },
+        {
+          "is_private": false,
+          "keyword": "Manufacturer",
+          "tag": "(0008,0070)",
+          "value_state": "present",
+          "vr": "LO"
+        },
+        {
+          "is_private": false,
+          "keyword": "PatientName",
+          "tag": "(0010,0010)",
+          "value_state": "present",
+          "vr": "PN"
+        },
+        {
+          "is_private": false,
+          "keyword": "PatientID",
+          "tag": "(0010,0020)",
+          "value_state": "present",
+          "vr": "LO"
+        },
+        {
+          "is_private": false,
+          "keyword": "StudyInstanceUID",
+          "tag": "(0020,000D)",
+          "value_state": "present",
+          "vr": "UI"
+        },
+        {
+          "is_private": false,
+          "keyword": "SeriesInstanceUID",
+          "tag": "(0020,000E)",
+          "value_state": "present",
+          "vr": "UI"
+        },
+        {
+          "is_private": true,
+          "keyword": "Private Creator",
+          "tag": "(0029,0010)",
+          "value_state": "present",
+          "vr": "LO"
+        }
+      ]
+    },
+    {
+      "manufacturer": "SIEMENS",
+      "modality": "MR",
+      "path": "examples/multiqc/output/dicom/pseudonymized.dcm",
+      "patient_id_present": true,
+      "series_uid": "1.2.826.0.1.3680043.10.54321.5.2",
+      "study_uid": "1.2.826.0.1.3680043.10.54321.4.1",
+      "tags": [
+        {
+          "is_private": false,
+          "keyword": "SOPClassUID",
+          "tag": "(0008,0016)",
+          "value_state": "present",
+          "vr": "UI"
+        },
+        {
+          "is_private": false,
+          "keyword": "SOPInstanceUID",
+          "tag": "(0008,0018)",
+          "value_state": "present",
+          "vr": "UI"
+        },
+        {
+          "is_private": false,
+          "keyword": "Modality",
+          "tag": "(0008,0060)",
+          "value_state": "present",
+          "vr": "CS"
+        },
+        {
+          "is_private": false,
+          "keyword": "Manufacturer",
+          "tag": "(0008,0070)",
+          "value_state": "present",
+          "vr": "LO"
+        },
+        {
+          "is_private": false,
+          "keyword": "PatientName",
+          "tag": "(0010,0010)",
+          "value_state": "present",
+          "vr": "PN"
+        },
+        {
+          "is_private": false,
+          "keyword": "PatientID",
+          "tag": "(0010,0020)",
+          "value_state": "present",
+          "vr": "LO"
+        },
+        {
+          "is_private": false,
+          "keyword": "StudyInstanceUID",
+          "tag": "(0020,000D)",
+          "value_state": "present",
+          "vr": "UI"
+        },
+        {
+          "is_private": false,
+          "keyword": "SeriesInstanceUID",
+          "tag": "(0020,000E)",
+          "value_state": "present",
+          "vr": "UI"
+        }
+      ]
+    },
+    {
+      "manufacturer": "SIEMENS",
+      "modality": "MR",
+      "path": "examples/multiqc/output/dicom/raw_phi.dcm",
+      "patient_id_present": true,
+      "series_uid": "1.2.826.0.1.3680043.10.54321.5.1",
+      "study_uid": "1.2.826.0.1.3680043.10.54321.4.1",
+      "tags": [
+        {
+          "is_private": false,
+          "keyword": "SOPClassUID",
+          "tag": "(0008,0016)",
+          "value_state": "present",
+          "vr": "UI"
+        },
+        {
+          "is_private": false,
+          "keyword": "SOPInstanceUID",
+          "tag": "(0008,0018)",
+          "value_state": "present",
+          "vr": "UI"
+        },
+        {
+          "is_private": false,
+          "keyword": "Modality",
+          "tag": "(0008,0060)",
+          "value_state": "present",
+          "vr": "CS"
+        },
+        {
+          "is_private": false,
+          "keyword": "Manufacturer",
+          "tag": "(0008,0070)",
+          "value_state": "present",
+          "vr": "LO"
+        },
+        {
+          "is_private": false,
+          "keyword": "PatientName",
+          "tag": "(0010,0010)",
+          "value_state": "present",
+          "vr": "PN"
+        },
+        {
+          "is_private": false,
+          "keyword": "PatientID",
+          "tag": "(0010,0020)",
+          "value_state": "present",
+          "vr": "LO"
+        },
+        {
+          "is_private": false,
+          "keyword": "PatientBirthDate",
+          "tag": "(0010,0030)",
+          "value_state": "present",
+          "vr": "DA"
+        },
+        {
+          "is_private": false,
+          "keyword": "StudyInstanceUID",
+          "tag": "(0020,000D)",
+          "value_state": "present",
+          "vr": "UI"
+        },
+        {
+          "is_private": false,
+          "keyword": "SeriesInstanceUID",
+          "tag": "(0020,000E)",
+          "value_state": "present",
+          "vr": "UI"
+        },
+        {
+          "is_private": true,
+          "keyword": "Private Creator",
+          "tag": "(0029,0010)",
+          "value_state": "present",
+          "vr": "LO"
+        }
+      ]
+    }
+  ],
+  "skipped_files": {},
+  "summary": {
+    "errors": 1,
+    "files_failed": 1,
+    "files_passed": 2,
+    "files_scanned": 3,
+    "info": 0,
+    "skipped_files": 0,
+    "warnings": 4
+  },
+  "tool": {
+    "name": "dicomqc",
+    "version": "0.1.0"
+  }
+}

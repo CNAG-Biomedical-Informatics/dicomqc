@@ -4,7 +4,7 @@ title: Reports
 
 # Reports
 
-DICOMQC v0.1 writes JSON, CSV, and MultiQC custom-content reports.
+dicomqc v0.1 writes JSON, CSV, and MultiQC custom-content reports.
 
 ```bash
 dicomqc scan study/ --json report.json --csv findings.csv --multiqc
@@ -51,12 +51,37 @@ multiqc .
 ```
 
 The directory contains small `*_mqc.yaml` custom-content files. MultiQC renders
-these as a DICOMQC summary in general statistics and a redaction-safe findings
-table. The JSON and CSV reports remain the primary evidence artifacts; MultiQC
-is a companion view for projects that already aggregate QC results.
+these as dicomqc general statistics, a compact audit-status table, and a
+redaction-safe findings table. The JSON and CSV reports remain the primary
+evidence artifacts; MultiQC is a companion view for projects that already
+aggregate QC results.
 
 Use a custom output directory when needed:
 
 ```bash
 dicomqc scan study/ --multiqc reports/dicomqc_mqc
 ```
+
+## Example Report
+
+The repository includes a reproducible MultiQC example that generates synthetic
+DICOM files, runs dicomqc, and renders a local MultiQC report when MultiQC is
+installed:
+
+```bash
+bash examples/multiqc/run_example.sh
+```
+
+The rendered report is written to:
+
+```text
+examples/multiqc/output/multiqc_report.html
+```
+
+### Screenshots
+
+![dicomqc sections rendered in a MultiQC report.](/img/multiqc-dicomqc-module.png)
+
+![dicomqc release status table rendered in MultiQC.](/img/multiqc-dicomqc-release-status.png)
+
+![dicomqc findings table rendered in MultiQC.](/img/multiqc-dicomqc-findings.png)

@@ -55,7 +55,7 @@ def test_cli_scan_writes_multiqc_custom_content(tmp_path):
 
     assert code == 1
     summary = multiqc_dir / "dicomqc_summary_mqc.yaml"
-    findings = multiqc_dir / "dicomqc_findings_mqc.yaml"
+    findings = multiqc_dir / "dicomqc_02_findings_mqc.yaml"
     assert summary.exists()
     assert findings.exists()
     assert "plot_type: generalstats" in summary.read_text(encoding="utf-8")

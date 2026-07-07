@@ -35,7 +35,7 @@ evidence.
 
 ## Fixing findings
 
-DICOMQC does not modify DICOM files. If it reports required changes, apply them
+dicomqc does not modify DICOM files. If it reports required changes, apply them
 with a pseudonymization or anonymization tool, then rerun the scan. See
 [Remediation](remediation.md) for examples with external tools.
 

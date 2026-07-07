@@ -1,4 +1,4 @@
-"""Normalized DICOMQC data models."""
+"""Normalized dicomqc data models."""
 
 from dicomqc.model.metadata import DicomTag, MetadataRecord, ValueState
 from dicomqc.model.results import Finding, ScanResult, Severity

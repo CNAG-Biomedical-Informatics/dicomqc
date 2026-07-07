@@ -4,7 +4,7 @@ title: MS MRI Workflow
 
 # MS MRI Workflow
 
-For a large multiple sclerosis MRI dataset, DICOMQC should be the audit layer on
+For a large multiple sclerosis MRI dataset, dicomqc should be the audit layer on
 top of a pseudonymization/de-identification workflow. It should not be the tool
 that edits the only copy of the study.
 
@@ -19,7 +19,7 @@ pseudonymization / de-identification pipeline
     v
 candidate_release_mri/
     |
-    | 3. DICOMQC reads metadata only
+    | 3. dicomqc reads metadata only
     v
 reports/
     |
@@ -56,7 +56,7 @@ can happen later, after the DICOM release candidate has passed metadata audit.
 
 ## Step 1: inventory and preserve the raw data
 
-Make the raw dataset immutable from the pipeline's point of view. DICOMQC can be
+Make the raw dataset immutable from the pipeline's point of view. dicomqc can be
 run on raw data for internal risk discovery, but raw reports may still reveal
 risk patterns through paths or tag presence, so keep them restricted.
 
@@ -77,7 +77,7 @@ Possible options include:
 - XNAT anonymization or pseudonymization scripts if the site already manages
   DICOM through XNAT
 - a validated institutional de-identification pipeline
-- a project-specific `pydicom` script maintained outside DICOMQC
+- a project-specific `pydicom` script maintained outside dicomqc
 
 For this project, the pseudonymization/de-identification workflow should at
 minimum address:
@@ -91,9 +91,9 @@ minimum address:
 - protocol names that may contain subject, site, or study information
 - pseudonym consistency across subject, visit, study, and series
 
-## Step 3: run DICOMQC as the release gate
+## Step 3: run dicomqc as the release gate
 
-Run DICOMQC on the pseudonymized `.dcm` output:
+Run dicomqc on the pseudonymized `.dcm` output:
 
 ```bash
 dicomqc scan work/candidate_release_mri/ \
@@ -112,27 +112,27 @@ Interpret the result:
 
 Use the report recommendations to update the pseudonymization/de-identification
 workflow, not just one file by hand. Then regenerate the candidate release and
-rerun DICOMQC.
+rerun dicomqc.
 
 The goal is a reproducible pipeline:
 
 ```text
-same raw input + same pseudonymization policy -> same DICOMQC result
+same raw input + same pseudonymization policy -> same dicomqc result
 ```
 
 ## MRI-specific privacy risks
 
-DICOMQC v0.1 audits metadata. It does not inspect pixel data and does not deface
+dicomqc v0.1 audits metadata. It does not inspect pixel data and does not deface
 brain MRI volumes.
 
 For head MRI, de-identification may also require image-level handling such as
 defacing, skull stripping, or another approved facial-feature protection method,
 depending on the release policy and downstream analysis needs.
 
-If the dataset will be converted to BIDS, keep DICOMQC as a pre-conversion
+If the dataset will be converted to BIDS, keep dicomqc as a pre-conversion
 metadata audit and then run BIDS-specific validation on the converted dataset.
 The BIDS MRI specification includes de-identification information and defacing
-mask concepts, so those checks should become a future DICOMQC/BIDS profile
+mask concepts, so those checks should become a future dicomqc/BIDS profile
 rather than an implicit v0.1 claim.
 
 ## Release checklist
@@ -144,7 +144,7 @@ Before sharing the MS MRI dataset, require:
   workflow
 - pseudonym linkage map retained by the provider, stored separately, and
   protected
-- DICOMQC JSON, CSV, and MultiQC reports archived
+- dicomqc JSON, CSV, and MultiQC reports archived
 - errors resolved
 - warnings reviewed and signed off
 - private-tag handling documented

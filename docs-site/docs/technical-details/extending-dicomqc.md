@@ -1,8 +1,8 @@
 ---
-title: Extending DICOMQC
+title: Extending dicomqc
 ---
 
-# Extending DICOMQC
+# Extending dicomqc
 
 v0.1 includes stable extension seams without shipping every planned extension.
 

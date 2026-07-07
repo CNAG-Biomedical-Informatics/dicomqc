@@ -1,6 +1,6 @@
 # Synthetic DICOM Fixtures
 
-This directory is reserved for synthetic DICOM fixtures used during DICOMQC
+This directory is reserved for synthetic DICOM fixtures used during dicomqc
 development.
 
 Generated `.dcm` files are intentionally ignored by git. Recreate them with:

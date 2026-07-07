@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Generate small synthetic DICOM fixtures for DICOMQC development."""
+"""Generate small synthetic DICOM fixtures for dicomqc development."""
 
 from __future__ import annotations
 
@@ -7,11 +7,13 @@ import argparse
 from pathlib import Path
 
 from pydicom.dataset import FileDataset, FileMetaDataset
-from pydicom.uid import ExplicitVRLittleEndian, generate_uid
+from pydicom.uid import ExplicitVRLittleEndian
+
+ROOT_UID = "1.2.826.0.1.3680043.10.54321"
 
 
 def main() -> int:
-    parser = argparse.ArgumentParser(description="Generate synthetic DICOMQC test fixtures.")
+    parser = argparse.ArgumentParser(description="Generate synthetic dicomqc test fixtures.")
     parser.add_argument(
         "--output-dir",
         type=Path,
@@ -23,6 +25,7 @@ def main() -> int:
     args.output_dir.mkdir(parents=True, exist_ok=True)
     _write_dicom(
         args.output_dir / "raw_phi.dcm",
+        fixture_index=1,
         patient_name="Smith^Jane",
         patient_id="LOCAL123",
         patient_birth_date="19700101",
@@ -30,6 +33,7 @@ def main() -> int:
     )
     _write_dicom(
         args.output_dir / "pseudonymized.dcm",
+        fixture_index=2,
         patient_name="SUBJ001",
         patient_id="SUBJ001",
         patient_birth_date=None,
@@ -37,6 +41,7 @@ def main() -> int:
     )
     _write_dicom(
         args.output_dir / "private_tags.dcm",
+        fixture_index=3,
         patient_name="SUBJ002",
         patient_id="SUBJ002",
         patient_birth_date=None,
@@ -49,6 +54,7 @@ def main() -> int:
 def _write_dicom(
     path: Path,
     *,
+    fixture_index: int,
     patient_name: str,
     patient_id: str,
     patient_birth_date: str | None,
@@ -56,14 +62,14 @@ def _write_dicom(
 ) -> None:
     meta = FileMetaDataset()
     meta.TransferSyntaxUID = ExplicitVRLittleEndian
-    meta.MediaStorageSOPClassUID = generate_uid()
-    meta.MediaStorageSOPInstanceUID = generate_uid()
-    meta.ImplementationClassUID = generate_uid()
+    meta.MediaStorageSOPClassUID = f"{ROOT_UID}.1"
+    meta.MediaStorageSOPInstanceUID = f"{ROOT_UID}.2.{fixture_index}"
+    meta.ImplementationClassUID = f"{ROOT_UID}.3"
     dataset = FileDataset(str(path), {}, file_meta=meta, preamble=b"\0" * 128)
     dataset.SOPClassUID = meta.MediaStorageSOPClassUID
     dataset.SOPInstanceUID = meta.MediaStorageSOPInstanceUID
-    dataset.StudyInstanceUID = generate_uid()
-    dataset.SeriesInstanceUID = generate_uid()
+    dataset.StudyInstanceUID = f"{ROOT_UID}.4.1"
+    dataset.SeriesInstanceUID = f"{ROOT_UID}.5.{fixture_index}"
     dataset.Modality = "MR"
     dataset.Manufacturer = "SIEMENS"
     dataset.PatientName = patient_name

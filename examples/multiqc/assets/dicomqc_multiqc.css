@@ -1,0 +1,115 @@
+.navbar-brand-title {
+  font-weight: 800;
+  letter-spacing: 0;
+}
+
+#mqc-module-section-dicomqc {
+  border-top: 4px solid #2563eb;
+}
+
+.dicomqc-dashboard {
+  display: grid;
+  grid-template-columns: minmax(240px, 1.1fr) minmax(420px, 2fr);
+  gap: 18px;
+  margin: 6px 0 18px;
+}
+
+.dicomqc-status-card,
+.dicomqc-metrics {
+  border: 1px solid #dbe3ef;
+  border-radius: 8px;
+  background: #ffffff;
+  box-shadow: 0 10px 28px rgba(15, 23, 42, 0.08);
+}
+
+.dicomqc-status-card {
+  padding: 22px 24px;
+  border-left-width: 8px;
+}
+
+.dicomqc-status-blocked .dicomqc-status-card {
+  border-left-color: #dc2626;
+}
+
+.dicomqc-status-review .dicomqc-status-card {
+  border-left-color: #f59e0b;
+}
+
+.dicomqc-status-pass .dicomqc-status-card {
+  border-left-color: #16a34a;
+}
+
+.dicomqc-label {
+  display: block;
+  color: #64748b;
+  font-size: 12px;
+  font-weight: 800;
+  letter-spacing: .08em;
+  text-transform: uppercase;
+}
+
+.dicomqc-status-card strong {
+  display: block;
+  margin-top: 5px;
+  color: #0f172a;
+  font-size: 34px;
+  line-height: 1;
+}
+
+.dicomqc-status-card p {
+  margin: 12px 0 0;
+  color: #475569;
+  font-size: 15px;
+}
+
+.dicomqc-metrics {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  overflow: hidden;
+}
+
+.dicomqc-metrics div {
+  padding: 22px 18px;
+  border-left: 1px solid #e2e8f0;
+}
+
+.dicomqc-metrics div:first-child {
+  border-left: 0;
+}
+
+.dicomqc-metrics span {
+  display: block;
+  color: #0f172a;
+  font-size: 32px;
+  font-weight: 800;
+  line-height: 1;
+}
+
+.dicomqc-metrics small {
+  display: block;
+  margin-top: 8px;
+  color: #64748b;
+  font-size: 13px;
+  font-weight: 700;
+}
+
+#dicomqc_release_status_table_table td[style],
+#dicomqc_findings_table_table td[style] {
+  color: #ffffff;
+  font-weight: 800;
+}
+
+#dicomqc_findings_table_table td.severity,
+#dicomqc_release_status_table_table td.Status {
+  text-transform: uppercase;
+}
+
+@media (max-width: 900px) {
+  .dicomqc-dashboard {
+    grid-template-columns: 1fr;
+  }
+
+  .dicomqc-metrics {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}

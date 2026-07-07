@@ -2,12 +2,12 @@
 title: Overview
 ---
 
-# DICOMQC
+# dicomqc
 
-**DICOMQC: a policy-driven, standards-aware audit framework for validating
+**dicomqc: a policy-driven, standards-aware audit framework for validating
 DICOM de-identification and research-release readiness.**
 
-DICOMQC validates DICOM metadata after pseudonymization or anonymization. It is
+dicomqc validates DICOM metadata after pseudonymization or anonymization. It is
 an independent audit layer for research-release readiness, not another DICOM
 anonymizer.
 
@@ -24,13 +24,13 @@ v0.1 is intentionally conservative. It provides a usable metadata scanner and
 rule engine, while leaving standards-specific profiles and plugin discovery for
 later releases.
 
-## What DICOMQC does not do
+## What dicomqc does not do
 
-DICOMQC never modifies original DICOM files. It also does not claim DICOM
+dicomqc never modifies original DICOM files. It also does not claim DICOM
 PS3.15, BIDS, HIPAA, or GDPR compliance in v0.1. Those standards are future
 profile targets that require audited rule packs.
 
-When DICOMQC reports required changes, apply them with an external
+When dicomqc reports required changes, apply them with an external
 pseudonymization or anonymization workflow and rerun the audit. See
 [Remediation](usage/remediation.md) for practical examples.
 

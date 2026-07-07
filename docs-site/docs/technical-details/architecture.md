@@ -4,7 +4,7 @@ title: Architecture
 
 # Architecture
 
-DICOMQC separates DICOM parsing from validation and reporting.
+dicomqc separates DICOM parsing from validation and reporting.
 
 ```text
 DICOM files

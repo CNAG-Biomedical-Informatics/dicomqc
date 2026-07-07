@@ -4,11 +4,11 @@ title: Remediation
 
 # Remediation
 
-DICOMQC is a validator for DICOM de-identification policies. Like a schema
+dicomqc is a validator for DICOM de-identification policies. Like a schema
 validator, it reports non-compliance but does not rewrite the source files.
 
-When DICOMQC finds a problem, fix the candidate release dataset with an
-pseudonymization or anonymization tool, then run DICOMQC again.
+When dicomqc finds a problem, fix the candidate release dataset with an
+pseudonymization or anonymization tool, then run dicomqc again.
 
 ```text
 raw DICOMs
@@ -20,7 +20,7 @@ pseudonymizer / anonymizer
 candidate release DICOMs
     |
     v
-DICOMQC audit
+dicomqc audit
     |
     v
 pass/fail report + recommendations
@@ -99,29 +99,29 @@ Recommended pattern:
 1. Import or route data into Orthanc.
 2. Use Orthanc anonymization to create a derived dataset.
 3. Export the derived dataset.
-4. Run DICOMQC on the exported result.
+4. Run dicomqc on the exported result.
 
-DICOMQC should audit the exported candidate release, not the original Orthanc
+dicomqc should audit the exported candidate release, not the original Orthanc
 store.
 
 ## XNAT and site pipelines
 
 For XNAT-based workflows, apply XNAT anonymization scripts or containerized
-pipeline steps first, then run DICOMQC on the resulting DICOM export.
+pipeline steps first, then run dicomqc on the resulting DICOM export.
 
-This keeps DICOMQC independent of the site platform while still making it useful
+This keeps dicomqc independent of the site platform while still making it useful
 as a release gate.
 
 ## Custom `pydicom` scripts
 
 Small projects sometimes use custom `pydicom` scripts to remediate metadata.
-Keep those scripts separate from DICOMQC and make them explicit pipeline steps.
+Keep those scripts separate from dicomqc and make them explicit pipeline steps.
 
-The DICOMQC role is to validate the output and produce redaction-safe evidence.
+The dicomqc role is to validate the output and produce redaction-safe evidence.
 
 ## Future remediation plans
 
-A future DICOMQC release may emit a machine-readable remediation plan such as:
+A future dicomqc release may emit a machine-readable remediation plan such as:
 
 ```yaml
 required_changes:
@@ -133,4 +133,4 @@ required_changes:
     action: review_or_remove
 ```
 
-The plan would still be applied by external tools. DICOMQC remains read-only.
+The plan would still be applied by external tools. dicomqc remains read-only.

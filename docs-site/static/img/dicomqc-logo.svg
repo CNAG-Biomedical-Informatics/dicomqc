@@ -1,0 +1,19 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 640 160" role="img" aria-labelledby="title desc">
+  <title id="title">dicomqc logo</title>
+  <desc id="desc">A DICOM slice mark with a check symbol and dicomqc wordmark.</desc>
+  <defs>
+    <linearGradient id="slice" x1="36" x2="150" y1="28" y2="132" gradientUnits="userSpaceOnUse">
+      <stop offset="0" stop-color="#0ea5e9"/>
+      <stop offset="1" stop-color="#2563eb"/>
+    </linearGradient>
+  </defs>
+  <rect width="640" height="160" rx="24" fill="#0f172a"/>
+  <g transform="translate(32 24)">
+    <rect x="0" y="0" width="112" height="112" rx="22" fill="#f8fafc"/>
+    <rect x="16" y="16" width="80" height="80" rx="40" fill="url(#slice)" opacity=".95"/>
+    <path d="M31 56h50M56 31v50" stroke="#dbeafe" stroke-width="4" stroke-linecap="round" opacity=".55"/>
+    <path d="M36 60l14 14 31-37" fill="none" stroke="#ffffff" stroke-width="10" stroke-linecap="round" stroke-linejoin="round"/>
+  </g>
+  <text x="176" y="79" fill="#f8fafc" font-family="Inter, Arial, sans-serif" font-size="48" font-weight="800" letter-spacing="0">dicomqc</text>
+  <text x="178" y="113" fill="#93c5fd" font-family="Inter, Arial, sans-serif" font-size="19" font-weight="600" letter-spacing="0">policy-driven DICOM release audit</text>
+</svg>

@@ -4,12 +4,13 @@ import Layout from '@theme/Layout';
 export default function Home() {
   return (
     <Layout
-      title="DICOMQC"
+      title="dicomqc"
       description="Quality control and validation of DICOM metadata for research release">
       <main className="dicomqcHome">
         <section className="dicomqcHero">
+          <img src="/dicomqc/img/dicomqc-logo.svg" alt="dicomqc" className="dicomqcHeroLogo" />
           <p className="dicomqcKicker">DICOM metadata audit</p>
-          <h1>DICOMQC</h1>
+          <h1>dicomqc</h1>
           <p>
             A policy-driven, standards-aware audit framework for validating DICOM
             de-identification and research-release readiness.

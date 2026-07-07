@@ -51,6 +51,15 @@
   text-transform: uppercase;
 }
 
+.dicomqcHeroLogo {
+  display: block;
+  width: min(360px, 100%);
+  height: auto;
+  margin-bottom: 2rem;
+  border-radius: 12px;
+  box-shadow: 0 18px 40px rgba(15, 23, 42, 0.14);
+}
+
 .dicomqcHero h1 {
   margin: 0 0 1rem;
   color: #173244;

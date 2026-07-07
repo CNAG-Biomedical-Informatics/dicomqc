@@ -1,4 +1,4 @@
-"""DICOMQC public API."""
+"""dicomqc public API."""
 
 __version__ = "0.1.0"
 

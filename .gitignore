@@ -11,3 +11,6 @@ docs-site/build/
 docs-site/node_modules/
 
 tests/fixtures/dicom/generated/
+examples/multiqc/output/multiqc_data/
+examples/multiqc/output/multiqc_report.html
+examples/multiqc/output-test/

@@ -1,4 +1,4 @@
-"""Command-line interface for DICOMQC."""
+"""Command-line interface for dicomqc."""
 
 from __future__ import annotations
 

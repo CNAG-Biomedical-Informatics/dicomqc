@@ -3,11 +3,11 @@ import type {Config} from '@docusaurus/types';
 import type * as Preset from '@docusaurus/preset-classic';
 
 const config: Config = {
-  title: 'DICOMQC Docs',
+  title: 'dicomqc Docs',
   tagline: 'A policy-driven, standards-aware audit framework for validating DICOM de-identification and research-release readiness',
   url: 'https://cnag-biomedical-informatics.github.io',
   baseUrl: '/dicomqc/',
-  organizationName: 'CNAG-Biomedical-Informatics',
+  organizationName: 'mrueda',
   projectName: 'dicomqc',
   onBrokenLinks: 'warn',
   markdown: {
@@ -51,7 +51,11 @@ const config: Config = {
       respectPrefersColorScheme: true,
     },
     navbar: {
-      title: 'DICOMQC',
+      title: 'dicomqc',
+      logo: {
+        alt: 'dicomqc logo',
+        src: 'img/dicomqc-logo.svg',
+      },
       items: [
         {
           type: 'docSidebar',
@@ -65,7 +69,7 @@ const config: Config = {
           position: 'left',
         },
         {
-          href: 'https://github.com/CNAG-Biomedical-Informatics/dicomqc',
+          href: 'https://github.com/mrueda/dicomqc',
           label: 'GitHub',
           position: 'right',
         },
@@ -100,7 +104,7 @@ const config: Config = {
           items: [
             {
               label: 'Repository',
-              href: 'https://github.com/CNAG-Biomedical-Informatics/dicomqc',
+              href: 'https://github.com/mrueda/dicomqc',
             },
             {
               label: 'CNAG',

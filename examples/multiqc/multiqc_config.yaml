@@ -1,0 +1,13 @@
+title: dicomqc example audit
+subtitle: Policy-driven DICOM release-readiness report
+output_fn_name: multiqc_report.html
+data_dir_name: multiqc_data
+custom_logo: assets/dicomqc-logo.svg
+custom_logo_title: dicomqc
+custom_logo_url: https://github.com/mrueda/dicomqc
+custom_logo_width: 160
+custom_css_files:
+  - assets/dicomqc_multiqc.css
+custom_content:
+  order:
+    - dicomqc
