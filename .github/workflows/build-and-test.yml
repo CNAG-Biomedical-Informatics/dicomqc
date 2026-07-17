@@ -40,6 +40,12 @@ jobs:
         if: matrix.python-version == '3.12'
         run: pytest --cov=dicomqc --cov-report=xml --cov-report=term-missing
 
+      - name: Build source and wheel distributions
+        if: matrix.python-version == '3.12'
+        run: |
+          python -m pip install ".[release]"
+          python -m build
+
       - name: Upload coverage artifact
         if: matrix.python-version == '3.12'
         uses: actions/upload-artifact@v4
