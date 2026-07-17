@@ -1,32 +1,65 @@
-# dicomqc
+<div align="center">
+  <a href="https://github.com/CNAG-Biomedical-Informatics/dicomqc">
+    <img src="https://raw.githubusercontent.com/CNAG-Biomedical-Informatics/dicomqc/main/docs-site/static/img/dicomqc-logo.png"
+         width="300" alt="dicomqc">
+  </a>
+  <p><em>Policy-driven DICOM de-identification audit and research-release readiness reporting</em></p>
+</div>
 
-**dicomqc: a policy-driven, standards-aware audit framework for validating
-DICOM de-identification and research-release readiness.**
+[![Build](https://github.com/CNAG-Biomedical-Informatics/dicomqc/actions/workflows/build-and-test.yml/badge.svg)](https://github.com/CNAG-Biomedical-Informatics/dicomqc/actions/workflows/build-and-test.yml)
+[![Documentation](https://github.com/CNAG-Biomedical-Informatics/dicomqc/actions/workflows/documentation.yml/badge.svg)](https://github.com/CNAG-Biomedical-Informatics/dicomqc/actions/workflows/documentation.yml)
+![version](https://img.shields.io/badge/version-0.1.0-28a745)
+[![License](https://img.shields.io/badge/License-Apache%202.0-blue.svg)](LICENSE)
 
-dicomqc is a Python tool for quality control and validation of DICOM metadata,
-with a primary focus on verifying pseudonymization and research-release
-readiness.
+---
 
-It is not an anonymizer. It never modifies the original DICOM files.
+**dicomqc** is a policy-driven, standards-aware audit framework for validating
+DICOM de-identification and research-release readiness.
 
-If dicomqc reports required changes, apply them with an external
-pseudonymization or anonymization tool and rerun the audit. The docs include
-remediation examples for tools such as DCMTK `dcmodify`, Orthanc, XNAT
-workflows, and custom pipeline steps.
+dicomqc inspects DICOM metadata after pseudonymization or anonymization and
+produces redaction-safe audit evidence in JSON, CSV, and MultiQC-compatible
+formats.
 
-The initial real-world target is a large multiple sclerosis MRI dataset where
-dicomqc acts as the release gate after pseudonymization and before research
-sharing. A linkage file may exist on the data provider side, but it must remain
-outside the released dataset and outside dicomqc reports.
+**Documentation:** <https://cnag-biomedical-informatics.github.io/dicomqc/>
+
+dicomqc is **not an anonymizer**. It never modifies original DICOM files. If it
+reports required changes, apply them with an external pseudonymization or
+anonymization tool and rerun the audit.
 
 The intended operating mode is DICOM-in and DICOM-out: raw `.dcm` files are
 pseudonymized into release-candidate `.dcm` files, and dicomqc audits those
-outputs.
+outputs before research sharing.
 
-## Quick Start
+## Key Points
+
+- Metadata-only DICOM scanning with `pydicom`
+- Built-in research-release checks for direct PHI, pseudonym format, and private tags
+- Redaction-safe reports that do not emit raw DICOM values
+- JSON and CSV outputs for pipeline evidence
+- MultiQC custom-content output with a styled example report
+- Synthetic DICOM fixtures for reproducible tests and demonstrations
+- Read-only design: remediation is performed by external tools such as DCMTK,
+  Orthanc, XNAT workflows, or custom pipeline steps
+- Future scope for policy DSLs, DICOM PS3.15 profiles, BIDS-oriented checks,
+  plugin architecture, and vendor metadata fingerprinting
+
+## Installation
+
+From a source checkout:
 
 ```bash
 python3 -m pip install -e ".[test]"
+```
+
+For local remediation workflows, install external DICOM tools separately. For
+example, DCMTK provides `dcmodify` and `dcmdump`, but dicomqc itself remains
+read-only.
+
+## Quick Start
+
+Run an audit on a directory of candidate release `.dcm` files:
+
+```bash
 dicomqc scan study/ --json report.json --csv findings.csv --multiqc
 ```
 
@@ -35,6 +68,24 @@ Exit codes:
 - `0`: no warnings or errors
 - `1`: warnings only
 - `2`: validation errors or fatal scan failure
+
+## Reports
+
+| Output | Purpose |
+| --- | --- |
+| JSON | Full structured audit result for pipelines and archival evidence |
+| CSV | One row per finding for review and spreadsheet workflows |
+| MultiQC | Custom-content summary for projects that aggregate QC reports |
+
+Generate synthetic `.dcm` files and render the bundled MultiQC example:
+
+```bash
+bash examples/multiqc/run_example.sh
+```
+
+The example output is written to `examples/multiqc/output/`. The generated
+`multiqc_report.html` is intentionally ignored because it embeds local runtime
+metadata, but the synthetic inputs and dicomqc report artifacts are tracked.
 
 ## Documentation
 
@@ -46,15 +97,13 @@ npm install
 npm run build
 ```
 
-## MultiQC Example
+Important docs:
 
-Generate synthetic `.dcm` files and render a MultiQC report:
-
-```bash
-bash examples/multiqc/run_example.sh
-```
-
-The output is written to `examples/multiqc/output/`.
+- [Quick start](https://cnag-biomedical-informatics.github.io/dicomqc/docs/usage/quickstart)
+- [Reports and MultiQC](https://cnag-biomedical-informatics.github.io/dicomqc/docs/usage/reports)
+- [MS MRI workflow](https://cnag-biomedical-informatics.github.io/dicomqc/docs/usage/ms-mri-workflow)
+- [Remediation examples](https://cnag-biomedical-informatics.github.io/dicomqc/docs/usage/remediation)
+- [Prior work](https://cnag-biomedical-informatics.github.io/dicomqc/docs/about/prior-work)
 
 ## Prior Work
 
@@ -69,3 +118,20 @@ Known related projects include:
 The initial dicomqc direction is a backend-independent, policy-driven audit
 framework focused on de-identification validation, release-readiness evidence,
 and future standards-aware rule packs.
+
+## Citation
+
+dicomqc is early-stage research software. Until a stable release, archived DOI,
+or manuscript is available, cite the repository URL and the exact version or
+commit used in your analysis.
+
+## Author
+
+Written by Manuel Rueda. GitHub repository:
+<https://github.com/CNAG-Biomedical-Informatics/dicomqc>.
+
+## Copyright and License
+
+Copyright 2026 Manuel Rueda, CNAG.
+
+dicomqc is distributed under the [Apache License 2.0](LICENSE).
