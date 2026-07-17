@@ -4,6 +4,51 @@ title: Quickstart
 
 # Quickstart
 
+## Install the preview release
+
+The current preview is available from
+[TestPyPI](https://test.pypi.org/project/dicomqc/). Create an isolated
+environment, install the runtime dependencies from PyPI, and then install
+dicomqc from TestPyPI:
+
+```bash
+python3 -m venv .venv
+source .venv/bin/activate
+python -m pip install --upgrade pip
+python -m pip install "pydicom>=2.4" "PyYAML>=6"
+python -m pip install \
+  --index-url https://test.pypi.org/simple/ \
+  --no-deps dicomqc==0.1.0
+```
+
+Dependencies are installed separately because TestPyPI is an isolated package
+index and does not mirror every dependency from the production Python Package
+Index.
+
+After the production PyPI release, installation will be:
+
+```bash
+python -m pip install dicomqc
+```
+
+## Install from source
+
+From a repository checkout, install dicomqc and its runtime dependencies in
+editable mode:
+
+```bash
+python3 -m pip install -e .
+```
+
+Contributors who need pytest and coverage tooling can install the `test`
+optional dependency group:
+
+```bash
+python3 -m pip install -e ".[test]"
+```
+
+The `test` extra is unnecessary when using dicomqc normally.
+
 ## Try the built-in demo
 
 After installation, generate a complete synthetic DICOM demo and dicomqc report
@@ -30,13 +75,7 @@ dicomqc-demo/
 The demo intentionally includes findings, so the reported scan exit code is `2`.
 The `demo` command itself exits `0` when the example was generated correctly.
 
-## Developer installation
-
-Install the package from the repository root with test dependencies:
-
-```bash
-python3 -m pip install -e ".[test]"
-```
+## Scan a dataset
 
 Scan a study directory:
 

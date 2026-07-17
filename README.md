@@ -45,13 +45,36 @@ outputs before research sharing.
 
 ## Installation
 
-From PyPI later:
+The current preview release is available from
+[TestPyPI](https://test.pypi.org/project/dicomqc/). Install it in an isolated
+environment:
 
 ```bash
-pip install dicomqc
+python3 -m venv .venv
+source .venv/bin/activate
+python -m pip install --upgrade pip
+python -m pip install "pydicom>=2.4" "PyYAML>=6"
+python -m pip install \
+  --index-url https://test.pypi.org/simple/ \
+  --no-deps dicomqc==0.1.0
 ```
 
-From a source checkout:
+TestPyPI does not mirror all production dependencies, so the runtime
+dependencies are installed from PyPI first. After the production release, the
+installation command will be:
+
+```bash
+python -m pip install dicomqc
+```
+
+From a source checkout, install the package in editable mode:
+
+```bash
+python3 -m pip install -e .
+```
+
+Contributors who need the test and coverage tools can install the `test`
+optional dependency group:
 
 ```bash
 python3 -m pip install -e ".[test]"
