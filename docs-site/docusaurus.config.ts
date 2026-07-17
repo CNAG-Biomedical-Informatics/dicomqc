@@ -7,7 +7,7 @@ const config: Config = {
   tagline: 'A policy-driven, standards-aware audit framework for validating DICOM de-identification and research-release readiness',
   url: 'https://cnag-biomedical-informatics.github.io',
   baseUrl: '/dicomqc/',
-  organizationName: 'mrueda',
+  organizationName: 'CNAG-Biomedical-Informatics',
   projectName: 'dicomqc',
   onBrokenLinks: 'warn',
   markdown: {
@@ -69,7 +69,7 @@ const config: Config = {
           position: 'left',
         },
         {
-          href: 'https://github.com/mrueda/dicomqc',
+          href: 'https://github.com/CNAG-Biomedical-Informatics/dicomqc',
           label: 'GitHub',
           position: 'right',
         },
@@ -104,7 +104,7 @@ const config: Config = {
           items: [
             {
               label: 'Repository',
-              href: 'https://github.com/mrueda/dicomqc',
+              href: 'https://github.com/CNAG-Biomedical-Informatics/dicomqc',
             },
             {
               label: 'CNAG',

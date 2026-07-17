@@ -4,7 +4,7 @@ output_fn_name: multiqc_report.html
 data_dir_name: multiqc_data
 custom_logo: assets/dicomqc-logo.png
 custom_logo_title: dicomqc
-custom_logo_url: https://github.com/mrueda/dicomqc
+custom_logo_url: https://github.com/CNAG-Biomedical-Informatics/dicomqc
 custom_logo_width: 160
 custom_css_files:
   - assets/dicomqc_multiqc.css
