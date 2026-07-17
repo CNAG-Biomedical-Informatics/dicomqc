@@ -8,7 +8,7 @@ description: Redaction-safe dicomqc warnings and errors. Values are never shown 
 plot_type: table
 data:
   finding_001:
-    file: examples/multiqc/output/dicom/private_tags.dcm
+    file: dicom/private_tags.dcm
     severity: warning
     rule_id: research-release-v0.1.private_tags.present
     tag: ''
@@ -16,7 +16,7 @@ data:
     value_state: present
     message: 1 private DICOM tag(s) are present.
   finding_002:
-    file: examples/multiqc/output/dicom/raw_phi.dcm
+    file: dicom/raw_phi.dcm
     severity: error
     rule_id: research-release-v0.1.direct_phi.PatientBirthDate
     tag: (0010,0030)
@@ -24,7 +24,7 @@ data:
     value_state: present
     message: PatientBirthDate is populated and may contain direct PHI.
   finding_003:
-    file: examples/multiqc/output/dicom/raw_phi.dcm
+    file: dicom/raw_phi.dcm
     severity: warning
     rule_id: research-release-v0.1.pseudonym_format.PatientID
     tag: (0010,0020)
@@ -33,7 +33,7 @@ data:
     message: PatientID is populated but does not match the built-in research pseudonym
       pattern.
   finding_004:
-    file: examples/multiqc/output/dicom/raw_phi.dcm
+    file: dicom/raw_phi.dcm
     severity: warning
     rule_id: research-release-v0.1.pseudonym_format.PatientName
     tag: (0010,0010)
@@ -42,7 +42,7 @@ data:
     message: PatientName is populated but does not match the built-in research pseudonym
       pattern.
   finding_005:
-    file: examples/multiqc/output/dicom/raw_phi.dcm
+    file: dicom/raw_phi.dcm
     severity: warning
     rule_id: research-release-v0.1.private_tags.present
     tag: ''

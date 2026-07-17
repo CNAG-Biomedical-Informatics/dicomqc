@@ -78,6 +78,29 @@ def test_cli_scan_clean_exit_for_research_pseudonym(tmp_path):
     assert main(["scan", str(dicom_path), "--quiet"]) == 0
 
 
+def test_cli_demo_writes_synthetic_dicom_and_reports(tmp_path, capsys):
+    output_dir = tmp_path / "demo"
+
+    assert main(["demo", "--output-dir", str(output_dir)]) == 0
+    out = capsys.readouterr().out
+
+    assert "Demo directory:" in out
+    assert "Demo scan exit code: 2" in out
+    assert (output_dir / "dicom" / "raw_phi.dcm").exists()
+    assert (output_dir / "dicom" / "pseudonymized.dcm").exists()
+    assert (output_dir / "dicomqc" / "report.json").exists()
+    assert (output_dir / "dicomqc" / "findings.csv").exists()
+    assert (output_dir / "dicomqc" / "dicomqc_mqc" / "dicomqc_summary_mqc.yaml").exists()
+
+
+def test_cli_demo_refuses_to_overwrite_without_force(tmp_path, capsys):
+    output_dir = tmp_path / "demo"
+    output_dir.mkdir()
+
+    assert main(["demo", "--output-dir", str(output_dir)]) == 2
+    assert "Use --force to replace it" in capsys.readouterr().err
+
+
 def test_cli_scan_invalid_file_is_fatal(tmp_path):
     bad = tmp_path / "not-dicom"
     bad.write_text("not a dicom", encoding="utf-8")

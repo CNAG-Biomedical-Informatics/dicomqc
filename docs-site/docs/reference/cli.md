@@ -33,3 +33,22 @@ dicomqc scan PATH [PATH ...] [--json FILE] [--csv FILE] [--multiqc [DIR]] [--pro
 | `0` | Clean scan |
 | `1` | Warnings only |
 | `2` | Errors or fatal scan failures |
+
+## `dicomqc demo`
+
+```bash
+dicomqc demo [--output-dir DIR] [--force]
+```
+
+Generate a synthetic DICOM dataset and a complete dicomqc report bundle.
+
+### Options
+
+| Option | Description |
+| --- | --- |
+| `--output-dir DIR` | Write demo files under `DIR` instead of `dicomqc-demo/`. |
+| `--force` | Replace the output directory if it already exists. |
+
+The demo command exits `0` when generation succeeds, even though the synthetic
+scan result contains intentional findings. The reported scan exit code is shown
+in the command output.

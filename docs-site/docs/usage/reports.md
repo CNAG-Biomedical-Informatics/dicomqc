@@ -64,18 +64,23 @@ dicomqc scan study/ --multiqc reports/dicomqc_mqc
 
 ## Example Report
 
-The repository includes a reproducible MultiQC example that generates synthetic
-DICOM files, runs dicomqc, and renders a local MultiQC report when MultiQC is
-installed:
+The CLI includes a reproducible demo that generates synthetic DICOM files and
+writes redaction-safe dicomqc reports:
 
 ```bash
-bash examples/multiqc/run_example.sh
+dicomqc demo --output-dir dicomqc-demo --force
+```
+
+If MultiQC is installed, render the custom-content bundle:
+
+```bash
+multiqc dicomqc-demo/dicomqc --outdir dicomqc-demo --force --config examples/multiqc/multiqc_config.yaml
 ```
 
 The rendered report is written to:
 
 ```text
-examples/multiqc/output/multiqc_report.html
+dicomqc-demo/multiqc_report.html
 ```
 
 ### Screenshots

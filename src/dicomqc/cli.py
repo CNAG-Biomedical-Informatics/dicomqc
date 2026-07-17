@@ -7,6 +7,7 @@ import sys
 from pathlib import Path
 from typing import Sequence
 
+from dicomqc.demo import run_demo
 from dicomqc.reports import write_csv, write_json, write_multiqc
 from dicomqc.rules.builtin import DEFAULT_PROFILE_ID
 from dicomqc.scanner import scan_paths
@@ -17,6 +18,8 @@ def main(argv: Sequence[str] | None = None) -> int:
     args = parser.parse_args(argv)
     if args.command == "scan":
         return _run_scan(args)
+    if args.command == "demo":
+        return _run_demo(args)
     parser.print_help()
     return 2
 
@@ -37,6 +40,14 @@ def _build_parser() -> argparse.ArgumentParser:
     )
     scan.add_argument("--profile", default=DEFAULT_PROFILE_ID, help=f"Rule profile to apply. Default: {DEFAULT_PROFILE_ID}.")
     scan.add_argument("--quiet", action="store_true", help="Suppress the text summary.")
+    demo = subparsers.add_parser("demo", help="Generate a synthetic DICOM demo dataset and dicomqc reports.")
+    demo.add_argument(
+        "--output-dir",
+        type=Path,
+        default=Path("dicomqc-demo"),
+        help="Directory where demo DICOM files and reports will be written. Default: dicomqc-demo.",
+    )
+    demo.add_argument("--force", action="store_true", help="Replace the output directory if it already exists.")
     return parser
 
 
@@ -57,6 +68,23 @@ def _run_scan(args: argparse.Namespace) -> int:
     if not args.quiet:
         _print_summary(result)
     return result.exit_code()
+
+
+def _run_demo(args: argparse.Namespace) -> int:
+    try:
+        demo = run_demo(args.output_dir, force=args.force)
+    except FileExistsError as exc:
+        print(f"dicomqc: {exc}", file=sys.stderr)
+        return 2
+
+    print(f"Demo directory: {demo.output_dir}")
+    print(f"Synthetic DICOM files: {demo.dicom_dir}")
+    print(f"JSON report: {demo.json_path}")
+    print(f"CSV findings: {demo.csv_path}")
+    print(f"MultiQC custom content: {demo.multiqc_dir}")
+    print(f"Demo scan exit code: {demo.scan_exit_code} (expected: synthetic findings are included)")
+    print(f"Render with MultiQC, if installed: multiqc {demo.report_dir} --outdir {demo.output_dir} --force")
+    return 0
 
 
 def _print_summary(result) -> None:

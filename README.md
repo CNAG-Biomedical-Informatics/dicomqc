@@ -45,6 +45,12 @@ outputs before research sharing.
 
 ## Installation
 
+From PyPI later:
+
+```bash
+pip install dicomqc
+```
+
 From a source checkout:
 
 ```bash
@@ -56,6 +62,16 @@ example, DCMTK provides `dcmodify` and `dcmdump`, but dicomqc itself remains
 read-only.
 
 ## Quick Start
+
+Generate a complete synthetic DICOM demo and report bundle:
+
+```bash
+dicomqc demo
+```
+
+This creates `dicomqc-demo/` with synthetic `.dcm` files, `report.json`,
+`findings.csv`, and MultiQC custom-content files. The demo includes intentional
+findings so users can see what a failed release gate looks like.
 
 Run an audit on a directory of candidate release `.dcm` files:
 
@@ -77,15 +93,14 @@ Exit codes:
 | CSV | One row per finding for review and spreadsheet workflows |
 | MultiQC | Custom-content summary for projects that aggregate QC reports |
 
-Generate synthetic `.dcm` files and render the bundled MultiQC example:
+Render the demo with MultiQC, if installed:
 
 ```bash
-bash examples/multiqc/run_example.sh
+multiqc dicomqc-demo/dicomqc --outdir dicomqc-demo --force
 ```
 
-The example output is written to `examples/multiqc/output/`. The generated
-`multiqc_report.html` is intentionally ignored because it embeds local runtime
-metadata, but the synthetic inputs and dicomqc report artifacts are tracked.
+Use `examples/multiqc/multiqc_config.yaml` when rendering the demo report if you
+want the repository logo and styling in local MultiQC output.
 
 ## Documentation
 

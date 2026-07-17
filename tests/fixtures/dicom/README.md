@@ -3,10 +3,10 @@
 This directory is reserved for synthetic DICOM fixtures used during dicomqc
 development.
 
-Generated `.dcm` files are intentionally ignored by git. Recreate them with:
+Generated `.dcm` files are intentionally ignored by git. Recreate demo data with:
 
 ```bash
-python scripts/make_dicom_fixtures.py
+dicomqc demo
 ```
 
 The generator writes:

@@ -1,9 +1,7 @@
-#!/usr/bin/env python3
-"""Generate small synthetic DICOM fixtures for dicomqc development."""
+"""Synthetic DICOM fixtures used by demos and tests."""
 
 from __future__ import annotations
 
-import argparse
 from pathlib import Path
 
 from pydicom.dataset import FileDataset, FileMetaDataset
@@ -12,43 +10,45 @@ from pydicom.uid import ExplicitVRLittleEndian
 ROOT_UID = "1.2.826.0.1.3680043.10.54321"
 
 
-def main() -> int:
-    parser = argparse.ArgumentParser(description="Generate synthetic dicomqc test fixtures.")
-    parser.add_argument(
-        "--output-dir",
-        type=Path,
-        default=Path("tests/fixtures/dicom/generated"),
-        help="Directory where synthetic .dcm files will be written.",
-    )
-    args = parser.parse_args()
+def write_synthetic_dicom_fixtures(output_dir: Path) -> list[Path]:
+    """Write a compact set of synthetic DICOM files for dicomqc demos."""
 
-    args.output_dir.mkdir(parents=True, exist_ok=True)
-    _write_dicom(
-        args.output_dir / "raw_phi.dcm",
-        fixture_index=1,
-        patient_name="Smith^Jane",
-        patient_id="LOCAL123",
-        patient_birth_date="19700101",
-        private_creator="SIEMENS CSA HEADER",
-    )
-    _write_dicom(
-        args.output_dir / "pseudonymized.dcm",
-        fixture_index=2,
-        patient_name="SUBJ001",
-        patient_id="SUBJ001",
-        patient_birth_date=None,
-        private_creator=None,
-    )
-    _write_dicom(
-        args.output_dir / "private_tags.dcm",
-        fixture_index=3,
-        patient_name="SUBJ002",
-        patient_id="SUBJ002",
-        patient_birth_date=None,
-        private_creator="SIEMENS CSA HEADER",
-    )
-    print(f"Wrote synthetic DICOM fixtures to {args.output_dir}")
-    return 0
+    output_dir.mkdir(parents=True, exist_ok=True)
+    fixtures = [
+        (
+            output_dir / "raw_phi.dcm",
+            {
+                "fixture_index": 1,
+                "patient_name": "Smith^Jane",
+                "patient_id": "LOCAL123",
+                "patient_birth_date": "19700101",
+                "private_creator": "SIEMENS CSA HEADER",
+            },
+        ),
+        (
+            output_dir / "pseudonymized.dcm",
+            {
+                "fixture_index": 2,
+                "patient_name": "SUBJ001",
+                "patient_id": "SUBJ001",
+                "patient_birth_date": None,
+                "private_creator": None,
+            },
+        ),
+        (
+            output_dir / "private_tags.dcm",
+            {
+                "fixture_index": 3,
+                "patient_name": "SUBJ002",
+                "patient_id": "SUBJ002",
+                "patient_birth_date": None,
+                "private_creator": "SIEMENS CSA HEADER",
+            },
+        ),
+    ]
+    for path, options in fixtures:
+        _write_dicom(path, **options)
+    return [path for path, _options in fixtures]
 
 
 def _write_dicom(
@@ -79,7 +79,3 @@ def _write_dicom(
     if private_creator is not None:
         dataset.add_new((0x0029, 0x0010), "LO", private_creator)
     dataset.save_as(str(path), enforce_file_format=True)
-
-
-if __name__ == "__main__":
-    raise SystemExit(main())

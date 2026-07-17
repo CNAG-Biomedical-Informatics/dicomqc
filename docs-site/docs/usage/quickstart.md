@@ -4,7 +4,35 @@ title: Quickstart
 
 # Quickstart
 
-Install the package from the repository root:
+## Try the built-in demo
+
+After installation, generate a complete synthetic DICOM demo and dicomqc report
+bundle:
+
+```bash
+dicomqc demo
+```
+
+This writes:
+
+```text
+dicomqc-demo/
+  dicom/
+    raw_phi.dcm
+    pseudonymized.dcm
+    private_tags.dcm
+  dicomqc/
+    report.json
+    findings.csv
+    dicomqc_mqc/
+```
+
+The demo intentionally includes findings, so the reported scan exit code is `2`.
+The `demo` command itself exits `0` when the example was generated correctly.
+
+## Developer installation
+
+Install the package from the repository root with test dependencies:
 
 ```bash
 python3 -m pip install -e ".[test]"
