@@ -11,6 +11,12 @@ dist/
 docs-site/.docusaurus/
 docs-site/build/
 docs-site/node_modules/
+docs-site/.cache/
+docs-site/.tmp/
+docs-site/screenshots/
+docs-site/playwright-report/
+docs-site/test-results/
+docs-site/*.tsbuildinfo
 
 tests/fixtures/dicom/generated/
 examples/multiqc/output/multiqc_data/
