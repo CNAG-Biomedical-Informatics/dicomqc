@@ -1,0 +1,84 @@
+name: Publish to TestPyPI
+
+on:
+  workflow_dispatch:
+
+env:
+  FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: true
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@v5
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+
+      - name: Install DCMTK
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y dcmtk
+
+      - name: Install test and release dependencies
+        run: |
+          python -m pip install --upgrade pip
+          python -m pip install ".[release,test]"
+
+      - name: Run tests with coverage gate
+        run: pytest
+
+      - name: Build and validate distributions
+        run: |
+          python -m build
+          python -m twine check dist/*
+
+      - name: Test built wheel and MultiQC integration
+        working-directory: /tmp
+        run: |
+          python -m venv dicomqc-wheel-test
+          dicomqc-wheel-test/bin/python -m pip install --upgrade pip
+          dicomqc-wheel-test/bin/python -m pip install "$GITHUB_WORKSPACE"/dist/*.whl multiqc
+          dicomqc-wheel-test/bin/dicomqc --help
+          dicomqc-wheel-test/bin/dicomqc demo --output-dir /tmp/dicomqc-demo
+          test -s /tmp/dicomqc-demo/dicomqc/report.json
+          test -s /tmp/dicomqc-demo/dicomqc/findings.csv
+          test -s /tmp/dicomqc-demo/dicomqc/dicomqc_mqc/dicomqc_summary_mqc.yaml
+          dicomqc-wheel-test/bin/multiqc /tmp/dicomqc-demo/dicomqc \
+            --outdir /tmp/dicomqc-demo \
+            --force \
+            --config "$GITHUB_WORKSPACE/examples/multiqc/multiqc_config.yaml"
+          test -s /tmp/dicomqc-demo/multiqc_report.html
+
+      - name: Upload distributions
+        uses: actions/upload-artifact@v4
+        with:
+          name: python-distributions
+          path: dist/
+
+  publish:
+    needs: build
+    runs-on: ubuntu-latest
+    environment:
+      name: testpypi
+      url: https://test.pypi.org/p/dicomqc
+    permissions:
+      id-token: write
+
+    steps:
+      - name: Download distributions
+        uses: actions/download-artifact@v4
+        with:
+          name: python-distributions
+          path: dist/
+
+      - name: Publish distributions with trusted publishing
+        uses: pypa/gh-action-pypi-publish@release/v1
+        with:
+          repository-url: https://test.pypi.org/legacy/
