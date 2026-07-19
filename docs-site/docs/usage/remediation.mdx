@@ -2,29 +2,32 @@
 title: Remediation
 ---
 
+import useBaseUrl from '@docusaurus/useBaseUrl';
+
 # Remediation
 
 dicomqc is a validator for DICOM de-identification policies. Like a schema
 validator, it reports non-compliance but does not rewrite the source files.
 
-When dicomqc finds a problem, fix the candidate release dataset with an
+When dicomqc finds a problem, fix the candidate release dataset with a
 pseudonymization or anonymization tool, then run dicomqc again.
 
-```text
-raw DICOMs
-    |
-    v
-pseudonymizer / anonymizer
-    |
-    v
-candidate release DICOMs
-    |
-    v
-dicomqc audit
-    |
-    v
-pass/fail report + recommendations
-```
+<figure className="dicomqcRemediationFigure">
+  <picture>
+    <source
+      media="(max-width: 760px)"
+      srcSet={useBaseUrl('/img/dicomqc-remediation-loop-mobile.svg')}
+    />
+    <img
+      src={useBaseUrl('/img/dicomqc-remediation-loop.svg')}
+      alt="Read-only dicomqc audit and external remediation loop from immutable source DICOM to release evidence"
+    />
+  </picture>
+  <figcaption>
+    Remediation changes the external transformation workflow and regenerates the
+    candidate dataset. dicomqc remains read-only and evaluates each new output.
+  </figcaption>
+</figure>
 
 ## Safe working pattern
 

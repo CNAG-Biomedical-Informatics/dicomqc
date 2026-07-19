@@ -48,6 +48,30 @@ requireText(overview, 'Project status', 'docs/overview.md');
 requireText(overview, 'Primary interface', 'docs/overview.md');
 requireText(overview, 'Why audit after de-identification?', 'docs/overview.md');
 
+const msMriWorkflow = read('docs/usage/ms-mri-workflow.mdx');
+requireText(
+  msMriWorkflow,
+  "useBaseUrl('/img/dicomqc-ms-mri-workflow.svg')",
+  'docs/usage/ms-mri-workflow.mdx',
+);
+requireText(
+  msMriWorkflow,
+  "useBaseUrl('/img/dicomqc-ms-mri-workflow-mobile.svg')",
+  'docs/usage/ms-mri-workflow.mdx',
+);
+
+const remediation = read('docs/usage/remediation.mdx');
+requireText(
+  remediation,
+  "useBaseUrl('/img/dicomqc-remediation-loop.svg')",
+  'docs/usage/remediation.mdx',
+);
+requireText(
+  remediation,
+  "useBaseUrl('/img/dicomqc-remediation-loop-mobile.svg')",
+  'docs/usage/remediation.mdx',
+);
+
 const homeStyles = read('src/pages/index.module.css');
 requireText(homeStyles, '.objectiveFigure {', 'src/pages/index.module.css');
 requireText(homeStyles, 'display: none;', 'src/pages/index.module.css');
@@ -55,5 +79,9 @@ requireText(homeStyles, 'display: none;', 'src/pages/index.module.css');
 requireAccessibleSvg('static/img/dicomqc-objective.svg');
 requireAccessibleSvg('static/img/dicomqc-architecture.svg');
 requireAccessibleSvg('static/img/dicomqc-architecture-mobile.svg');
+requireAccessibleSvg('static/img/dicomqc-ms-mri-workflow.svg');
+requireAccessibleSvg('static/img/dicomqc-ms-mri-workflow-mobile.svg');
+requireAccessibleSvg('static/img/dicomqc-remediation-loop.svg');
+requireAccessibleSvg('static/img/dicomqc-remediation-loop-mobile.svg');
 
 console.log('Documentation smoke checks passed.');

@@ -98,7 +98,9 @@ body,
   border-color: var(--dicomqc-line);
 }
 
-.dicomqcArchitectureFigure {
+.dicomqcArchitectureFigure,
+.dicomqcWorkflowFigure,
+.dicomqcRemediationFigure {
   max-width: 100%;
   margin: 1.5rem 0 2rem;
   overflow-x: auto;
@@ -107,7 +109,9 @@ body,
   background: var(--ifm-background-surface-color);
 }
 
-.dicomqcArchitectureFigure img {
+.dicomqcArchitectureFigure img,
+.dicomqcWorkflowFigure img,
+.dicomqcRemediationFigure img {
   display: block;
   width: 100%;
   min-width: 0;
@@ -115,11 +119,15 @@ body,
   padding: 0.75rem;
 }
 
-.dicomqcArchitectureFigure picture {
+.dicomqcArchitectureFigure picture,
+.dicomqcWorkflowFigure picture,
+.dicomqcRemediationFigure picture {
   display: block;
 }
 
-.dicomqcArchitectureFigure figcaption {
+.dicomqcArchitectureFigure figcaption,
+.dicomqcWorkflowFigure figcaption,
+.dicomqcRemediationFigure figcaption {
   width: 100%;
   margin: 0;
   padding: 0.85rem 1rem;

@@ -1,0 +1,102 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 920 860" role="img" aria-labelledby="title desc">
+  <title id="title">Multiple sclerosis MRI DICOM release workflow</title>
+  <desc id="desc">Raw DICOM is preserved, transformed by an external pseudonymization workflow, audited by dicomqc, and reviewed for release. The provider retains the linkage map separately, and findings loop back to remediation and a new candidate dataset.</desc>
+  <defs>
+    <marker id="arrow" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse">
+      <path d="M 0 0 L 10 5 L 0 10 z" class="arrowHead"/>
+    </marker>
+    <marker id="feedbackArrow" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse">
+      <path d="M 0 0 L 10 5 L 0 10 z" class="feedbackHead"/>
+    </marker>
+    <style>
+      .node { fill: #ffffff; stroke: #adbbbd; stroke-width: 1.25; }
+      .transform { fill: #f7eee9; stroke: #b97858; }
+      .audit { fill: #eaf4f3; stroke: #4e8f96; }
+      .review { fill: #edf3ec; stroke: #789475; }
+      .restricted { fill: #eef1f4; stroke: #788995; }
+      .flow { fill: none; stroke: #60757a; stroke-width: 1.6; marker-end: url(#arrow); }
+      .feedback { fill: none; stroke: #a45c39; stroke-width: 1.6; marker-end: url(#feedbackArrow); }
+      .linkage { fill: none; stroke: #788995; stroke-width: 1.4; stroke-dasharray: 6 5; }
+      .arrowHead { fill: #60757a; }
+      .feedbackHead { fill: #a45c39; }
+      .pageTitle { fill: #18272e; font: 700 25px Inter, Arial, sans-serif; letter-spacing: 0; }
+      .phase { fill: #934927; font: 700 11px Inter, Arial, sans-serif; letter-spacing: 0; }
+      .nodeTitle { fill: #18272e; font: 700 20px Inter, Arial, sans-serif; letter-spacing: 0; }
+      .detail { fill: #52636a; font: 15px Inter, Arial, sans-serif; letter-spacing: 0; }
+      .code { fill: #075761; font: 13px ui-monospace, SFMono-Regular, Menlo, Consolas, monospace; letter-spacing: 0; }
+      .note { fill: #68797e; font: 14px Inter, Arial, sans-serif; letter-spacing: 0; }
+      .feedbackText { fill: #934927; font: 700 11px Inter, Arial, sans-serif; letter-spacing: 0; }
+      @media (prefers-color-scheme: dark) {
+        .node { fill: #192125; stroke: #526166; }
+        .transform { fill: #352923; stroke: #d28d6b; }
+        .audit { fill: #203436; stroke: #70bdc4; }
+        .review { fill: #263126; stroke: #91ae8d; }
+        .restricted { fill: #252d33; stroke: #8d9ca6; }
+        .flow { stroke: #91a4a7; }
+        .feedback { stroke: #e09b78; }
+        .linkage { stroke: #8d9ca6; }
+        .arrowHead { fill: #91a4a7; }
+        .feedbackHead { fill: #e09b78; }
+        .pageTitle, .nodeTitle { fill: #edf2f2; }
+        .phase, .feedbackText { fill: #e09b78; }
+        .detail, .note { fill: #aebbbc; }
+        .code { fill: #9bd5d8; }
+      }
+    </style>
+  </defs>
+
+  <text x="30" y="35" class="pageTitle">MS MRI research-release workflow</text>
+  <text x="30" y="63" class="note">DICOM-in / DICOM-out pseudonymization with an independent metadata audit</text>
+
+  <rect x="170" y="92" width="530" height="88" rx="4" class="node"/>
+  <text x="194" y="119" class="phase">STEP 1 / PRESERVE</text>
+  <text x="194" y="149" class="nodeTitle">Raw DICOM archive</text>
+  <text x="440" y="148" class="detail">Restricted and immutable</text>
+  <text x="440" y="168" class="code">raw_mri/</text>
+  <line x1="435" y1="181" x2="435" y2="211" class="flow"/>
+
+  <rect x="170" y="214" width="530" height="100" rx="4" class="node transform"/>
+  <text x="194" y="242" class="phase">STEP 2 / TRANSFORM</text>
+  <text x="194" y="273" class="nodeTitle">External pseudonymization</text>
+  <text x="194" y="297" class="detail">Controlled DICOM-in / DICOM-out workflow</text>
+  <text x="545" y="296" class="code">.dcm</text>
+
+  <line x1="700" y1="264" x2="725" y2="264" class="linkage"/>
+  <rect x="725" y="214" width="170" height="100" rx="4" class="restricted"/>
+  <text x="743" y="240" class="phase">PROVIDER SIDE</text>
+  <text x="743" y="268" class="nodeTitle">Linkage map</text>
+  <text x="743" y="291" class="detail">Separate policy</text>
+  <text x="743" y="308" class="detail">Never released</text>
+
+  <line x1="435" y1="315" x2="435" y2="345" class="flow"/>
+
+  <rect x="170" y="348" width="530" height="88" rx="4" class="node"/>
+  <text x="194" y="375" class="phase">STEP 3 / CANDIDATE</text>
+  <text x="194" y="405" class="nodeTitle">Pseudonymized DICOM</text>
+  <text x="472" y="404" class="detail">Proposed release dataset</text>
+  <text x="472" y="424" class="code">candidate_release_mri/</text>
+  <line x1="435" y1="437" x2="435" y2="467" class="flow"/>
+
+  <rect x="170" y="470" width="530" height="100" rx="4" class="node audit"/>
+  <text x="194" y="498" class="phase">STEP 4 / AUDIT</text>
+  <text x="194" y="529" class="nodeTitle">dicomqc metadata audit</text>
+  <text x="194" y="553" class="detail">Read-only policy checks</text>
+  <text x="456" y="552" class="code">JSON / CSV / MultiQC</text>
+  <line x1="435" y1="571" x2="435" y2="601" class="flow"/>
+
+  <rect x="170" y="604" width="530" height="104" rx="4" class="node review"/>
+  <text x="194" y="632" class="phase">STEP 5 / REVIEW</text>
+  <text x="194" y="663" class="nodeTitle">Release decision</text>
+  <text x="194" y="687" class="detail">Pass, review warnings, or block on errors</text>
+  <text x="543" y="686" class="code">exit 0 / 1 / 2</text>
+
+  <path d="M 170 656 L 65 656 L 65 264 L 168 264" class="feedback"/>
+  <text x="82" y="445" class="feedbackText">REMEDIATE</text>
+  <text x="82" y="462" class="feedbackText">AND RERUN</text>
+
+  <line x1="435" y1="709" x2="435" y2="753" class="flow"/>
+  <text x="452" y="739" class="phase">APPROVED</text>
+  <rect x="285" y="756" width="300" height="78" rx="4" class="node"/>
+  <text x="309" y="787" class="phase">RESEARCH RELEASE</text>
+  <text x="309" y="816" class="nodeTitle">DICOM + audit evidence</text>
+</svg>

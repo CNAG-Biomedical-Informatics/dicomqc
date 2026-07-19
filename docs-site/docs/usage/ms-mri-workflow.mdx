@@ -2,31 +2,31 @@
 title: MS MRI Workflow
 ---
 
+import useBaseUrl from '@docusaurus/useBaseUrl';
+
 # MS MRI Workflow
 
 For a large multiple sclerosis MRI dataset, dicomqc should be the audit layer on
 top of a pseudonymization/de-identification workflow. It should not be the tool
 that edits the only copy of the study.
 
-```text
-raw_mri/
-    |
-    | 1. archive read-only
-    v
-pseudonymization / de-identification pipeline
-    |
-    | 2. external tool writes pseudonymized DICOM files
-    v
-candidate_release_mri/
-    |
-    | 3. dicomqc reads metadata only
-    v
-reports/
-    |
-    | 4. fix findings and rerun
-    v
-release_candidate/
-```
+<figure className="dicomqcWorkflowFigure">
+  <picture>
+    <source
+      media="(max-width: 760px)"
+      srcSet={useBaseUrl('/img/dicomqc-ms-mri-workflow-mobile.svg')}
+    />
+    <img
+      src={useBaseUrl('/img/dicomqc-ms-mri-workflow.svg')}
+      alt="MS MRI DICOM workflow from preserved source data through external pseudonymization, dicomqc audit, remediation, and research release"
+    />
+  </picture>
+  <figcaption>
+    The transformation tool creates each candidate dataset. dicomqc evaluates
+    that output independently; findings feed back into the transformation
+    workflow before a release is approved.
+  </figcaption>
+</figure>
 
 ## Recommended directory layout
 

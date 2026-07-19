@@ -73,9 +73,9 @@ technical and institutional review; it does not replace either.
 | Task | Documentation |
 | --- | --- |
 | Install and run the CLI | [Quickstart](usage/quickstart.md) |
-| Audit a large MS MRI collection | [MS MRI workflow](usage/ms-mri-workflow.md) |
+| Audit a large MS MRI collection | [MS MRI workflow](usage/ms-mri-workflow.mdx) |
 | Interpret and aggregate outputs | [Reports](usage/reports.md) |
-| Apply findings with external tools | [Remediation](usage/remediation.md) |
+| Apply findings with external tools | [Remediation](usage/remediation.mdx) |
 | Understand implementation boundaries | [Architecture](technical-details/architecture.mdx) |
 | Compare related software | [Prior work](about/prior-work.md) |
 

@@ -1,0 +1,88 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 400 840" role="img" aria-labelledby="title desc">
+  <title id="title">Mobile dicomqc remediation loop</title>
+  <desc id="desc">An immutable source is transformed externally into candidate DICOM. dicomqc audits the candidate. Findings return to external remediation and regeneration; a reviewed pass proceeds to release evidence.</desc>
+  <defs>
+    <marker id="arrow" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="6" markerHeight="6" orient="auto-start-reverse">
+      <path d="M 0 0 L 10 5 L 0 10 z" class="arrowHead"/>
+    </marker>
+    <marker id="feedbackArrow" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="6" markerHeight="6" orient="auto-start-reverse">
+      <path d="M 0 0 L 10 5 L 0 10 z" class="feedbackHead"/>
+    </marker>
+    <style>
+      .node { fill: #ffffff; stroke: #adbbbd; stroke-width: 1.2; }
+      .transform { fill: #f7eee9; stroke: #b97858; }
+      .audit { fill: #eaf4f3; stroke: #4e8f96; }
+      .result { fill: #edf3ec; stroke: #789475; }
+      .flow { fill: none; stroke: #60757a; stroke-width: 1.5; marker-end: url(#arrow); }
+      .feedback { fill: none; stroke: #a45c39; stroke-width: 1.5; marker-end: url(#feedbackArrow); }
+      .arrowHead { fill: #60757a; }
+      .feedbackHead { fill: #a45c39; }
+      .pageTitle { fill: #18272e; font: 700 21px Inter, Arial, sans-serif; letter-spacing: 0; }
+      .phase { fill: #934927; font: 700 10px Inter, Arial, sans-serif; letter-spacing: 0; }
+      .nodeTitle { fill: #18272e; font: 700 17px Inter, Arial, sans-serif; letter-spacing: 0; }
+      .detail { fill: #52636a; font: 12px Inter, Arial, sans-serif; letter-spacing: 0; }
+      .code { fill: #075761; font: 11px ui-monospace, SFMono-Regular, Menlo, Consolas, monospace; letter-spacing: 0; }
+      .note { fill: #68797e; font: 12px Inter, Arial, sans-serif; letter-spacing: 0; }
+      .feedbackText { fill: #934927; font: 700 9px Inter, Arial, sans-serif; letter-spacing: 0; }
+      @media (prefers-color-scheme: dark) {
+        .node { fill: #192125; stroke: #526166; }
+        .transform { fill: #352923; stroke: #d28d6b; }
+        .audit { fill: #203436; stroke: #70bdc4; }
+        .result { fill: #263126; stroke: #91ae8d; }
+        .flow { stroke: #91a4a7; }
+        .feedback { stroke: #e09b78; }
+        .arrowHead { fill: #91a4a7; }
+        .feedbackHead { fill: #e09b78; }
+        .pageTitle, .nodeTitle { fill: #edf2f2; }
+        .phase, .feedbackText { fill: #e09b78; }
+        .detail, .note { fill: #aebbbc; }
+        .code { fill: #9bd5d8; }
+      }
+    </style>
+  </defs>
+
+  <text x="24" y="30" class="pageTitle">Audit and remediation loop</text>
+  <text x="24" y="51" class="note">External edits; independent validation</text>
+
+  <rect x="42" y="72" width="334" height="82" rx="4" class="node"/>
+  <text x="60" y="96" class="phase">SOURCE CONTROL</text>
+  <text x="60" y="121" class="nodeTitle">Immutable source DICOM</text>
+  <text x="60" y="142" class="detail">Restricted original dataset</text>
+  <line x1="209" y1="155" x2="209" y2="175" class="flow"/>
+
+  <rect x="42" y="178" width="334" height="108" rx="4" class="node transform"/>
+  <text x="60" y="202" class="phase">EXTERNAL TRANSFORMATION</text>
+  <text x="60" y="227" class="nodeTitle">Pseudonymize or remediate</text>
+  <text x="60" y="249" class="detail">dcmodify / Orthanc / XNAT /</text>
+  <text x="60" y="269" class="detail">pydicom / site pipeline</text>
+  <line x1="209" y1="287" x2="209" y2="307" class="flow"/>
+
+  <rect x="42" y="310" width="334" height="82" rx="4" class="node"/>
+  <text x="60" y="334" class="phase">WORKING OUTPUT</text>
+  <text x="60" y="359" class="nodeTitle">Candidate release DICOM</text>
+  <text x="60" y="380" class="detail">Derived working copy</text>
+  <line x1="209" y1="393" x2="209" y2="413" class="flow"/>
+
+  <rect x="42" y="416" width="334" height="102" rx="4" class="node audit"/>
+  <text x="60" y="440" class="phase">INDEPENDENT QC</text>
+  <text x="60" y="465" class="nodeTitle">dicomqc metadata audit</text>
+  <text x="60" y="487" class="detail">Read-only policy evaluation</text>
+  <text x="60" y="506" class="code">JSON / CSV / MultiQC</text>
+  <line x1="209" y1="519" x2="209" y2="539" class="flow"/>
+
+  <rect x="42" y="542" width="334" height="110" rx="4" class="node result"/>
+  <text x="60" y="566" class="phase">DECISION</text>
+  <text x="60" y="591" class="nodeTitle">Pass or actionable findings</text>
+  <text x="60" y="613" class="detail">Fix the workflow and regenerate</text>
+  <text x="60" y="634" class="code">exit 0 / 1 / 2</text>
+
+  <path d="M 42 597 L 16 597 L 16 232 L 40 232" class="feedback"/>
+  <text x="21" y="405" class="feedbackText" transform="rotate(-90 21 405)">FIX, REGENERATE, RERUN</text>
+
+  <line x1="209" y1="653" x2="209" y2="711" class="flow"/>
+  <text x="225" y="687" class="phase">PASSED + REVIEWED</text>
+  <rect x="42" y="714" width="334" height="88" rx="4" class="node"/>
+  <text x="60" y="739" class="phase">RELEASE RECORD</text>
+  <text x="60" y="765" class="nodeTitle">DICOM + audit evidence</text>
+  <text x="60" y="787" class="detail">Source data remains unchanged</text>
+</svg>

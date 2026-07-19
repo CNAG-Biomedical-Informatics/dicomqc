@@ -104,7 +104,7 @@ evidence.
 
 dicomqc does not modify DICOM files. If it reports required changes, apply them
 with a pseudonymization or anonymization tool, then rerun the scan. See
-[Remediation](remediation.md) for examples with external tools.
+[Remediation](remediation.mdx) for examples with external tools.
 
 For the intended multiple sclerosis MRI use case, see
-[MS MRI Workflow](ms-mri-workflow.md).
+[MS MRI Workflow](ms-mri-workflow.mdx).
