@@ -3,7 +3,7 @@ import type {Config} from '@docusaurus/types';
 import type * as Preset from '@docusaurus/preset-classic';
 
 const config: Config = {
-  title: 'dicomqc Docs',
+  title: 'dicomqc documentation',
   tagline: 'A policy-driven, standards-aware audit framework for validating DICOM de-identification and research-release readiness',
   url: 'https://cnag-biomedical-informatics.github.io',
   baseUrl: '/dicomqc/',
@@ -52,10 +52,6 @@ const config: Config = {
     },
     navbar: {
       title: 'dicomqc',
-      logo: {
-        alt: 'dicomqc logo',
-        src: 'img/dicomqc-logo.png',
-      },
       items: [
         {
           type: 'docSidebar',
@@ -69,6 +65,11 @@ const config: Config = {
           position: 'left',
         },
         {
+          to: '/docs/usage/reports',
+          label: 'Reports',
+          position: 'left',
+        },
+        {
           href: 'https://github.com/CNAG-Biomedical-Informatics/dicomqc',
           label: 'GitHub',
           position: 'right',
@@ -76,7 +77,7 @@ const config: Config = {
       ],
     },
     footer: {
-      style: 'dark',
+      style: 'light',
       links: [
         {
           title: 'Docs',
@@ -105,6 +106,10 @@ const config: Config = {
             {
               label: 'Repository',
               href: 'https://github.com/CNAG-Biomedical-Informatics/dicomqc',
+            },
+            {
+              label: 'TestPyPI',
+              href: 'https://test.pypi.org/project/dicomqc/',
             },
             {
               label: 'CNAG',

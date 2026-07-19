@@ -1,0 +1,145 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1040 955" role="img" aria-labelledby="title desc">
+  <title id="title">dicomqc version 0.1 architecture</title>
+  <desc id="desc">A vertical architecture diagram shows DICOM files moving through discovery, a metadata-only pydicom backend, normalized records, policy rules, and a scan result. Below a reporting boundary, process status and report writers produce JSON, CSV, and MultiQC outputs without raw DICOM values.</desc>
+  <defs>
+    <marker id="arrow" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse">
+      <path d="M 0 0 L 10 5 L 0 10 z" class="arrowHead"/>
+    </marker>
+    <style>
+      .node { fill: #ffffff; stroke: #adbbbd; stroke-width: 1.25; }
+      .backend { fill: #eaf4f3; stroke: #4e8f96; }
+      .rules { fill: #f7eee9; stroke: #b97858; }
+      .result { fill: #edf3ec; stroke: #789475; }
+      .reporter { fill: #eef1f4; stroke: #788995; }
+      .output { fill: #ffffff; stroke: #adbbbd; stroke-width: 1.1; }
+      .divider { stroke: #d1d9d9; stroke-width: 1; }
+      .flow { fill: none; stroke: #60757a; stroke-width: 1.6; marker-end: url(#arrow); }
+      .branch { fill: none; stroke: #60757a; stroke-width: 1.4; }
+      .arrowHead { fill: #60757a; }
+      .boundary { stroke: #a45c39; stroke-width: 1.5; stroke-dasharray: 7 6; }
+      .boundaryLabel { fill: #f4f6f5; }
+      .pageTitle { fill: #18272e; font: 700 24px Inter, Arial, sans-serif; letter-spacing: 0; }
+      .phase { fill: #934927; font: 700 11px Inter, Arial, sans-serif; letter-spacing: 0; }
+      .nodeTitle { fill: #18272e; font: 700 18px Inter, Arial, sans-serif; letter-spacing: 0; }
+      .detail { fill: #52636a; font: 15px Inter, Arial, sans-serif; letter-spacing: 0; }
+      .code { fill: #075761; font: 13px ui-monospace, SFMono-Regular, Menlo, Consolas, monospace; letter-spacing: 0; }
+      .note { fill: #68797e; font: 14px Inter, Arial, sans-serif; letter-spacing: 0; }
+      .boundaryText { fill: #934927; font: 700 11px Inter, Arial, sans-serif; letter-spacing: 0; }
+      @media (prefers-color-scheme: dark) {
+        .node, .output { fill: #192125; stroke: #526166; }
+        .backend { fill: #203436; stroke: #70bdc4; }
+        .rules { fill: #352923; stroke: #d28d6b; }
+        .result { fill: #263126; stroke: #91ae8d; }
+        .reporter { fill: #252d33; stroke: #8d9ca6; }
+        .divider { stroke: #465459; }
+        .flow, .branch { stroke: #91a4a7; }
+        .arrowHead { fill: #91a4a7; }
+        .boundary { stroke: #e09b78; }
+        .boundaryLabel { fill: #1d262a; }
+        .pageTitle, .nodeTitle { fill: #edf2f2; }
+        .phase, .boundaryText { fill: #e09b78; }
+        .detail, .note { fill: #aebbbc; }
+        .code { fill: #9bd5d8; }
+      }
+    </style>
+  </defs>
+
+  <text x="24" y="34" class="pageTitle">dicomqc v0.1 data flow</text>
+  <text x="24" y="62" class="note">Layered metadata audit with an explicit reporting boundary</text>
+
+  <text x="24" y="129" class="phase">INPUT</text>
+  <rect x="170" y="86" width="840" height="72" rx="4" class="node"/>
+  <line x1="420" y1="86" x2="420" y2="158" class="divider"/>
+  <line x1="735" y1="86" x2="735" y2="158" class="divider"/>
+  <text x="194" y="130" class="nodeTitle">Candidate DICOM</text>
+  <text x="446" y="130" class="detail">Files or directories</text>
+  <text x="760" y="129" class="code">external output</text>
+
+  <line x1="590" y1="159" x2="590" y2="181" class="flow"/>
+
+  <text x="24" y="227" class="phase">ORCHESTRATE</text>
+  <rect x="170" y="184" width="840" height="72" rx="4" class="node"/>
+  <line x1="420" y1="184" x2="420" y2="256" class="divider"/>
+  <line x1="735" y1="184" x2="735" y2="256" class="divider"/>
+  <text x="194" y="228" class="nodeTitle">CLI + discovery</text>
+  <text x="446" y="228" class="detail">Recursive file set</text>
+  <text x="760" y="227" class="code">scan_paths()</text>
+
+  <line x1="590" y1="257" x2="590" y2="275" class="flow"/>
+
+  <text x="24" y="321" class="phase">PARSE</text>
+  <rect x="170" y="278" width="840" height="72" rx="4" class="node backend"/>
+  <line x1="420" y1="278" x2="420" y2="350" class="divider"/>
+  <line x1="735" y1="278" x2="735" y2="350" class="divider"/>
+  <text x="194" y="322" class="nodeTitle">PydicomBackend</text>
+  <text x="446" y="322" class="detail">Metadata only</text>
+  <text x="760" y="321" class="code">stop_before_pixels=True</text>
+
+  <line x1="590" y1="351" x2="590" y2="369" class="flow"/>
+
+  <text x="24" y="415" class="phase">NORMALIZE</text>
+  <rect x="170" y="372" width="840" height="72" rx="4" class="node"/>
+  <line x1="420" y1="372" x2="420" y2="444" class="divider"/>
+  <line x1="735" y1="372" x2="735" y2="444" class="divider"/>
+  <text x="194" y="416" class="nodeTitle">MetadataRecord</text>
+  <text x="446" y="416" class="detail">DicomTag + ValueState</text>
+  <text x="760" y="415" class="code">raw values internal</text>
+
+  <line x1="590" y1="445" x2="590" y2="463" class="flow"/>
+
+  <text x="24" y="509" class="phase">EVALUATE</text>
+  <rect x="170" y="466" width="840" height="72" rx="4" class="node rules"/>
+  <line x1="420" y1="466" x2="420" y2="538" class="divider"/>
+  <line x1="735" y1="466" x2="735" y2="538" class="divider"/>
+  <text x="194" y="510" class="nodeTitle">Profile + rules</text>
+  <text x="446" y="510" class="detail">PHI, pseudonyms, private tags</text>
+  <text x="760" y="509" class="code">research-release-v0.1</text>
+
+  <line x1="590" y1="539" x2="590" y2="557" class="flow"/>
+
+  <text x="24" y="603" class="phase">RESULT</text>
+  <rect x="170" y="560" width="840" height="72" rx="4" class="node result"/>
+  <line x1="420" y1="560" x2="420" y2="632" class="divider"/>
+  <line x1="735" y1="560" x2="735" y2="632" class="divider"/>
+  <text x="194" y="604" class="nodeTitle">ScanResult</text>
+  <text x="446" y="604" class="detail">Records, findings, skipped files</text>
+  <text x="760" y="603" class="code">exit_code()</text>
+
+  <line x1="590" y1="633" x2="590" y2="680" class="branch"/>
+  <line x1="170" y1="667" x2="1010" y2="667" class="boundary"/>
+  <rect x="185" y="647" width="390" height="25" class="boundaryLabel"/>
+  <text x="194" y="663" class="boundaryText">REPORTING BOUNDARY: RAW TAG VALUES REMAIN INTERNAL</text>
+
+  <path d="M 590 680 L 290 680 L 290 703" class="flow"/>
+  <path d="M 590 680 L 725 680 L 725 703" class="flow"/>
+
+  <text x="24" y="752" class="phase">OUTPUT</text>
+  <rect x="170" y="706" width="240" height="80" rx="4" class="output"/>
+  <text x="194" y="742" class="nodeTitle">Process status</text>
+  <text x="194" y="768" class="code">exit 0 / 1 / 2</text>
+
+  <rect x="440" y="706" width="570" height="80" rx="4" class="node reporter"/>
+  <line x1="665" y1="706" x2="665" y2="786" class="divider"/>
+  <text x="464" y="742" class="nodeTitle">Report writers</text>
+  <text x="690" y="739" class="detail">Findings, value states, counts</text>
+  <text x="690" y="765" class="code">no raw DICOM values</text>
+
+  <path d="M 725 787 L 725 814 L 535 814 L 535 831" class="branch"/>
+  <path d="M 725 814 L 725 831" class="branch"/>
+  <path d="M 725 814 L 915 814 L 915 831" class="branch"/>
+  <line x1="535" y1="831" x2="535" y2="847" class="flow"/>
+  <line x1="725" y1="831" x2="725" y2="847" class="flow"/>
+  <line x1="915" y1="831" x2="915" y2="847" class="flow"/>
+
+  <rect x="440" y="850" width="190" height="78" rx="4" class="output"/>
+  <text x="464" y="887" class="nodeTitle">JSON</text>
+  <text x="464" y="913" class="detail">Audit evidence</text>
+
+  <rect x="630" y="850" width="190" height="78" rx="4" class="output"/>
+  <text x="654" y="887" class="nodeTitle">CSV</text>
+  <text x="654" y="913" class="detail">Finding table</text>
+
+  <rect x="820" y="850" width="190" height="78" rx="4" class="output"/>
+  <text x="844" y="887" class="nodeTitle">MultiQC</text>
+  <text x="844" y="913" class="detail">Project overview</text>
+</svg>

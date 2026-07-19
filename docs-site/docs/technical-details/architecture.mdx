@@ -1,0 +1,90 @@
+---
+title: Architecture
+hide_table_of_contents: true
+---
+
+import useBaseUrl from '@docusaurus/useBaseUrl';
+
+# Architecture
+
+dicomqc separates file discovery, DICOM parsing, policy evaluation, and report
+generation. The separation keeps the audit read-only and prevents report
+formats from becoming coupled to pydicom objects.
+
+<figure className="dicomqcArchitectureFigure">
+  <picture>
+    <source
+      media="(max-width: 760px)"
+      srcSet={useBaseUrl('/img/dicomqc-architecture-mobile.svg')}
+    />
+    <img
+      src={useBaseUrl('/img/dicomqc-architecture.svg')}
+      alt="dicomqc data flow from candidate DICOM files through metadata parsing and policy evaluation to structured reports"
+    />
+  </picture>
+  <figcaption>
+    Current v0.1 data flow. Raw tag values remain internal to the audit process;
+    report writers emit findings, value states, and aggregate evidence.
+  </figcaption>
+</figure>
+
+## Component boundaries
+
+| Component | Current responsibility |
+| --- | --- |
+| CLI and scanner | Expand input paths, discover files recursively, select a profile, and coordinate outputs. |
+| `DicomBackend` | Read one file and return a normalized `MetadataRecord`. |
+| `PydicomBackend` | Parse DICOM metadata with `stop_before_pixels=True`; pixel data is not loaded. |
+| Metadata model | Represent file context, normalized tags, private-tag status, and `ValueState`. |
+| Built-in rules | Evaluate direct PHI fields, pseudonym patterns, and private tags under `research-release-v0.1`. |
+| Result model | Collect records, findings, skipped files, counts, and the process exit status. |
+| Report writers | Produce JSON, CSV, and MultiQC-compatible artifacts without serializing raw tag values. |
+
+## Data flow
+
+1. `scan_paths()` expands files and directories into a deterministic audit set.
+2. The backend reads each file as DICOM metadata. Files that cannot be parsed are
+   recorded as skipped rather than silently ignored.
+3. pydicom elements are normalized into `DicomTag` objects inside a
+   `MetadataRecord`.
+4. Built-in rules may inspect internal values and produce structured `Finding`
+   objects with severity, tag context, and remediation guidance.
+5. `ScanResult` combines records, findings, and skipped-file reasons. Its exit
+   code is `0` for pass, `1` for review warnings, and `2` for errors or skipped
+   files.
+6. Report writers convert that result into review artifacts. Raw DICOM values
+   are deliberately excluded from report serialization.
+
+## Backend boundary
+
+The parser is isolated behind a small protocol:
+
+```python
+class DicomBackend(Protocol):
+    def read_metadata(self, path: Path) -> MetadataRecord:
+        ...
+```
+
+The scanner and rule modules operate on normalized records and do not depend on
+pydicom dataset objects. This makes parser behavior testable and leaves room for
+alternative metadata readers without changing policy logic.
+
+## Metadata and reporting boundary
+
+`MetadataRecord` includes file-level context such as modality, manufacturer,
+Study Instance UID, and Series Instance UID, together with normalized tag
+records. Each `DicomTag` tracks its number, keyword, value representation,
+private-tag status, value state, and an internal raw value.
+
+The raw value is available to rules because pattern checks require it. It is not
+written to JSON, CSV, or MultiQC outputs. This is a reporting boundary, not a
+claim that every remaining metadata field is non-identifying; release artifacts
+still require appropriate governance and access control.
+
+## Extension direction
+
+The current package ships one built-in profile. Planned plugin discovery,
+policy-language support, vendor fingerprinting, and standards-specific rule
+packs should extend the rule and backend boundaries rather than bypass them.
+See [Extending dicomqc](./extending-dicomqc.md) for the proposed interfaces and
+the distinction between current and planned capabilities.

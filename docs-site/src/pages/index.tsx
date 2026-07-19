@@ -3,137 +3,158 @@ import Layout from '@theme/Layout';
 import useBaseUrl from '@docusaurus/useBaseUrl';
 import styles from './index.module.css';
 
-const guideLinks = [
+const primaryLinks = [
+  {label: 'Quickstart', to: '/docs/usage/quickstart'},
+  {label: 'MS MRI workflow', to: '/docs/usage/ms-mri-workflow'},
+  {label: 'Reports', to: '/docs/usage/reports'},
+];
+
+const auditOperations = [
   {
-    label: '01',
-    title: 'Quickstart',
-    text: 'Install dicomqc, scan a study directory, and read the exit codes.',
-    to: '/docs/usage/quickstart',
+    label: '01 / Inspect',
+    title: 'Read DICOM metadata',
+    text: 'Discover files recursively and parse metadata without loading pixel data.',
   },
   {
-    label: '02',
-    title: 'MS MRI workflow',
-    text: 'Place dicomqc after pseudonymization and before research release.',
-    to: '/docs/usage/ms-mri-workflow',
+    label: '02 / Evaluate',
+    title: 'Apply explicit rules',
+    text: 'Identify direct PHI fields, pseudonym-pattern failures, and private tags.',
   },
   {
-    label: '03',
-    title: 'Reports',
-    text: 'Use redaction-safe JSON, CSV, and MultiQC companion evidence.',
-    to: '/docs/usage/reports',
+    label: '03 / Record',
+    title: 'Produce review evidence',
+    text: 'Write JSON, CSV, and MultiQC outputs without reporting raw DICOM values.',
   },
   {
-    label: '04',
-    title: 'Architecture',
-    text: 'Review the scanner, rules, report writers, and extension roadmap.',
-    to: '/docs/technical-details/architecture',
+    label: '04 / Integrate',
+    title: 'Drive pipeline decisions',
+    text: 'Use stable exit codes and structured findings in repeatable release workflows.',
   },
 ];
 
-const capabilities = [
+const documentationPaths = [
   {
-    label: 'Inspect',
-    title: 'Read metadata only',
-    text: 'Scan DICOM files without loading pixel data and normalize release-relevant tags.',
+    title: 'Run an audit',
+    text: 'Install the package, scan a directory, and interpret the result.',
+    to: '/docs/usage/quickstart',
   },
   {
-    label: 'Audit',
-    title: 'Apply explicit policies',
-    text: 'Flag direct PHI fields, risky pseudonym fields, and private tags as structured findings.',
+    title: 'Plan remediation',
+    text: 'Apply findings with an external DICOM transformation tool and audit again.',
+    to: '/docs/usage/remediation',
   },
   {
-    label: 'Report',
-    title: 'Keep evidence reproducible',
-    text: 'Write JSON, CSV, and MultiQC-compatible outputs that avoid raw DICOM values.',
+    title: 'Review the architecture',
+    text: 'Trace metadata through discovery, policy evaluation, and report generation.',
+    to: '/docs/technical-details/architecture',
   },
   {
-    label: 'Improve',
-    title: 'Feed the remediation loop',
-    text: 'Use findings to update an external pseudonymization workflow, then rerun the audit.',
+    title: 'Compare prior work',
+    text: 'Understand how dicomqc relates to existing de-identification software.',
+    to: '/docs/about/prior-work',
   },
 ];
 
 export default function Home() {
-  const logo = useBaseUrl('/img/dicomqc-logo.png');
-  const auditFlow = useBaseUrl('/img/dicomqc-audit-flow.svg');
+  const objective = useBaseUrl('/img/dicomqc-objective.svg');
 
   return (
     <Layout
       title="dicomqc"
-      description="Policy-driven DICOM metadata quality control for de-identification and research-release readiness">
+      description="Independent DICOM metadata quality control for research-release workflows">
       <main className={styles.page}>
         <section className={styles.hero}>
           <div className={styles.heroInner}>
-            <div className={styles.copy}>
-              <img className={styles.logo} src={logo} alt="dicomqc" />
-              <p className={styles.kicker}>DICOM metadata audit</p>
-              <h1>Policy-driven QC for research-ready DICOM releases</h1>
-              <p className={styles.lede}>
-                dicomqc validates pseudonymized DICOM datasets before release,
-                producing redaction-safe evidence for de-identification review,
-                private-tag handling, and MultiQC project reports.
+            <div className={styles.heroCopy}>
+              <p className={styles.kicker}>DICOM metadata quality control</p>
+              <h1>dicomqc</h1>
+              <p className={styles.claim}>
+                Independent metadata audit for DICOM research releases.
               </p>
-              <div className={styles.actions}>
-                <Link className="button button--primary button--lg" to="/docs/usage/quickstart">
-                  Quick start
+              <p className={styles.lede}>
+                A read-only command-line framework that evaluates candidate DICOM
+                data after external pseudonymization or de-identification. It turns
+                explicit policy checks into reviewable JSON, CSV, and MultiQC
+                evidence.
+              </p>
+              <nav className={styles.primaryLinks} aria-label="Primary documentation">
+                {primaryLinks.map((link) => (
+                  <Link to={link.to} key={link.to}>
+                    {link.label}
+                    <span aria-hidden="true">&#8594;</span>
+                  </Link>
+                ))}
+              </nav>
+            </div>
+
+            <figure className={styles.objectiveFigure}>
+              <img
+                src={objective}
+                alt="Candidate DICOM passes through an independent dicomqc metadata audit to produce review evidence"
+              />
+              <figcaption>
+                Transformation and audit remain separate, repeatable steps.
+              </figcaption>
+            </figure>
+          </div>
+        </section>
+
+        <section className={styles.auditSection} aria-labelledby="audit-surface-title">
+          <div className={styles.sectionInner}>
+            <div className={styles.sectionHeading}>
+              <p className={styles.sectionLabel}>Current audit surface</p>
+              <h2 id="audit-surface-title">A focused metadata control point</h2>
+              <p>
+                dicomqc evaluates the output of a transformation workflow. Keeping
+                that check independent makes release criteria visible, testable,
+                and reproducible across tools and data providers.
+              </p>
+            </div>
+
+            <div className={styles.operationGrid}>
+              {auditOperations.map((operation) => (
+                <article className={styles.operation} key={operation.title}>
+                  <span>{operation.label}</span>
+                  <h3>{operation.title}</h3>
+                  <p>{operation.text}</p>
+                </article>
+              ))}
+            </div>
+          </div>
+        </section>
+
+        <section className={styles.boundarySection} aria-labelledby="scope-title">
+          <div className={styles.boundaryInner}>
+            <div>
+              <p className={styles.sectionLabel}>Scope boundary</p>
+              <h2 id="scope-title">Evidence, not transformation</h2>
+            </div>
+            <p>
+              Version 0.1 does not pseudonymize or modify DICOM files, inspect
+              pixels or facial features, or certify DICOM PS3.15, BIDS, HIPAA, or
+              GDPR compliance. Findings support technical and institutional review;
+              they do not replace it.
+            </p>
+          </div>
+        </section>
+
+        <section className={styles.docsSection} aria-labelledby="documentation-title">
+          <div className={styles.sectionInner}>
+            <div className={styles.sectionHeading}>
+              <p className={styles.sectionLabel}>Documentation</p>
+              <h2 id="documentation-title">Follow the task at hand</h2>
+            </div>
+            <div className={styles.documentationList}>
+              {documentationPaths.map((item) => (
+                <Link to={item.to} className={styles.documentationLink} key={item.to}>
+                  <span>
+                    <strong>{item.title}</strong>
+                    <small>{item.text}</small>
+                  </span>
+                  <span className={styles.linkArrow} aria-hidden="true">&#8594;</span>
                 </Link>
-                <Link className="button button--secondary button--lg" to="/docs/overview">
-                  Overview
-                </Link>
-              </div>
+              ))}
             </div>
-
-            <div className={styles.contractPreview} aria-label="Example dicomqc scan command">
-              <div className={styles.previewTitle}>Release audit</div>
-              <pre><code><span>dicomqc scan</span> work/candidate_release_mri/{`\n`}  <span>--json</span> reports/dicomqc/report.json{`\n`}  <span>--csv</span> reports/dicomqc/findings.csv{`\n`}  <span>--multiqc</span> reports/dicomqc/dicomqc_mqc</code></pre>
-              <div className={styles.resolution}>
-                <div><span>Input</span><strong>DICOM</strong></div>
-                <div><span>Mode</span><strong>read-only</strong></div>
-                <div><span>Evidence</span><strong>redacted</strong></div>
-              </div>
-            </div>
-          </div>
-        </section>
-
-        <section className={styles.workflow} aria-label="DICOM release audit workflow">
-          <div className={styles.workflowInner}>
-            <img
-              className={styles.workflowImage}
-              src={auditFlow}
-              alt="Raw DICOM files are pseudonymized externally, audited by dicomqc, and reported as release evidence"
-            />
-            <div className={styles.mobileFlow}>
-              <div><span>Raw</span><strong>Preserve source DICOM</strong></div>
-              <div><span>Anon</span><strong>Run external pseudonymization</strong></div>
-              <div><span>QC</span><strong>Audit metadata with dicomqc</strong></div>
-              <div><span>Report</span><strong>Archive JSON, CSV, and MultiQC evidence</strong></div>
-            </div>
-            <p>dicomqc audits the candidate release; it does not modify the original imaging data.</p>
-          </div>
-        </section>
-
-        <section className={styles.sections} aria-label="dicomqc capabilities">
-          <div className={styles.grid}>
-            {capabilities.map((item) => (
-              <article className={styles.card} key={item.title}>
-                <span>{item.label}</span>
-                <h2>{item.title}</h2>
-                <p>{item.text}</p>
-              </article>
-            ))}
-          </div>
-        </section>
-
-        <section className={styles.sections} aria-label="Documentation paths">
-          <p className={styles.sectionLabel}>Start here</p>
-          <div className={styles.grid}>
-            {guideLinks.map((guide) => (
-              <Link className={styles.card} to={guide.to} key={guide.title}>
-                <span>{guide.label}</span>
-                <h2>{guide.title}</h2>
-                <p>{guide.text}</p>
-              </Link>
-            ))}
           </div>
         </section>
       </main>

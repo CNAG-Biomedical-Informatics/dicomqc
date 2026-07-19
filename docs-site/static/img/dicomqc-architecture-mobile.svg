@@ -1,0 +1,100 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 400 840" role="img" aria-labelledby="title desc">
+  <title id="title">dicomqc mobile architecture</title>
+  <desc id="desc">A compact vertical diagram shows candidate DICOM moving through discovery, metadata parsing, normalization, policy rules, and scan results before process status and reports are emitted.</desc>
+  <defs>
+    <marker id="arrow" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="6" markerHeight="6" orient="auto-start-reverse">
+      <path d="M 0 0 L 10 5 L 0 10 z" class="arrowHead"/>
+    </marker>
+    <style>
+      .node { fill: #ffffff; stroke: #adbbbd; stroke-width: 1.2; }
+      .backend { fill: #eaf4f3; stroke: #4e8f96; }
+      .rules { fill: #f7eee9; stroke: #b97858; }
+      .result { fill: #edf3ec; stroke: #789475; }
+      .reporter { fill: #eef1f4; stroke: #788995; }
+      .flow { fill: none; stroke: #60757a; stroke-width: 1.5; marker-end: url(#arrow); }
+      .arrowHead { fill: #60757a; }
+      .boundary { stroke: #a45c39; stroke-width: 1.4; stroke-dasharray: 6 5; }
+      .boundaryLabel { fill: #f4f6f5; }
+      .pageTitle { fill: #18272e; font: 700 22px Inter, Arial, sans-serif; letter-spacing: 0; }
+      .phase { fill: #934927; font: 700 10px Inter, Arial, sans-serif; letter-spacing: 0; }
+      .nodeTitle { fill: #18272e; font: 700 17px Inter, Arial, sans-serif; letter-spacing: 0; }
+      .detail { fill: #52636a; font: 12px Inter, Arial, sans-serif; letter-spacing: 0; }
+      .code { fill: #075761; font: 11px ui-monospace, SFMono-Regular, Menlo, Consolas, monospace; letter-spacing: 0; }
+      .note { fill: #68797e; font: 12px Inter, Arial, sans-serif; letter-spacing: 0; }
+      .boundaryText { fill: #934927; font: 700 9px Inter, Arial, sans-serif; letter-spacing: 0; }
+      @media (prefers-color-scheme: dark) {
+        .node { fill: #192125; stroke: #526166; }
+        .backend { fill: #203436; stroke: #70bdc4; }
+        .rules { fill: #352923; stroke: #d28d6b; }
+        .result { fill: #263126; stroke: #91ae8d; }
+        .reporter { fill: #252d33; stroke: #8d9ca6; }
+        .flow { stroke: #91a4a7; }
+        .arrowHead { fill: #91a4a7; }
+        .boundary { stroke: #e09b78; }
+        .boundaryLabel { fill: #1d262a; }
+        .pageTitle, .nodeTitle { fill: #edf2f2; }
+        .phase, .boundaryText { fill: #e09b78; }
+        .detail, .note { fill: #aebbbc; }
+        .code { fill: #9bd5d8; }
+      }
+    </style>
+  </defs>
+
+  <text x="24" y="30" class="pageTitle">dicomqc v0.1 data flow</text>
+  <text x="24" y="52" class="note">Metadata audit and reporting boundary</text>
+
+  <rect x="24" y="74" width="352" height="72" rx="4" class="node"/>
+  <text x="42" y="96" class="phase">INPUT</text>
+  <text x="42" y="121" class="nodeTitle">Candidate DICOM</text>
+  <text x="213" y="121" class="detail">External output</text>
+  <line x1="200" y1="147" x2="200" y2="162" class="flow"/>
+
+  <rect x="24" y="165" width="352" height="72" rx="4" class="node"/>
+  <text x="42" y="187" class="phase">ORCHESTRATE</text>
+  <text x="42" y="212" class="nodeTitle">CLI + discovery</text>
+  <text x="225" y="212" class="code">scan_paths()</text>
+  <line x1="200" y1="238" x2="200" y2="253" class="flow"/>
+
+  <rect x="24" y="256" width="352" height="72" rx="4" class="node backend"/>
+  <text x="42" y="278" class="phase">PARSE</text>
+  <text x="42" y="303" class="nodeTitle">PydicomBackend</text>
+  <text x="225" y="303" class="detail">Metadata only</text>
+  <line x1="200" y1="329" x2="200" y2="344" class="flow"/>
+
+  <rect x="24" y="347" width="352" height="72" rx="4" class="node"/>
+  <text x="42" y="369" class="phase">NORMALIZE</text>
+  <text x="42" y="394" class="nodeTitle">MetadataRecord</text>
+  <text x="213" y="394" class="detail">Raw values internal</text>
+  <line x1="200" y1="420" x2="200" y2="435" class="flow"/>
+
+  <rect x="24" y="438" width="352" height="72" rx="4" class="node rules"/>
+  <text x="42" y="460" class="phase">EVALUATE</text>
+  <text x="42" y="485" class="nodeTitle">Profile + rules</text>
+  <text x="213" y="485" class="detail">PHI + private tags</text>
+  <line x1="200" y1="511" x2="200" y2="526" class="flow"/>
+
+  <rect x="24" y="529" width="352" height="72" rx="4" class="node result"/>
+  <text x="42" y="551" class="phase">RESULT</text>
+  <text x="42" y="576" class="nodeTitle">ScanResult</text>
+  <text x="213" y="576" class="detail">Findings + skipped files</text>
+  <line x1="200" y1="602" x2="200" y2="646" class="flow"/>
+
+  <line x1="24" y1="625" x2="376" y2="625" class="boundary"/>
+  <rect x="36" y="614" width="250" height="18" class="boundaryLabel"/>
+  <text x="42" y="626" class="boundaryText">REPORTING BOUNDARY: RAW VALUES REMAIN INTERNAL</text>
+
+  <rect x="24" y="650" width="136" height="72" rx="4" class="node"/>
+  <text x="42" y="675" class="phase">STATUS</text>
+  <text x="42" y="699" class="nodeTitle">Exit code</text>
+  <text x="42" y="714" class="code">0 / 1 / 2</text>
+
+  <rect x="176" y="650" width="200" height="72" rx="4" class="node reporter"/>
+  <text x="194" y="675" class="phase">REPORTING</text>
+  <text x="194" y="699" class="nodeTitle">Report writers</text>
+  <text x="194" y="715" class="code">no raw values</text>
+  <line x1="276" y1="723" x2="276" y2="755" class="flow"/>
+
+  <rect x="176" y="758" width="200" height="58" rx="4" class="node"/>
+  <text x="194" y="783" class="nodeTitle">JSON / CSV / MultiQC</text>
+  <text x="194" y="802" class="detail">Review evidence</text>
+</svg>

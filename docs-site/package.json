@@ -5,10 +5,12 @@
   "scripts": {
     "docusaurus": "docusaurus",
     "start": "docusaurus start",
+    "prebuild": "node scripts/check-docs.mjs",
     "build": "docusaurus build",
     "preview": "docusaurus build && docusaurus serve",
     "clear": "docusaurus clear",
     "serve": "docusaurus serve",
+    "smoke": "node scripts/check-docs.mjs",
     "screenshots:multiqc": "node ../scripts/capture_multiqc_screenshots.js",
     "typecheck": "tsc"
   },
