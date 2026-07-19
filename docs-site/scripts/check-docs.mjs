@@ -48,6 +48,14 @@ requireText(overview, 'Project status', 'docs/overview.md');
 requireText(overview, 'Primary interface', 'docs/overview.md');
 requireText(overview, 'Why audit after de-identification?', 'docs/overview.md');
 
+const install = read('docs/usage/install.md');
+requireText(install, 'python -m pip install dicomqc', 'docs/usage/install.md');
+requireText(install, 'python -m pip install multiqc', 'docs/usage/install.md');
+requireText(install, 'python -m pip install -e ".[test]"', 'docs/usage/install.md');
+
+const quickstart = read('docs/usage/quickstart.md');
+requireText(quickstart, '[Install](install.md)', 'docs/usage/quickstart.md');
+
 const msMriWorkflow = read('docs/usage/ms-mri-workflow.mdx');
 requireText(
   msMriWorkflow,

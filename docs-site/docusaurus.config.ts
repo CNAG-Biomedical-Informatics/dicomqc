@@ -60,6 +60,11 @@ const config: Config = {
           label: 'Docs',
         },
         {
+          to: '/docs/usage/install',
+          label: 'Install',
+          position: 'left',
+        },
+        {
           to: '/docs/usage/quickstart',
           label: 'Quick Start',
           position: 'left',
@@ -85,6 +90,10 @@ const config: Config = {
             {
               label: 'Overview',
               to: '/docs/overview',
+            },
+            {
+              label: 'Install',
+              to: '/docs/usage/install',
             },
             {
               label: 'Quick Start',

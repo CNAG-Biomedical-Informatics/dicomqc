@@ -13,6 +13,11 @@ const sidebars: SidebarsConfig = {
       items: [
         {
           type: 'doc',
+          id: 'usage/install',
+          label: 'Install',
+        },
+        {
+          type: 'doc',
           id: 'usage/quickstart',
           label: 'Quickstart',
         },

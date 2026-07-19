@@ -7,6 +7,11 @@ and this project follows [Semantic Versioning](https://semver.org/spec/v2.0.0.ht
 
 ## [Unreleased]
 
+### Changed
+
+- Moved installation guidance to a dedicated documentation page and added
+  Install links to the primary documentation navigation.
+
 ## [0.1.0] - 2026-07-19
 
 ### Added

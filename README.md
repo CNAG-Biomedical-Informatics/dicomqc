@@ -127,6 +127,7 @@ npm run build
 
 Important docs:
 
+- [Install](https://cnag-biomedical-informatics.github.io/dicomqc/docs/usage/install)
 - [Quick start](https://cnag-biomedical-informatics.github.io/dicomqc/docs/usage/quickstart)
 - [Reports and MultiQC](https://cnag-biomedical-informatics.github.io/dicomqc/docs/usage/reports)
 - [MS MRI workflow](https://cnag-biomedical-informatics.github.io/dicomqc/docs/usage/ms-mri-workflow)

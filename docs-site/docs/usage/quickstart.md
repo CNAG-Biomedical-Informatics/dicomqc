@@ -4,36 +4,8 @@ title: Quickstart
 
 # Quickstart
 
-## Install from PyPI
-
-Create an isolated environment and install dicomqc from
-[PyPI](https://pypi.org/project/dicomqc/):
-
-```bash
-python3 -m venv .venv
-source .venv/bin/activate
-python -m pip install --upgrade pip
-python -m pip install dicomqc
-dicomqc --version
-```
-
-## Install from source
-
-From a repository checkout, install dicomqc and its runtime dependencies in
-editable mode:
-
-```bash
-python3 -m pip install -e .
-```
-
-Contributors who need pytest and coverage tooling can install the `test`
-optional dependency group:
-
-```bash
-python3 -m pip install -e ".[test]"
-```
-
-The `test` extra is unnecessary when using dicomqc normally.
+Install dicomqc and verify the command before continuing. See
+[Install](install.md) for PyPI, MultiQC, and source-installation instructions.
 
 ## Try the built-in demo
 

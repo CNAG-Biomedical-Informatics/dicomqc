@@ -4,8 +4,8 @@ import useBaseUrl from '@docusaurus/useBaseUrl';
 import styles from './index.module.css';
 
 const primaryLinks = [
+  {label: 'Install', to: '/docs/usage/install'},
   {label: 'Quickstart', to: '/docs/usage/quickstart'},
-  {label: 'MS MRI workflow', to: '/docs/usage/ms-mri-workflow'},
   {label: 'Reports', to: '/docs/usage/reports'},
 ];
 
@@ -34,8 +34,13 @@ const auditOperations = [
 
 const documentationPaths = [
   {
+    title: 'Install dicomqc',
+    text: 'Install the PyPI release, optional MultiQC support, or a source checkout.',
+    to: '/docs/usage/install',
+  },
+  {
     title: 'Run an audit',
-    text: 'Install the package, scan a directory, and interpret the result.',
+    text: 'Generate the demo, scan a directory, and interpret the result.',
     to: '/docs/usage/quickstart',
   },
   {
