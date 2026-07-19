@@ -108,8 +108,8 @@ const config: Config = {
               href: 'https://github.com/CNAG-Biomedical-Informatics/dicomqc',
             },
             {
-              label: 'TestPyPI',
-              href: 'https://test.pypi.org/project/dicomqc/',
+              label: 'PyPI',
+              href: 'https://pypi.org/project/dicomqc/',
             },
             {
               label: 'CNAG',

@@ -8,7 +8,8 @@
 
 [![Build](https://github.com/CNAG-Biomedical-Informatics/dicomqc/actions/workflows/build-and-test.yml/badge.svg)](https://github.com/CNAG-Biomedical-Informatics/dicomqc/actions/workflows/build-and-test.yml)
 [![Documentation](https://github.com/CNAG-Biomedical-Informatics/dicomqc/actions/workflows/documentation.yml/badge.svg)](https://github.com/CNAG-Biomedical-Informatics/dicomqc/actions/workflows/documentation.yml)
-![version](https://img.shields.io/badge/version-0.1.0-28a745)
+[![PyPI](https://img.shields.io/pypi/v/dicomqc.svg)](https://pypi.org/project/dicomqc/)
+[![Python](https://img.shields.io/pypi/pyversions/dicomqc.svg)](https://pypi.org/project/dicomqc/)
 [![License](https://img.shields.io/badge/License-Apache%202.0-blue.svg)](LICENSE)
 
 ---
@@ -45,26 +46,15 @@ outputs before research sharing.
 
 ## Installation
 
-The current preview release is available from
-[TestPyPI](https://test.pypi.org/project/dicomqc/). Install it in an isolated
-environment:
+Install the release from [PyPI](https://pypi.org/project/dicomqc/) in an
+isolated environment:
 
 ```bash
 python3 -m venv .venv
 source .venv/bin/activate
 python -m pip install --upgrade pip
-python -m pip install "pydicom>=2.4" "PyYAML>=6"
-python -m pip install \
-  --index-url https://test.pypi.org/simple/ \
-  --no-deps dicomqc==0.1.0
-```
-
-TestPyPI does not mirror all production dependencies, so the runtime
-dependencies are installed from PyPI first. After the production release, the
-installation command will be:
-
-```bash
 python -m pip install dicomqc
+dicomqc --version
 ```
 
 From a source checkout, install the package in editable mode:
@@ -142,6 +132,7 @@ Important docs:
 - [MS MRI workflow](https://cnag-biomedical-informatics.github.io/dicomqc/docs/usage/ms-mri-workflow)
 - [Remediation examples](https://cnag-biomedical-informatics.github.io/dicomqc/docs/usage/remediation)
 - [Prior work](https://cnag-biomedical-informatics.github.io/dicomqc/docs/about/prior-work)
+- [Changelog](https://github.com/CNAG-Biomedical-Informatics/dicomqc/blob/main/CHANGELOG.md)
 
 ## Prior Work
 

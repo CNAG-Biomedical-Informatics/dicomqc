@@ -12,7 +12,7 @@ release.
 :::info Project status
 
 The current package is **v0.1.0** and is available from
-[TestPyPI](https://test.pypi.org/project/dicomqc/). This release implements a
+[PyPI](https://pypi.org/project/dicomqc/). This release implements a
 metadata-only scanner, one built-in research-release profile, JSON and CSV
 reports, and MultiQC-compatible output. Standards-specific rule packs and a
 plugin system remain planned work.

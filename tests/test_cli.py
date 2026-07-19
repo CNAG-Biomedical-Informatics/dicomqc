@@ -4,6 +4,7 @@ from pathlib import Path
 
 import pytest
 
+from dicomqc import __version__
 from dicomqc.cli import main
 
 pydicom = pytest.importorskip("pydicom")
@@ -111,6 +112,13 @@ def test_cli_scan_invalid_file_is_fatal(tmp_path):
 def test_cli_without_subcommand_prints_help(capsys):
     assert main([]) == 2
     assert "Validate DICOM metadata" in capsys.readouterr().out
+
+
+def test_cli_version(capsys):
+    with pytest.raises(SystemExit, match="0"):
+        main(["--version"])
+
+    assert capsys.readouterr().out.strip() == f"dicomqc {__version__}"
 
 
 def test_cli_rejects_unknown_profile(tmp_path, capsys):

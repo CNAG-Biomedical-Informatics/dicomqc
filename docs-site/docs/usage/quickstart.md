@@ -4,31 +4,17 @@ title: Quickstart
 
 # Quickstart
 
-## Install the preview release
+## Install from PyPI
 
-The current preview is available from
-[TestPyPI](https://test.pypi.org/project/dicomqc/). Create an isolated
-environment, install the runtime dependencies from PyPI, and then install
-dicomqc from TestPyPI:
+Create an isolated environment and install dicomqc from
+[PyPI](https://pypi.org/project/dicomqc/):
 
 ```bash
 python3 -m venv .venv
 source .venv/bin/activate
 python -m pip install --upgrade pip
-python -m pip install "pydicom>=2.4" "PyYAML>=6"
-python -m pip install \
-  --index-url https://test.pypi.org/simple/ \
-  --no-deps dicomqc==0.1.0
-```
-
-Dependencies are installed separately because TestPyPI is an isolated package
-index and does not mirror every dependency from the production Python Package
-Index.
-
-After the production PyPI release, installation will be:
-
-```bash
 python -m pip install dicomqc
+dicomqc --version
 ```
 
 ## Install from source

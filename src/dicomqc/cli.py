@@ -7,6 +7,7 @@ import sys
 from pathlib import Path
 from typing import Sequence
 
+from dicomqc import __version__
 from dicomqc.demo import run_demo
 from dicomqc.reports import write_csv, write_json, write_multiqc
 from dicomqc.rules.builtin import DEFAULT_PROFILE_ID
@@ -26,6 +27,7 @@ def main(argv: Sequence[str] | None = None) -> int:
 
 def _build_parser() -> argparse.ArgumentParser:
     parser = argparse.ArgumentParser(prog="dicomqc", description="Validate DICOM metadata for research release.")
+    parser.add_argument("--version", action="version", version=f"%(prog)s {__version__}")
     subparsers = parser.add_subparsers(dest="command")
     scan = subparsers.add_parser("scan", help="Scan DICOM files or directories.")
     scan.add_argument("paths", nargs="+", help="DICOM file or directory paths.")

@@ -4,6 +4,13 @@ title: CLI Reference
 
 # CLI Reference
 
+## Global options
+
+| Option | Description |
+| --- | --- |
+| `--version` | Print the installed dicomqc version and exit. |
+| `-h`, `--help` | Show command help and exit. |
+
 ## `dicomqc scan`
 
 ```bash

@@ -34,6 +34,7 @@ Homepage = "https://github.com/CNAG-Biomedical-Informatics/dicomqc"
 Documentation = "https://cnag-biomedical-informatics.github.io/dicomqc/"
 Repository = "https://github.com/CNAG-Biomedical-Informatics/dicomqc"
 Issues = "https://github.com/CNAG-Biomedical-Informatics/dicomqc/issues"
+Changelog = "https://github.com/CNAG-Biomedical-Informatics/dicomqc/blob/main/CHANGELOG.md"
 
 [project.optional-dependencies]
 test = [
