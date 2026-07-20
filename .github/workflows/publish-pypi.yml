@@ -1,8 +1,9 @@
 name: Publish to PyPI
 
 on:
-  release:
-    types: [published]
+  push:
+    tags:
+      - "v*"
 
 env:
   FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: true
@@ -13,14 +14,16 @@ concurrency:
 
 jobs:
   build:
-    if: ${{ github.event.release.prerelease == false }}
     runs-on: ubuntu-latest
     permissions:
       contents: read
 
     steps:
-      - name: Check out release
+      - name: Check out tagged source
         uses: actions/checkout@v5
+        with:
+          fetch-depth: 0
+          persist-credentials: false
 
       - name: Set up Python
         uses: actions/setup-python@v5
@@ -37,11 +40,20 @@ jobs:
           python -m pip install --upgrade pip
           python -m pip install ".[release,test]"
 
-      - name: Run tests with coverage gate
-        run: pytest
-
-      - name: Verify release version
+      - name: Verify annotated stable tag and release version
         run: |
+          [[ "$GITHUB_REF_NAME" =~ ^v[0-9]+\.[0-9]+\.[0-9]+$ ]] || {
+            echo "Stable release tags must match vX.Y.Z; got $GITHUB_REF_NAME"
+            exit 1
+          }
+          test "$(git cat-file -t "refs/tags/$GITHUB_REF_NAME")" = "tag" || {
+            echo "Release tag $GITHUB_REF_NAME must be annotated"
+            exit 1
+          }
+          test "$(git rev-list -n 1 "$GITHUB_REF_NAME")" = "$(git rev-parse HEAD)" || {
+            echo "Release tag $GITHUB_REF_NAME does not target the checked-out commit"
+            exit 1
+          }
           package_version=$(python -c "from dicomqc import __version__; print(__version__)")
           metadata_version=$(python -c "from importlib.metadata import version; print(version('dicomqc'))")
           test "$GITHUB_REF_NAME" = "v$package_version" || {
@@ -56,6 +68,9 @@ jobs:
             echo "CHANGELOG.md has no entry for $package_version"
             exit 1
           }
+
+      - name: Run tests with coverage gate
+        run: pytest
 
       - name: Build and validate distributions
         run: |

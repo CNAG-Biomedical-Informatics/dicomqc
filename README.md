@@ -134,6 +134,7 @@ Important docs:
 - [Remediation examples](https://cnag-biomedical-informatics.github.io/dicomqc/docs/usage/remediation)
 - [Prior work](https://cnag-biomedical-informatics.github.io/dicomqc/docs/about/prior-work)
 - [Changelog](https://github.com/CNAG-Biomedical-Informatics/dicomqc/blob/main/CHANGELOG.md)
+- [Release process](https://github.com/CNAG-Biomedical-Informatics/dicomqc/blob/main/RELEASING.md)
 
 ## Prior Work
 

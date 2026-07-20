@@ -11,6 +11,8 @@ and this project follows [Semantic Versioning](https://semver.org/spec/v2.0.0.ht
 
 - Moved installation guidance to a dedicated documentation page and added
   Install links to the primary documentation navigation.
+- Changed stable PyPI publication to use annotated `vX.Y.Z` tag pushes as the
+  canonical release event instead of GitHub Release objects.
 
 ## [0.1.0] - 2026-07-19
 
@@ -35,4 +37,4 @@ and this project follows [Semantic Versioning](https://semver.org/spec/v2.0.0.ht
   compliance.
 
 [Unreleased]: https://github.com/CNAG-Biomedical-Informatics/dicomqc/compare/v0.1.0...HEAD
-[0.1.0]: https://github.com/CNAG-Biomedical-Informatics/dicomqc/releases/tag/v0.1.0
+[0.1.0]: https://github.com/CNAG-Biomedical-Informatics/dicomqc/tree/v0.1.0
