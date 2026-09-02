@@ -1,32 +1,34 @@
 ---
-title: Extending dicomqc
+title: Planned Features
 ---
 
-# Extending dicomqc
+# Planned Features
 
-v0.1 includes stable extension seams without shipping every planned extension.
+The features on this page are not available in dicomqc v0.1. They describe
+possible directions for later releases.
 
-## Policy DSL
+## Policy files
 
-Future policy files should declare audit expectations, not anonymization
-actions. For example, a policy may say that `PatientBirthDate` must be absent or
-that `PatientID` must match a site-approved pseudonym pattern.
+A planned domain-specific language (DSL) would let users define metadata checks
+in a configuration file. For example, a policy could require
+`PatientBirthDate` to be absent or `PatientID` to match an approved pseudonym
+format. The policy would define what dicomqc checks, not how files are modified.
 
 ## Plugins
 
-Future plugins should be able to contribute rule packs, reports, backend
-implementations, compliance profiles, or vendor fingerprinting modules.
+A planned plugin interface would allow separately installed packages to add
+checks, report formats, DICOM readers, standards profiles, or vendor-specific
+metadata checks.
 
 ## Standards profiles
 
-DICOM PS3.15 and BIDS support should be implemented as explicit profile packs
-with stable rule IDs and source references. v0.1 keeps fields such as
-`profile_id`, `rule_id`, and `standard_refs` ready for that work, but does not
-claim standards compliance.
+Planned DICOM PS3.15 and BIDS profiles would identify every check with a stable
+rule ID and a reference to its source standard. The v0.1 result model already
+contains `profile_id`, `rule_id`, and `standard_refs`, but the current built-in
+profile does not claim compliance with either standard.
 
 ## Vendor fingerprinting
 
-Vendor fingerprinting can build on the normalized inventory of manufacturer,
-model, software versions, and private creator blocks. The first useful target is
-risk evidence that helps reviewers decide which private tags or protocol fields
-need manual inspection.
+A planned vendor-fingerprinting feature would summarize manufacturer, scanner
+model, software version, and private creator blocks. Reviewers could use that
+summary to identify private tags and protocol fields that need manual inspection.

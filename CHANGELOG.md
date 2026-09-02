@@ -13,6 +13,8 @@ and this project follows [Semantic Versioning](https://semver.org/spec/v2.0.0.ht
   Install links to the primary documentation navigation.
 - Changed stable PyPI publication to use annotated `vX.Y.Z` tag pushes as the
   canonical release event instead of GitHub Release objects.
+- Replaced abstract documentation copy with direct descriptions of current
+  behavior and clearly labeled planned features.
 
 ## [0.1.0] - 2026-07-19
 

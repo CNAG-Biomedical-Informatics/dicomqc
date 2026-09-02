@@ -22,13 +22,13 @@ const auditOperations = [
   },
   {
     label: '03 / Record',
-    title: 'Produce review evidence',
-    text: 'Write JSON, CSV, and MultiQC outputs without reporting raw DICOM values.',
+    title: 'Save the results',
+    text: 'Write JSON, CSV, and MultiQC reports without copying raw DICOM values.',
   },
   {
     label: '04 / Integrate',
-    title: 'Drive pipeline decisions',
-    text: 'Use stable exit codes and structured findings in repeatable release workflows.',
+    title: 'Automate the check',
+    text: 'Use exit codes to pass, review, or stop a data-processing pipeline.',
   },
 ];
 
@@ -44,8 +44,8 @@ const documentationPaths = [
     to: '/docs/usage/quickstart',
   },
   {
-    title: 'Plan remediation',
-    text: 'Apply findings with an external DICOM transformation tool and audit again.',
+    title: 'Fix reported problems',
+    text: 'Update the pseudonymization process with an external tool and run dicomqc again.',
     to: '/docs/usage/remediation',
   },
   {
@@ -74,13 +74,13 @@ export default function Home() {
               <p className={styles.kicker}>DICOM metadata quality control</p>
               <h1>dicomqc</h1>
               <p className={styles.claim}>
-                Independent metadata audit for DICOM research releases.
+                Check DICOM metadata before sharing research data.
               </p>
               <p className={styles.lede}>
-                A read-only command-line framework that evaluates candidate DICOM
-                data after external pseudonymization or de-identification. It turns
-                explicit policy checks into reviewable JSON, CSV, and MultiQC
-                evidence.
+                Run dicomqc after pseudonymization or de-identification. It checks
+                metadata for patient identifiers, unexpected pseudonym formats, and
+                private tags, then writes JSON, CSV, and MultiQC reports. It never
+                changes the DICOM files.
               </p>
               <nav className={styles.primaryLinks} aria-label="Primary documentation">
                 {primaryLinks.map((link) => (
@@ -95,10 +95,10 @@ export default function Home() {
             <figure className={styles.objectiveFigure}>
               <img
                 src={objective}
-                alt="Candidate DICOM passes through an independent dicomqc metadata audit to produce review evidence"
+                alt="Pseudonymized DICOM files are checked by dicomqc, which writes JSON, CSV, and MultiQC reports"
               />
               <figcaption>
-                Transformation and audit remain separate, repeatable steps.
+                The de-identification tool changes the files; dicomqc checks the result.
               </figcaption>
             </figure>
           </div>
@@ -107,12 +107,12 @@ export default function Home() {
         <section className={styles.auditSection} aria-labelledby="audit-surface-title">
           <div className={styles.sectionInner}>
             <div className={styles.sectionHeading}>
-              <p className={styles.sectionLabel}>Current audit surface</p>
-              <h2 id="audit-surface-title">A focused metadata control point</h2>
+              <p className={styles.sectionLabel}>Current checks</p>
+              <h2 id="audit-surface-title">Metadata checks after de-identification</h2>
               <p>
-                dicomqc evaluates the output of a transformation workflow. Keeping
-                that check independent makes release criteria visible, testable,
-                and reproducible across tools and data providers.
+                Use dicomqc on the files produced by any DICOM de-identification
+                tool. The same checks can then be repeated for every provider and
+                every version of a dataset.
               </p>
             </div>
 
@@ -131,14 +131,14 @@ export default function Home() {
         <section className={styles.boundarySection} aria-labelledby="scope-title">
           <div className={styles.boundaryInner}>
             <div>
-              <p className={styles.sectionLabel}>Scope boundary</p>
-              <h2 id="scope-title">Evidence, not transformation</h2>
+              <p className={styles.sectionLabel}>Limits</p>
+              <h2 id="scope-title">What dicomqc does not check</h2>
             </div>
             <p>
               Version 0.1 does not pseudonymize or modify DICOM files, inspect
               pixels or facial features, or certify DICOM PS3.15, BIDS, HIPAA, or
-              GDPR compliance. Findings support technical and institutional review;
-              they do not replace it.
+              GDPR compliance. A qualified reviewer must still decide whether the
+              data can be shared.
             </p>
           </div>
         </section>
@@ -147,7 +147,7 @@ export default function Home() {
           <div className={styles.sectionInner}>
             <div className={styles.sectionHeading}>
               <p className={styles.sectionLabel}>Documentation</p>
-              <h2 id="documentation-title">Follow the task at hand</h2>
+              <h2 id="documentation-title">Choose a task</h2>
             </div>
             <div className={styles.documentationList}>
               {documentationPaths.map((item) => (

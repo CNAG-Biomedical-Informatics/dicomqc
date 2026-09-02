@@ -23,7 +23,7 @@ function requireAccessibleSvg(relativePath) {
 
 const home = read('src/pages/index.tsx');
 requireText(home, "useBaseUrl('/img/dicomqc-objective.svg')", 'src/pages/index.tsx');
-requireText(home, 'Independent metadata audit for DICOM research releases.', 'src/pages/index.tsx');
+requireText(home, 'Check DICOM metadata before sharing research data.', 'src/pages/index.tsx');
 requireText(home, 'Version 0.1 does not pseudonymize', 'src/pages/index.tsx');
 
 if (home.includes('dicomqc-logo.png')) {
@@ -45,8 +45,17 @@ requireText(architecture, 'Metadata and reporting boundary', 'docs/technical-det
 
 const overview = read('docs/overview.md');
 requireText(overview, 'Project status', 'docs/overview.md');
-requireText(overview, 'Primary interface', 'docs/overview.md');
+requireText(overview, 'Run from the command line', 'docs/overview.md');
 requireText(overview, 'Why audit after de-identification?', 'docs/overview.md');
+requireText(overview, '## Terminology', 'docs/overview.md');
+
+const plannedFeatures = read('docs/technical-details/extending-dicomqc.md');
+requireText(plannedFeatures, '# Planned Features', 'docs/technical-details/extending-dicomqc.md');
+requireText(
+  plannedFeatures,
+  'not available in dicomqc v0.1',
+  'docs/technical-details/extending-dicomqc.md',
+);
 
 const install = read('docs/usage/install.md');
 requireText(install, 'python -m pip install dicomqc', 'docs/usage/install.md');

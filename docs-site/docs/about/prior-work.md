@@ -4,24 +4,20 @@ title: Prior Work
 
 # Prior Work
 
-dicomqc should improve on existing DICOM metadata QC efforts rather than overlap
-with them. Related projects identified during initial repository discovery
-include:
+dicomqc builds on existing work in DICOM metadata quality control. The projects
+below address related problems but differ in scope or deployment model.
 
 | Project | Focus | Relationship to dicomqc |
 | --- | --- | --- |
-| [`SPMIC-UoN/xnat-dicomqc`](https://github.com/SPMIC-UoN/xnat-dicomqc) | XNAT container script for simple configurable tag-based QC on scan DICOMs. | dicomqc should remain usable outside XNAT and provide a typed Python API, reproducible reports, and future policy/profile extensibility. |
-| [`IUSCA/SQAN`](https://github.com/IUSCA/SQAN) | Scalable Quality Assurance for Neuroimaging: DICOM metadata ETL, logging, and web portal-based QC verification. | dicomqc should stay lightweight and pipeline-friendly while focusing on de-identification validation and research-release audit evidence. |
+| [`SPMIC-UoN/xnat-dicomqc`](https://github.com/SPMIC-UoN/xnat-dicomqc) | Configurable DICOM tag checks in an XNAT container. | dicomqc is a standalone command-line tool and does not require XNAT. It writes JSON, CSV, and MultiQC-compatible reports. |
+| [`IUSCA/SQAN`](https://github.com/IUSCA/SQAN) | DICOM metadata extraction, logging, and web-based quality-control review for neuroimaging. | SQAN provides a broader data-management system. dicomqc has a narrower role: checking local DICOM metadata after de-identification. |
 
 ## Positioning
 
-dicomqc is not intended to be a replacement for site QC platforms, XNAT-based
-workflows, anonymizers, or BIDS validators. Its core value should be an
-independent, backend-neutral audit layer that can answer:
+dicomqc does not replace site QC platforms, XNAT workflows, anonymizers, or BIDS
+validators. It is a standalone, read-only check that answers:
 
-- whether a declared DICOM metadata release policy passed
-- which tags created release risk
-- what evidence can be archived without exposing raw PHI
-- which standards-aware profiles or institutional policies were applied
-
-This page should be updated as more related tools are identified.
+- Did the files pass the selected metadata checks?
+- Which files and tags need review?
+- Which profile and rule produced each finding?
+- Can the results be saved without copying raw DICOM values into the report?

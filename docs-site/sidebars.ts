@@ -50,7 +50,7 @@ const sidebars: SidebarsConfig = {
         {
           type: 'doc',
           id: 'technical-details/extending-dicomqc',
-          label: 'Extending dicomqc',
+          label: 'Planned Features',
         },
       ],
     },
