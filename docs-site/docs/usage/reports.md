@@ -20,6 +20,20 @@ Review reports before sharing them.
 
 ## HTML
 
+### Report snapshots
+
+These screenshots use the synthetic comparison demo, not patient data.
+
+**Before corrections:** missing output and inconsistent patient pseudonyms.
+
+![HTML comparison report showing two grouped issues and their recommended actions.](/img/html-report-before.png)
+
+**After corrections:** all paired files are readable and the checked metadata passes.
+
+![HTML comparison report after corrections, showing checks passed and no findings.](/img/html-report-after.png)
+
+### Generate a report
+
 Create a report you can open directly in a browser:
 
 ```bash

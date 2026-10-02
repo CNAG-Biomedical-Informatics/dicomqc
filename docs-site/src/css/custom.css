@@ -125,6 +125,16 @@ body,
   display: block;
 }
 
+.dicomqcArchitectureFigure {
+  max-width: 640px;
+  margin-inline: auto;
+}
+
+.dicomqcArchitectureFigure img {
+  max-height: 540px;
+  object-fit: contain;
+}
+
 .dicomqcArchitectureFigure figcaption,
 .dicomqcWorkflowFigure figcaption,
 .dicomqcRemediationFigure figcaption {

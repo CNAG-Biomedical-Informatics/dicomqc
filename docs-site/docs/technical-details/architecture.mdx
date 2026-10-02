@@ -12,6 +12,7 @@ Each step has its own module. The checks and report writers use dicomqc's data
 models rather than pydicom objects.
 
 <figure className="dicomqcArchitectureFigure">
+  <a href={useBaseUrl('/img/dicomqc-architecture.svg')} target="_blank" rel="noopener noreferrer" aria-label="Open the full-size architecture diagram">
   <picture>
     <source
       media="(max-width: 760px)"
@@ -22,9 +23,11 @@ models rather than pydicom objects.
       alt="DICOM files pass through metadata reading and checks to JSON, CSV, and MultiQC reports"
     />
   </picture>
+  </a>
   <figcaption>
     Version 0.2 reads tag values to run its checks. Reports contain findings,
-    value states, and counts, without copying raw tag values.
+    value states, and counts, without copying raw tag values. Click the diagram
+    to open it at full size.
   </figcaption>
 </figure>
 
