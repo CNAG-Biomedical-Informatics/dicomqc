@@ -4,9 +4,55 @@ title: Compare datasets
 
 # Compare source and de-identified files
 
-The source checkout includes `dicomqc compare`. It checks that a de-identification
+Available since v0.2.0, `dicomqc compare` checks that a de-identification
 run accounts for every input file and uses patient pseudonyms consistently.
-This command is not included in the published v0.1.0 package.
+
+## Try the comparison demo
+
+Run:
+
+```bash
+dicomqc demo --compare --output-dir comparison-demo
+```
+
+The demo creates three synthetic source files for two patients. The first
+candidate dataset is missing one file and assigns different pseudonyms to two
+visits from the same patient. Its comparison exits `2`. Each existing candidate
+file passes the individual metadata checks, so this shows problems that require
+comparing the datasets.
+
+The demo also creates a separate corrected dataset with all three files and
+consistent pseudonyms. Its comparison exits `0`. The generator creates both
+examples; the audit itself never edits DICOM files.
+
+```text
+comparison-demo/
+  source/                 # three synthetic source files
+  candidate/              # two files; inconsistent pseudonyms
+  corrected/              # three files; consistent pseudonyms
+  pairs.csv               # same pairing manifest for both runs
+  before.html             # failing comparison
+  before.json
+  before.csv
+  after.html              # corrected comparison
+  after.json
+  after.csv
+```
+
+Rerun either comparison yourself:
+
+```bash
+dicomqc compare comparison-demo/source comparison-demo/candidate --manifest comparison-demo/pairs.csv
+dicomqc compare comparison-demo/source comparison-demo/corrected --manifest comparison-demo/pairs.csv
+```
+
+The `demo` command exits `0` when generation succeeds, even though the first
+comparison intentionally fails. Unexpected audit results make the demo exit `2`.
+Use `--force` to replace a demo directory created by v0.2.0 or later. It refuses
+unmarked directories, including old demos; choose a new output path for those.
+Without `--output-dir`, it writes to `dicomqc-demo/`, just like the
+regular demo. Comparison demos write HTML, JSON, and CSV reports. Open either
+`before.html` or `after.html` directly in a browser; MultiQC is not needed.
 
 ## Prepare a pairing manifest
 
@@ -34,7 +80,8 @@ It does not guess from filenames or UIDs, which may change during de-identificat
 dicomqc compare raw_mri/ candidate_mri/ \
   --manifest pairs.csv \
   --json comparison.json \
-  --csv comparison-findings.csv
+  --csv comparison-findings.csv \
+  --html comparison.html
 ```
 
 Save reports outside both input directories. The command reads metadata and

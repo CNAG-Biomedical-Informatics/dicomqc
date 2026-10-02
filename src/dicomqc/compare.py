@@ -4,6 +4,7 @@ from __future__ import annotations
 
 import csv
 import logging
+import os
 import threading
 import warnings
 from collections import defaultdict
@@ -12,7 +13,7 @@ from pathlib import Path
 
 from dicomqc.backend.base import DicomBackend, DicomReadError
 from dicomqc.backend.pydicom_backend import PydicomBackend
-from dicomqc.model.metadata import MetadataRecord, ValueState
+from dicomqc.model.metadata import MetadataRecord
 from dicomqc.model.results import Finding, ScanResult, Severity
 from dicomqc.rules.builtin import evaluate_record
 
@@ -70,10 +71,18 @@ def _manifest(path: Path) -> list[tuple[str, str]]:
 
 def _inventory(root: Path) -> set[str]:
     paths = set()
-    for path in root.rglob("*"):
-        if path.is_symlink():
-            raise ValueError("Comparison inputs must not contain symbolic links.")
-        if path.is_file():
+    def inaccessible(error: OSError) -> None:
+        raise ValueError("Cannot inventory every input directory; check access permissions.") from error
+
+    for directory, directories, files in os.walk(root, onerror=inaccessible, followlinks=False):
+        for name in directories + files:
+            path = Path(directory) / name
+            if path.is_symlink():
+                raise ValueError("Comparison inputs must not contain symbolic links.")
+        for name in files:
+            path = Path(directory) / name
+            if not path.is_file():
+                raise ValueError("Comparison inputs must contain only regular files and directories.")
             paths.add(path.relative_to(root).as_posix())
     return paths
 
@@ -175,8 +184,7 @@ def compare_datasets(
                   "Supply PatientID on both sides so identity consistency can be checked.")
             continue
         # Issuer distinguishes source identifiers assigned by different institutions.
-        issuer_tag = before.by_keyword("IssuerOfPatientID")
-        issuer = str(issuer_tag.raw_value).strip() if issuer_tag and issuer_tag.value_state == ValueState.PRESENT else ""
+        issuer = before.issuer_of_patient_id or ""
         identity = (issuer, before.patient_id)
         mappings.append((identity, after.patient_id, reference))
         if before.patient_id == after.patient_id:

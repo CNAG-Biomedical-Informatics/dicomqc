@@ -18,9 +18,11 @@ DICOM files.
 
 :::info Project status
 
-The current package is **v0.1.0** and is available from
-[PyPI](https://pypi.org/project/dicomqc/). It includes a metadata-only scanner,
-one built-in set of checks, JSON and CSV reports, and MultiQC-compatible output.
+This documentation covers **v0.2.0**. It includes a metadata-only scanner,
+built-in privacy checks, offline HTML reports, JSON and CSV reports, and
+MultiQC-compatible scan output.
+The new [dataset comparison](usage/compare.md) checks file completeness and
+patient pseudonym consistency between source and de-identified files.
 Standards-specific checks and plugins are planned for later releases.
 
 :::
@@ -80,7 +82,7 @@ finding. They also include summary counts. Raw DICOM tag values are omitted.
 
 :::caution Limits
 
-dicomqc v0.1 does not modify files, inspect pixel data or facial features, or
+dicomqc v0.2 does not modify files, inspect pixel data or facial features, or
 certify compliance with DICOM PS3.15, BIDS, HIPAA, or GDPR. A qualified reviewer
 must still decide whether the data can be shared.
 
@@ -92,6 +94,7 @@ must still decide whether the data can be shared.
 | --- | --- |
 | Install the CLI | [Install](usage/install.md) |
 | Generate the demo and run an audit | [Quickstart](usage/quickstart.md) |
+| Compare source and de-identified datasets | [Compare datasets](usage/compare.md) |
 | Audit a large MS MRI collection | [MS MRI workflow](usage/ms-mri-workflow.mdx) |
 | Read reports and view them in MultiQC | [Reports](usage/reports.md) |
 | Fix reported problems with external tools | [Remediation](usage/remediation.mdx) |

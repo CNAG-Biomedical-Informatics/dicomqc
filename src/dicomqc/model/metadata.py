@@ -35,6 +35,7 @@ class MetadataRecord:
     manufacturer: str | None
     modality: str | None
     tags: dict[str, DicomTag]
+    issuer_of_patient_id: str | None = None
 
     def by_keyword(self, keyword: str) -> DicomTag | None:
         for tag in self.tags.values():

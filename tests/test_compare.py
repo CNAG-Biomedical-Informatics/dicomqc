@@ -82,6 +82,37 @@ def test_issuer_scopes_source_ids(tmp_path):
     assert compare_datasets(*args).exit_code() == 0
 
 
+def test_nested_issuer_cannot_change_patient_grouping(tmp_path):
+    from pydicom.dataset import Dataset
+    args = dataset(tmp_path, (("A", "sub-001"), ("A", "sub-002")))
+    for index, path in enumerate(sorted(args[0].iterdir())):
+        ds = dcmread(path)
+        ds.IssuerOfPatientID = "SAME_SITE"
+        item = Dataset()
+        item.IssuerOfPatientID = f"DIFFERENT_SITE_{index}"
+        ds.RequestAttributesSequence = [item]
+        ds.save_as(path, enforce_file_format=True)
+    assert "inconsistent_pseudonym" in rules(compare_datasets(*args))
+
+
+def test_inventory_cannot_silently_skip_inaccessible_directory(tmp_path, monkeypatch):
+    args = dataset(tmp_path)
+    def denied_walk(root, *, onerror, followlinks):
+        onerror(PermissionError("SECRET_PATH"))
+        return iter(())
+    monkeypatch.setattr("dicomqc.compare.os.walk", denied_walk)
+    with pytest.raises(ValueError, match="inventory every input directory") as error:
+        compare_datasets(*args)
+    assert "SECRET_PATH" not in str(error.value)
+
+
+def test_inventory_rejects_special_files(tmp_path):
+    args = dataset(tmp_path)
+    os.mkfifo(args[0] / "fifo")
+    with pytest.raises(ValueError, match="regular files"):
+        compare_datasets(*args)
+
+
 @pytest.mark.parametrize("side", [0, 1])
 def test_missing_file(tmp_path, side):
     args = dataset(tmp_path)
@@ -220,3 +251,14 @@ def test_hardlinked_report_cannot_overwrite_input(tmp_path):
     assert main(["compare", str(source), str(candidate), "--manifest", str(manifest),
                  "--json", str(output)]) == 2
     assert original.read_bytes() == content
+
+
+def test_compare_html_cli_and_output_protection(tmp_path):
+    source, candidate, manifest = dataset(tmp_path)
+    report = tmp_path / "report.html"
+    args = ["compare", str(source), str(candidate), "--manifest", str(manifest)]
+    assert main(args + ["--html", str(report)]) == 0
+    assert "Pairing coverage" in report.read_text() and "Checks passed" in report.read_text()
+    assert main(args + ["--html", str(manifest)]) == 2
+    assert main(args + ["--html", str(next(candidate.iterdir()))]) == 2
+    assert main(args + ["--html", str(report), "--csv", str(report)]) == 2

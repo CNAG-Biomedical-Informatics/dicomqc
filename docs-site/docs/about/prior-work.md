@@ -8,7 +8,7 @@ All three tools check DICOM metadata. In particular, xnat-dicomqc and dicomqc
 overlap in checking tags against rules. The useful differences are how they run,
 how checks are defined, and what the results are used for.
 
-| Aspect | dicomqc v0.1 | [xnat-dicomqc](https://github.com/SPMIC-UoN/xnat-dicomqc) | [SQAN](https://github.com/IUSCA/SQAN) |
+| Aspect | dicomqc v0.2 | [xnat-dicomqc](https://github.com/SPMIC-UoN/xnat-dicomqc) | [SQAN](https://github.com/IUSCA/SQAN) |
 | --- | --- | --- | --- |
 | Main task | Audit metadata for privacy risks after de-identification. | Run project-defined DICOM tag QC on scans in XNAT. | Check imaging protocols and exams, and review results in a web portal. |
 | Setup | Python CLI that scans local files and directories. | Docker container run through XNAT, with a plugin for QC data. | Services for data intake, QC, an API, and a web UI, backed by a database. |

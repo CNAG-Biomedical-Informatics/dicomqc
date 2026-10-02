@@ -1,6 +1,10 @@
 from __future__ import annotations
 
-from dicomqc.demo import run_demo
+import json
+import pytest
+
+from dicomqc.demo import run_comparison_demo, run_demo
+from dicomqc.compare import compare_datasets
 from dicomqc.scanner import scan_paths
 
 
@@ -41,3 +45,87 @@ def test_demo_fixtures_represent_expected_release_cases(tmp_path):
     assert clean.exit_code() == 0
     assert private.exit_code() == 1
     assert [finding.keyword for finding in private.findings] == ["PrivateTags"]
+
+
+def test_comparison_demo_can_be_rerun_and_reports_explain_failures(tmp_path):
+    output = tmp_path / "comparison"
+    demo = run_comparison_demo(output)
+    assert demo.before.exit_code() == 2
+    assert demo.after.exit_code() == 0
+    assert demo.before.error_count == 3
+    assert {f.rule_id.rsplit(".", 1)[-1] for f in demo.before.findings} == {
+        "missing_candidate", "inconsistent_pseudonym",
+    }
+    # Each existing candidate passes the individual checks: the problems require comparison.
+    assert scan_paths([output / "candidate"]).exit_code() == 0
+    original = {p: p.read_bytes() for p in output.rglob("*.dcm")}
+    assert compare_datasets(output / "source", output / "candidate", demo.manifest) == demo.before
+    assert compare_datasets(output / "source", output / "corrected", demo.manifest) == demo.after
+    assert all(p.read_bytes() == content for p, content in original.items())
+    for name, expected, readable in (("before", 3, 2), ("after", 0, 3)):
+        payload = json.loads((output / f"{name}.json").read_text())
+        assert payload["summary"]["errors"] == expected
+        assert payload["comparison"]["manifest_pairs"] == 3
+        assert payload["comparison"]["readable_pairs"] == readable
+        content = (output / f"{name}.json").read_text() + (output / f"{name}.csv").read_text()
+        for secret in ("LOCAL001", "LOCAL002", "Example^Patient", "19700101", "patient-a"):
+            assert secret not in content
+
+
+def test_comparison_demo_requires_force_to_replace(tmp_path):
+    output = tmp_path / "comparison"
+    run_comparison_demo(output)
+    marker = output / "old-marker"
+    marker.write_text("keep")
+    with pytest.raises(FileExistsError):
+        run_comparison_demo(output)
+    assert marker.read_text() == "keep"
+    assert run_comparison_demo(output, force=True).after.exit_code() == 0
+    assert not marker.exists()
+
+
+def test_demo_rejects_unsafe_destination(tmp_path, monkeypatch):
+    monkeypatch.chdir(tmp_path)
+    with pytest.raises(ValueError, match="separate demo directory"):
+        run_comparison_demo(tmp_path, force=True)
+    link = tmp_path / "link"
+    link.symlink_to(tmp_path, target_is_directory=True)
+    with pytest.raises(ValueError, match="separate demo directory"):
+        run_demo(link, force=True)
+
+
+def test_force_preserves_unrecognized_directory(tmp_path):
+    output = tmp_path / "real-data"
+    output.mkdir()
+    original = output / "keep.dcm"
+    original.write_bytes(b"must survive")
+    with pytest.raises(ValueError, match="only replaces directories created"):
+        run_comparison_demo(output, force=True)
+    assert original.read_bytes() == b"must survive"
+
+
+@pytest.mark.parametrize("which", ["before", "after"])
+def test_comparison_demo_rejects_unexpected_audit(tmp_path, monkeypatch, which):
+    from dataclasses import replace
+    from dicomqc.demo import DemoValidationError
+    def unexpected(source, candidate, manifest):
+        result = compare_datasets(source, candidate, manifest)
+        if which == "before" and candidate.name == "candidate":
+            return replace(result, findings=[])
+        if which == "after" and candidate.name == "corrected":
+            return replace(result, comparison={**result.comparison, "identity_pairs_checked": 0})
+        return result
+    monkeypatch.setattr("dicomqc.demo.compare_datasets", unexpected)
+    with pytest.raises(DemoValidationError, match="unexpected results"):
+        run_comparison_demo(tmp_path / "demo")
+    assert (tmp_path / "demo" / "after.json").exists()
+
+
+def test_scan_demo_rejects_unexpected_audit(tmp_path, monkeypatch):
+    from dataclasses import replace
+    from dicomqc.demo import DemoValidationError
+    def unexpected(*args, **kwargs):
+        return replace(scan_paths(*args, **kwargs), findings=[])
+    monkeypatch.setattr("dicomqc.demo.scan_paths", unexpected)
+    with pytest.raises(DemoValidationError):
+        run_demo(tmp_path / "demo")

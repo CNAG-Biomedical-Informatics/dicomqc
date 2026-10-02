@@ -40,7 +40,7 @@
     </style>
   </defs>
 
-  <text x="24" y="30" class="pageTitle">dicomqc v0.1 data flow</text>
+  <text x="24" y="30" class="pageTitle">dicomqc v0.2 data flow</text>
   <text x="24" y="52" class="note">Read metadata, run checks, write reports</text>
 
   <rect x="24" y="74" width="352" height="72" rx="4" class="node"/>

@@ -33,6 +33,17 @@ dicomqc-demo/
 The demo intentionally includes findings, so the reported scan exit code is `2`.
 The `demo` command itself exits `0` when the example was generated correctly.
 
+## Try a dataset comparison
+
+To try the dataset comparison feature (v0.2.0 and later):
+
+```bash
+dicomqc demo --compare --output-dir comparison-demo
+```
+
+This creates synthetic source and output files, a pairing manifest, and reports
+for a failing comparison and a corrected run. See [Compare datasets](compare.md).
+
 ## Scan a dataset
 
 Scan a study directory:

@@ -29,9 +29,9 @@ PSEUDONYM_RE = re.compile(
 def evaluate_record(record: MetadataRecord, *, profile_id: str = DEFAULT_PROFILE_ID) -> list[Finding]:
     findings: list[Finding] = []
 
-    for keyword in sorted(DIRECT_PHI_KEYWORDS):
-        tag = record.by_keyword(keyword)
-        if _is_present(tag):
+    for tag in sorted(record.tags.values(), key=lambda item: item.keyword):
+        keyword = tag.keyword
+        if keyword in DIRECT_PHI_KEYWORDS and _is_present(tag):
             findings.append(
                 Finding(
                     rule_id=f"{profile_id}.direct_phi.{keyword}",
@@ -46,9 +46,9 @@ def evaluate_record(record: MetadataRecord, *, profile_id: str = DEFAULT_PROFILE
                 )
             )
 
-    for keyword in sorted(PSEUDONYM_KEYWORDS):
-        tag = record.by_keyword(keyword)
-        if _is_present(tag) and not _looks_like_pseudonym(tag.raw_value):
+    for tag in sorted(record.tags.values(), key=lambda item: item.keyword):
+        keyword = tag.keyword
+        if keyword in PSEUDONYM_KEYWORDS and _is_present(tag) and not _looks_like_pseudonym(tag.raw_value):
             findings.append(
                 Finding(
                     rule_id=f"{profile_id}.pseudonym_format.{keyword}",

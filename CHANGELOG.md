@@ -7,22 +7,25 @@ and this project follows [Semantic Versioning](https://semver.org/spec/v2.0.0.ht
 
 ## [Unreleased]
 
+## [0.2.0] - 2026-10-02
+
 ### Added
 
-- `dicomqc compare` checks paired source and candidate datasets for file
-  completeness, missing or unchanged patient IDs, inconsistent pseudonyms, and
-  pseudonym collisions. It also runs existing privacy checks on candidate files.
-- Explicit CSV pairing manifests and comparison reports that omit original paths
-  and raw metadata, with JSON coverage counts and CSV findings.
+- Dataset comparisons for file completeness and patient pseudonym consistency,
+  with explicit CSV pairing manifests and a before/after demo.
+- Offline HTML reports with grouped findings, charts, filters, and print support.
 
 ### Changed
 
-- Moved installation guidance to a dedicated documentation page and added
-  Install links to the primary documentation navigation.
-- Changed stable PyPI publication to use annotated `vX.Y.Z` tag pushes as the
-  canonical release event instead of GitHub Release objects.
-- Replaced abstract documentation copy with direct descriptions of current
-  behavior and clearly labeled planned features.
+- Simplified documentation and demos; require pydicom 3.0 or newer.
+- Safer demo overwrite checks and automated wheel/sdist release validation.
+
+### Fixed
+
+- Preserve repeated metadata tags and use the correct patient-ID issuer.
+- Fail safely on incomplete inventories and unreadable metadata.
+
+Comparisons check metadata and file pairing, not pixels, date shifts, or UID references.
 
 ## [0.1.0] - 2026-07-19
 
@@ -46,5 +49,6 @@ and this project follows [Semantic Versioning](https://semver.org/spec/v2.0.0.ht
 - The built-in profile does not certify DICOM PS3.15, BIDS, HIPAA, or GDPR
   compliance.
 
-[Unreleased]: https://github.com/CNAG-Biomedical-Informatics/dicomqc/compare/v0.1.0...HEAD
+[Unreleased]: https://github.com/CNAG-Biomedical-Informatics/dicomqc/compare/v0.2.0...HEAD
+[0.2.0]: https://github.com/CNAG-Biomedical-Informatics/dicomqc/compare/v0.1.0...v0.2.0
 [0.1.0]: https://github.com/CNAG-Biomedical-Informatics/dicomqc/tree/v0.1.0

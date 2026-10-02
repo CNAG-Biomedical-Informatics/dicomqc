@@ -44,16 +44,34 @@ read-only repository access. Only the separate `pypi` environment job receives
    pytest
    ```
 
-4. Commit the release state and push `main`.
-5. Create and push an annotated tag on that exact commit:
+4. Build the wheel and source distribution and validate their metadata:
+
+   ```bash
+   python -m build
+   python -m twine check dist/*
+   ```
+
+   Install each distribution into its own fresh virtual environment. From a
+   directory outside the checkout, run this script with that environment's Python:
+
+   ```bash
+   python /path/to/dicomqc/scripts/smoke_distribution.py --expected-version X.Y.Z
+   ```
+
+   It checks version metadata, both demo modes, failing and passing comparisons,
+   and generated reports. The PyPI workflow runs it against both package formats.
+   Update the docs for the release and run `npm run build` in `docs-site/`.
+
+5. Commit the release state and push `main`.
+6. Create and push an annotated tag on that exact commit:
 
    ```bash
    git tag -a vX.Y.Z -m "Tagging version X.Y.Z" <commit>
    git push origin vX.Y.Z
    ```
 
-6. Confirm that the **Publish to PyPI** workflow succeeds.
-7. If a Docker image is published, dispatch that build manually from the same
+7. Confirm that the **Publish to PyPI** workflow succeeds.
+8. If a Docker image is published, dispatch that build manually from the same
    stable tag so both distributions use the identical source revision.
 
 ## TestPyPI prereleases

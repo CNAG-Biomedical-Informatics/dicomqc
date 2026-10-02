@@ -127,3 +127,47 @@ def test_cli_rejects_unknown_profile(tmp_path, capsys):
 
     assert main(["scan", str(dicom_path), "--profile", "missing-profile"]) == 2
     assert "Unknown profile" in capsys.readouterr().err
+
+
+def test_cli_comparison_demo(tmp_path, capsys):
+    output = tmp_path / "comparison"
+    assert main(["demo", "--compare", "--output-dir", str(output)]) == 0
+    text = capsys.readouterr().out
+    assert "Before comparison exit code: 2" in text
+    assert "After comparison exit code: 0" in text
+    assert (output / "pairs.csv").exists()
+    assert (output / "before.json").exists()
+    assert (output / "after.csv").exists()
+    assert main(["demo", "--compare", "--output-dir", str(output)]) == 2
+    assert "Use --force" in capsys.readouterr().err
+
+
+def test_demo_cli_reports_validation_and_io_failures(tmp_path, monkeypatch, capsys):
+    from dicomqc.demo import DemoValidationError
+    for exception in (DemoValidationError("unexpected audit"), OSError("private path")):
+        def fail(*args, **kwargs):
+            raise exception
+        monkeypatch.setattr("dicomqc.cli.run_comparison_demo", fail)
+        assert main(["demo", "--compare", "--output-dir", str(tmp_path / "demo")]) == 2
+        captured = capsys.readouterr()
+        assert "expected: 0" not in captured.out
+        assert "private path" not in captured.err
+
+
+def test_scan_html_and_output_safety(tmp_path):
+    path = tmp_path / "image.dcm"
+    _write_dicom(path, PatientBirthDate="19700101")
+    original = path.read_bytes()
+    report = tmp_path / "report.html"
+    assert main(["scan", str(path), "--html", str(report), "--quiet"]) == 2
+    assert "PatientBirthDate" in report.read_text() and "19700101" not in report.read_text()
+    assert main(["scan", str(path), "--html", str(path)]) == 2
+    assert main(["scan", str(tmp_path), "--html", str(path)]) == 2
+    assert path.read_bytes() == original
+    assert main(["scan", str(path), "--html", str(report), "--json", str(report)]) == 2
+    assert main(["scan", str(path), "--html", str(tmp_path / "missing" / "report")]) == 2
+    import os
+    alias = tmp_path / "alias"
+    os.link(path, alias)
+    assert main(["scan", str(path), "--html", str(alias)]) == 2
+    assert path.read_bytes() == original

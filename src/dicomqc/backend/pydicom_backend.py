@@ -21,9 +21,11 @@ class PydicomBackend:
 
         try:
             dataset = pydicom.dcmread(str(path), stop_before_pixels=True, force=False)
+            return self._normalize(dataset, path)
         except (InvalidDicomError, OSError, EOFError, ValueError) as exc:
-            raise DicomReadError(str(exc)) from exc
+            raise DicomReadError("Cannot read DICOM metadata.") from exc
 
+    def _normalize(self, dataset: Any, path: Path) -> MetadataRecord:
         tags: dict[str, DicomTag] = {}
         for elem in dataset.iterall():
             if elem.keyword == "PixelData":
@@ -31,7 +33,9 @@ class PydicomBackend:
             tag_key = f"({elem.tag.group:04X},{elem.tag.element:04X})"
             keyword = elem.keyword or elem.name or tag_key
             raw_value = elem.value
-            tags[tag_key] = DicomTag(
+            # Sequences can contain repeated tags, including identifiers. Keep every occurrence.
+            occurrence_key = tag_key if tag_key not in tags else f"{tag_key}#{len(tags)}"
+            tags[occurrence_key] = DicomTag(
                 tag=tag_key,
                 keyword=keyword,
                 vr=str(elem.VR),
@@ -43,6 +47,7 @@ class PydicomBackend:
         return MetadataRecord(
             path=path,
             patient_id=_string_value(dataset.get("PatientID")),
+            issuer_of_patient_id=_string_value(dataset.get("IssuerOfPatientID")),
             study_uid=_string_value(dataset.get("StudyInstanceUID")),
             series_uid=_string_value(dataset.get("SeriesInstanceUID")),
             manufacturer=_string_value(dataset.get("Manufacturer")),

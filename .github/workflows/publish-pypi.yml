@@ -94,6 +94,16 @@ jobs:
             --force \
             --config "$GITHUB_WORKSPACE/examples/multiqc/multiqc_config.yaml"
           test -s /tmp/dicomqc-pypi-demo/multiqc_report.html
+          dicomqc-pypi-wheel-test/bin/python "$GITHUB_WORKSPACE/scripts/smoke_distribution.py" \
+            --expected-version "${GITHUB_REF_NAME#v}"
+
+      - name: Test built source distribution
+        working-directory: /tmp
+        run: |
+          python -m venv dicomqc-pypi-sdist-test
+          dicomqc-pypi-sdist-test/bin/python -m pip install "$GITHUB_WORKSPACE"/dist/*.tar.gz
+          dicomqc-pypi-sdist-test/bin/python "$GITHUB_WORKSPACE/scripts/smoke_distribution.py" \
+            --expected-version "${GITHUB_REF_NAME#v}"
 
       - name: Upload distributions
         uses: actions/upload-artifact@v4

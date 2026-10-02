@@ -3,11 +3,48 @@
 from __future__ import annotations
 
 from pathlib import Path
+import csv
 
 from pydicom.dataset import FileDataset, FileMetaDataset
 from pydicom.uid import ExplicitVRLittleEndian
 
 ROOT_UID = "1.2.826.0.1.3680043.10.54321"
+
+
+def write_comparison_fixtures(output_dir: Path) -> Path:
+    """Create two source patients, broken/corrected outputs, and their manifest."""
+    for name in ("source", "candidate", "corrected"):
+        (output_dir / name).mkdir(parents=True, exist_ok=True)
+    pairs = [
+        ("patient-a-visit-1.dcm", "image-001.dcm", "LOCAL001", "sub-001"),
+        ("patient-a-visit-2.dcm", "image-002.dcm", "LOCAL001", "sub-001"),
+        ("patient-b-visit-1.dcm", "image-003.dcm", "LOCAL002", "sub-002"),
+    ]
+    for index, (source_name, output_name, patient_id, pseudonym) in enumerate(pairs, 1):
+        _write_dicom(
+            output_dir / "source" / source_name, fixture_index=index,
+            patient_name="Example^Patient", patient_id=patient_id,
+            patient_birth_date="19700101", private_creator=None,
+        )
+        _write_dicom(
+            output_dir / "corrected" / output_name, fixture_index=index + 100,
+            patient_name=pseudonym, patient_id=pseudonym,
+            patient_birth_date=None, private_creator=None,
+        )
+        # The second visit gets a different pseudonym; the third file is missing.
+        if index < 3:
+            broken_id = "sub-099" if index == 2 else pseudonym
+            _write_dicom(
+                output_dir / "candidate" / output_name, fixture_index=index + 200,
+                patient_name=broken_id, patient_id=broken_id,
+                patient_birth_date=None, private_creator=None,
+            )
+    manifest = output_dir / "pairs.csv"
+    with manifest.open("w", encoding="utf-8", newline="") as handle:
+        writer = csv.writer(handle)
+        writer.writerow(["source", "candidate"])
+        writer.writerows((source_name, output_name) for source_name, output_name, _, _ in pairs)
+    return manifest
 
 
 def write_synthetic_dicom_fixtures(output_dir: Path) -> list[Path]:

@@ -24,7 +24,7 @@ function requireAccessibleSvg(relativePath) {
 const home = read('src/pages/index.tsx');
 requireText(home, "useBaseUrl('/img/dicomqc-objective.svg')", 'src/pages/index.tsx');
 requireText(home, 'Check DICOM metadata before sharing research data.', 'src/pages/index.tsx');
-requireText(home, 'Version 0.1 does not pseudonymize', 'src/pages/index.tsx');
+requireText(home, 'Version 0.2 does not pseudonymize', 'src/pages/index.tsx');
 
 if (home.includes('dicomqc-logo.png')) {
   throw new Error('The landing page should use the lowercase wordmark, not the legacy logo image');
@@ -53,7 +53,7 @@ const plannedFeatures = read('docs/technical-details/extending-dicomqc.md');
 requireText(plannedFeatures, '# Planned Features', 'docs/technical-details/extending-dicomqc.md');
 requireText(
   plannedFeatures,
-  'not available in dicomqc v0.1',
+  'not available in dicomqc v0.2',
   'docs/technical-details/extending-dicomqc.md',
 );
 

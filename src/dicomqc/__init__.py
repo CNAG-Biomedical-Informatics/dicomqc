@@ -1,6 +1,6 @@
 """dicomqc public API."""
 
-__version__ = "0.1.0"
+__version__ = "0.2.0"
 
 from dicomqc.model.metadata import DicomTag, MetadataRecord
 from dicomqc.model.results import Finding, ScanResult, Severity

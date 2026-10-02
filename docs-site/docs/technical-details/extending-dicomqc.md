@@ -4,7 +4,7 @@ title: Planned Features
 
 # Planned Features
 
-The features on this page are not available in dicomqc v0.1. They describe
+The features on this page are not available in dicomqc v0.2. They describe
 ideas for later releases.
 
 ## Policy files
@@ -22,7 +22,7 @@ metadata checks.
 ## Standards profiles
 
 Planned DICOM PS3.15 and BIDS profiles would identify every check with a stable
-rule ID and a reference to its source standard. The v0.1 result model already
+rule ID and a reference to its source standard. The v0.2 result model already
 contains `profile_id`, `rule_id`, and `standard_refs`, but the current built-in
 profile does not claim compliance with either standard.
 

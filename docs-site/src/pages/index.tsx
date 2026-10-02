@@ -23,7 +23,7 @@ const auditOperations = [
   {
     label: '03 / Record',
     title: 'Save the results',
-    text: 'Write JSON, CSV, and MultiQC reports without copying raw DICOM values.',
+    text: 'Open an offline HTML report, save JSON or CSV, or view results in MultiQC.',
   },
   {
     label: '04 / Integrate',
@@ -79,7 +79,7 @@ export default function Home() {
               <p className={styles.lede}>
                 dicomqc audits de-identified DICOM metadata for privacy risks.
                 It flags patient identifiers, unexpected pseudonym formats, and
-                private tags, and writes JSON, CSV, and MultiQC reports.
+                private tags, and writes HTML, JSON, CSV, and MultiQC reports.
                 It never changes the DICOM files.
               </p>
               <nav className={styles.primaryLinks} aria-label="Primary documentation">
@@ -141,7 +141,7 @@ export default function Home() {
               <h2 id="scope-title">What dicomqc does not check</h2>
             </div>
             <p>
-              Version 0.1 does not pseudonymize or modify DICOM files, inspect
+              Version 0.2 does not pseudonymize or modify DICOM files, inspect
               pixels or facial features, or certify DICOM PS3.15, BIDS, HIPAA, or
               GDPR compliance. A qualified reviewer must still decide whether the
               data can be shared.

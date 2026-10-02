@@ -23,7 +23,7 @@ models rather than pydicom objects.
     />
   </picture>
   <figcaption>
-    Version 0.1 reads tag values to run its checks. Reports contain findings,
+    Version 0.2 reads tag values to run its checks. Reports contain findings,
     value states, and counts, without copying raw tag values.
   </figcaption>
 </figure>
@@ -77,6 +77,19 @@ Rules need raw tag values for checks such as pseudonym matching. Report writers
 omit those values. Reports still contain file paths and other context that may
 identify people or datasets, so review them before sharing and restrict access
 when needed.
+
+## Dataset comparison
+
+`compare_datasets()` checks a one-to-one CSV manifest against both directory
+inventories, reads each pair, and runs the privacy rules on candidate files.
+It groups source patients by top-level `IssuerOfPatientID` and `PatientID`, then
+checks for inconsistent output IDs and collisions. Repeated tags inside sequences
+are retained so each occurrence can be checked.
+
+Comparison results use manifest-row references and omit raw file context.
+The comparison profile is `dataset-comparison-v0.1`; candidate privacy findings
+retain their `research-release-v0.1` rule IDs. Profile versions are independent
+of the package version. See [Compare datasets](../usage/compare.md) for details.
 
 ## Planned extensions
 

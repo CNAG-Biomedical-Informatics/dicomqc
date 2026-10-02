@@ -4,8 +4,8 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "dicomqc"
-version = "0.1.0"
-description = "Policy-driven quality control and validation of DICOM metadata for research release."
+version = "0.2.0"
+description = "Audit de-identified DICOM metadata for privacy risks and dataset consistency."
 readme = "README.md"
 requires-python = ">=3.10"
 license = "Apache-2.0"
@@ -25,7 +25,7 @@ classifiers = [
   "Topic :: Scientific/Engineering :: Medical Science Apps.",
 ]
 dependencies = [
-  "pydicom>=2.4",
+  "pydicom>=3.0",
   "PyYAML>=6",
 ]
 
