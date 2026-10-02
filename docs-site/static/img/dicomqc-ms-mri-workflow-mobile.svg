@@ -1,6 +1,6 @@
 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 400 860" role="img" aria-labelledby="title desc">
   <title id="title">Mobile multiple sclerosis MRI DICOM release workflow</title>
-  <desc id="desc">Raw DICOM is preserved, externally pseudonymized, audited by dicomqc, and reviewed. Findings return to remediation, while an approved candidate is released with audit evidence.</desc>
+  <desc id="desc">Raw DICOM is preserved, externally pseudonymized, audited by dicomqc, and reviewed. Findings return to remediation, while an approved candidate is released with audit reports.</desc>
   <defs>
     <marker id="arrow" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="6" markerHeight="6" orient="auto-start-reverse">
       <path d="M 0 0 L 10 5 L 0 10 z" class="arrowHead"/>
@@ -67,7 +67,7 @@
   <rect x="42" y="418" width="334" height="106" rx="4" class="node audit"/>
   <text x="60" y="442" class="phase">4 / INDEPENDENT AUDIT</text>
   <text x="60" y="467" class="nodeTitle">dicomqc metadata audit</text>
-  <text x="60" y="489" class="detail">Read-only policy checks</text>
+  <text x="60" y="489" class="detail">Read-only metadata checks</text>
   <text x="60" y="510" class="code">JSON / CSV / MultiQC</text>
   <line x1="209" y1="525" x2="209" y2="545" class="flow"/>
 
@@ -84,6 +84,6 @@
   <text x="225" y="688" class="phase">APPROVED</text>
   <rect x="42" y="716" width="334" height="92" rx="4" class="node"/>
   <text x="60" y="741" class="phase">RESEARCH RELEASE</text>
-  <text x="60" y="767" class="nodeTitle">DICOM + audit evidence</text>
+  <text x="60" y="767" class="nodeTitle">DICOM + audit reports</text>
   <text x="60" y="790" class="detail">Linkage map excluded</text>
 </svg>

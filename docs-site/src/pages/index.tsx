@@ -17,7 +17,7 @@ const auditOperations = [
   },
   {
     label: '02 / Evaluate',
-    title: 'Apply explicit rules',
+    title: 'Check for privacy risks',
     text: 'Identify direct PHI fields, pseudonym-pattern failures, and private tags.',
   },
   {
@@ -28,7 +28,7 @@ const auditOperations = [
   {
     label: '04 / Integrate',
     title: 'Automate the check',
-    text: 'Use exit codes to pass, review, or stop a data-processing pipeline.',
+    text: 'Use exit codes to continue a workflow, request review, or stop on errors.',
   },
 ];
 
@@ -50,12 +50,12 @@ const documentationPaths = [
   },
   {
     title: 'Review the architecture',
-    text: 'Trace metadata through discovery, policy evaluation, and report generation.',
+    text: 'See how dicomqc reads metadata, checks it, and writes reports.',
     to: '/docs/technical-details/architecture',
   },
   {
     title: 'Compare prior work',
-    text: 'Understand how dicomqc relates to existing de-identification software.',
+    text: 'Compare dicomqc with other DICOM quality-control tools.',
     to: '/docs/about/prior-work',
   },
 ];
@@ -66,7 +66,7 @@ export default function Home() {
   return (
     <Layout
       title="dicomqc"
-      description="Independent DICOM metadata quality control for research-release workflows">
+      description="dicomqc audits de-identified DICOM metadata for privacy risks">
       <main className={styles.page}>
         <section className={styles.hero}>
           <div className={styles.heroInner}>
@@ -77,10 +77,10 @@ export default function Home() {
                 Check DICOM metadata before sharing research data.
               </p>
               <p className={styles.lede}>
-                Run dicomqc after pseudonymization or de-identification. It checks
-                metadata for patient identifiers, unexpected pseudonym formats, and
-                private tags, then writes JSON, CSV, and MultiQC reports. It never
-                changes the DICOM files.
+                dicomqc audits de-identified DICOM metadata for privacy risks.
+                It flags patient identifiers, unexpected pseudonym formats, and
+                private tags, and writes JSON, CSV, and MultiQC reports.
+                It never changes the DICOM files.
               </p>
               <nav className={styles.primaryLinks} aria-label="Primary documentation">
                 {primaryLinks.map((link) => (
@@ -106,13 +106,19 @@ export default function Home() {
 
         <section className={styles.auditSection} aria-labelledby="audit-surface-title">
           <div className={styles.sectionInner}>
+            <picture>
+              <source media="(max-width: 760px)" srcSet={useBaseUrl('/img/dicomqc-audit-mobile.svg')} />
+              <img className={styles.workflowImage} src={useBaseUrl('/img/dicomqc-audit.svg')}
+                alt="dicomqc flags a birth date and private tags in fictional DICOM metadata. An external tool fixes a new copy, then a second audit passes. Pixels are not inspected." />
+            </picture>
+          </div>
+          <div className={styles.sectionInner}>
             <div className={styles.sectionHeading}>
               <p className={styles.sectionLabel}>Current checks</p>
               <h2 id="audit-surface-title">Metadata checks after de-identification</h2>
               <p>
-                Use dicomqc on the files produced by any DICOM de-identification
-                tool. The same checks can then be repeated for every provider and
-                every version of a dataset.
+                Run the same checks on files from different providers or
+                de-identification tools, and repeat them when a dataset changes.
               </p>
             </div>
 

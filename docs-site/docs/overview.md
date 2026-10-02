@@ -4,18 +4,24 @@ title: Overview
 
 # dicomqc
 
-dicomqc checks DICOM metadata after files have been pseudonymized or
-de-identified. It reports patient-identifying fields, unexpected pseudonym
+import useBaseUrl from '@docusaurus/useBaseUrl';
+
+dicomqc audits de-identified DICOM metadata for privacy risks.
+It reports patient-identifying fields, unexpected pseudonym
 formats, private tags, and files that could not be read. It never changes the
 DICOM files.
+
+<picture>
+  <source media="(max-width: 760px)" srcSet={useBaseUrl('/img/dicomqc-audit-mobile.svg')} />
+  <img src={useBaseUrl('/img/dicomqc-audit.svg')} alt="A fictional DICOM metadata audit flags a birth date and private tags. After external fixes, a rescan passes. Pixels and sharing still need review." />
+</picture>
 
 :::info Project status
 
 The current package is **v0.1.0** and is available from
 [PyPI](https://pypi.org/project/dicomqc/). It includes a metadata-only scanner,
 one built-in set of checks, JSON and CSV reports, and MultiQC-compatible output.
-Checks based directly on specific standards and support for plugins are planned,
-but are not included in this release.
+Standards-specific checks and plugins are planned for later releases.
 
 :::
 
@@ -34,10 +40,9 @@ pass (`0`), warnings that require review (`1`), and errors or unreadable files
 
 ## Why audit after de-identification?
 
-Completing a de-identification command does not prove that every file was
-processed or that the result meets the project's rules. dicomqc performs a
-separate check, so one set of rules can be applied to output from different
-tools and data providers.
+A de-identification tool can leave identifying metadata behind or miss files.
+Run dicomqc on its output to check for these problems. You can use the same
+checks with different tools and data providers.
 
 The recommended process is:
 
@@ -56,17 +61,17 @@ The recommended process is:
 - **PHI/PII** means identifying or sensitive personal information. Although PHI
   is a term from US health-privacy law, dicomqc uses it in rule names for
   identifiable DICOM metadata.
-- **Redaction-safe report** means that dicomqc reports whether a tag value is
-  present, empty, or absent without copying the raw value into the report.
+- **Value state** says whether a tag value is present, empty, or absent.
+  Reports include this state without copying the raw tag value.
 - **Private tag** means a vendor- or organization-defined DICOM data element.
   Private tags are not automatically safe or unsafe; they require review.
 
 ## Current checks
 
-The built-in `research-release-v0.1` profile evaluates:
+The built-in `research-release-v0.1` profile checks for:
 
-- direct PHI-bearing metadata fields;
-- whether configured patient identifiers resemble pseudonyms;
+- metadata fields containing direct identifiers;
+- patient identifiers that do not match the expected pseudonym format;
 - private DICOM tags that require review;
 - unreadable or skipped input files.
 
@@ -81,24 +86,23 @@ must still decide whether the data can be shared.
 
 :::
 
-## Start by task
+## Find what you need
 
 | Task | Documentation |
 | --- | --- |
 | Install the CLI | [Install](usage/install.md) |
 | Generate the demo and run an audit | [Quickstart](usage/quickstart.md) |
 | Audit a large MS MRI collection | [MS MRI workflow](usage/ms-mri-workflow.mdx) |
-| Interpret and aggregate outputs | [Reports](usage/reports.md) |
-| Apply findings with external tools | [Remediation](usage/remediation.mdx) |
+| Read reports and view them in MultiQC | [Reports](usage/reports.md) |
+| Fix reported problems with external tools | [Remediation](usage/remediation.mdx) |
 | Understand the implementation | [Architecture](technical-details/architecture.mdx) |
 | Compare related software | [Prior work](about/prior-work.md) |
 
 ## Documentation map
 
 - **Use** covers installation, routine audits, reporting, and remediation.
-- **Technical Details** documents the current architecture and planned extension
-  points.
-- **Reference** defines the command-line contract.
+- **Technical Details** explains the implementation and planned features.
+- **Reference** lists commands, options, and exit codes.
 - **About** records citation guidance, prior work, and the project disclaimer.
 
 Project development and issue tracking take place in the

@@ -54,9 +54,9 @@ files do not need a `.dcm` extension.
 
 ## Default profile
 
-The default profile is `research-release-v0.1`. It flags direct PHI fields,
-warns on risky pseudonym fields, and reports private tags as release-risk
-evidence.
+The default profile is `research-release-v0.1`. It flags direct identifiers,
+warns when patient identifiers do not match the expected pseudonym format, and
+lists private tags for review.
 
 ## Fixing findings
 

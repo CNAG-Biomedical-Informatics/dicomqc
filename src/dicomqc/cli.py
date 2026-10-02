@@ -8,6 +8,7 @@ from pathlib import Path
 from typing import Sequence
 
 from dicomqc import __version__
+from dicomqc.compare import compare_datasets, comparison_roots
 from dicomqc.demo import run_demo
 from dicomqc.reports import write_csv, write_json, write_multiqc
 from dicomqc.rules.builtin import DEFAULT_PROFILE_ID
@@ -21,6 +22,8 @@ def main(argv: Sequence[str] | None = None) -> int:
         return _run_scan(args)
     if args.command == "demo":
         return _run_demo(args)
+    if args.command == "compare":
+        return _run_compare(args)
     parser.print_help()
     return 2
 
@@ -50,7 +53,44 @@ def _build_parser() -> argparse.ArgumentParser:
         help="Directory where demo DICOM files and reports will be written. Default: dicomqc-demo.",
     )
     demo.add_argument("--force", action="store_true", help="Replace the output directory if it already exists.")
+    compare = subparsers.add_parser("compare", help="Audit paired source and de-identified datasets.")
+    compare.add_argument("source", type=Path, help="Source DICOM directory.")
+    compare.add_argument("candidate", type=Path, help="De-identified DICOM directory.")
+    compare.add_argument("--manifest", type=Path, required=True, help="CSV with source,candidate relative paths.")
+    compare.add_argument("--json", dest="json_path", type=Path, help="Write comparison results as JSON.")
+    compare.add_argument("--csv", dest="csv_path", type=Path, help="Write comparison findings as CSV.")
+    compare.add_argument("--quiet", action="store_true", help="Suppress the text summary.")
     return parser
+
+
+def _run_compare(args: argparse.Namespace) -> int:
+    try:
+        roots = comparison_roots(args.source, args.candidate)
+        outputs = [path.resolve() for path in (args.json_path, args.csv_path) if path]
+        if len(outputs) != len(set(outputs)):
+            raise ValueError("JSON and CSV reports need different output paths.")
+        for output in outputs:
+            if output == args.manifest.resolve() or any(output == root or root in output.parents for root in roots):
+                raise ValueError("Write reports outside the inputs and do not overwrite the manifest.")
+            if output.exists() and output.stat().st_nlink > 1:
+                raise ValueError("Report output must not be a hard-linked file.")
+        result = compare_datasets(*roots, args.manifest)
+        if args.json_path:
+            write_json(result, args.json_path)
+        if args.csv_path:
+            write_csv(result, args.csv_path)
+    except ValueError as exc:
+        print(f"dicomqc: {exc}", file=sys.stderr)
+        return 2
+    except OSError:
+        print("dicomqc: Cannot access comparison inputs or write reports.", file=sys.stderr)
+        return 2
+    if not args.quiet:
+        print(f"Manifest pairs: {result.comparison['manifest_pairs']}")
+        print(f"Readable pairs: {result.comparison['readable_pairs']}")
+        print(f"Identity pairs checked: {result.comparison['identity_pairs_checked']}")
+        _print_summary(result)
+    return result.exit_code()
 
 
 def _run_scan(args: argparse.Namespace) -> int:

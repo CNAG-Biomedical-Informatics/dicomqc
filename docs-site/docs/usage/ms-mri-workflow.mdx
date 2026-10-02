@@ -6,9 +6,8 @@ import useBaseUrl from '@docusaurus/useBaseUrl';
 
 # MS MRI Workflow
 
-For a large multiple sclerosis MRI dataset, dicomqc should be the audit layer on
-top of a pseudonymization/de-identification workflow. It should not be the tool
-that edits the only copy of the study.
+For a multiple sclerosis MRI dataset, pseudonymize the DICOM files first, then
+audit their metadata with dicomqc. Keep the original files under restricted access.
 
 <figure className="dicomqcWorkflowFigure">
   <picture>
@@ -22,9 +21,8 @@ that edits the only copy of the study.
     />
   </picture>
   <figcaption>
-    The transformation tool creates each candidate dataset. dicomqc evaluates
-    that output independently; findings feed back into the transformation
-    workflow before a release is approved.
+    Pseudonymize a copy, audit it with dicomqc, and review the results.
+    If problems remain, fix the pseudonymization process and run it again.
   </figcaption>
 </figure>
 
@@ -44,21 +42,18 @@ project/
       dicomqc_mqc/
 ```
 
-For this MS MRI project, the likely model is pseudonymization rather than full
-anonymization: the data provider may keep a linkage file that maps source
-identifiers to research pseudonyms. That linkage file is operationally necessary,
-but it is sensitive. Keep it on the provider side, outside the released dataset,
-outside public repositories, and under a separate access policy.
+If the provider keeps a file linking patient identifiers to research pseudonyms,
+the dataset is pseudonymized. Keep that sensitive mapping file with the provider,
+separate from the shared dataset and public repositories, with restricted access.
 
-The preferred data shape is DICOM-in and DICOM-out: raw `.dcm` files are the
-input, and pseudonymized `.dcm` files are the output. Conversion to NIfTI or BIDS
-can happen later, after the DICOM release candidate has passed metadata audit.
+Keep the files in DICOM format during pseudonymization and audit.
+Convert to NIfTI or BIDS later, after reviewing the metadata results.
 
 ## Step 1: inventory and preserve the raw data
 
-Make the raw dataset immutable from the pipeline's point of view. dicomqc can be
-run on raw data for internal risk discovery, but raw reports may still reveal
-risk patterns through paths or tag presence, so keep them restricted.
+Preserve the original files. You can scan them to find privacy risks before
+pseudonymization. Keep those reports restricted: paths and tag details may
+still reveal sensitive information.
 
 ```bash
 dicomqc scan raw_mri/ \
@@ -68,8 +63,7 @@ dicomqc scan raw_mri/ \
 
 ## Step 2: pseudonymize and de-identify with an external tool
 
-Use a controlled pseudonymization/de-identification workflow to create
-`candidate_release_mri/` as DICOM files.
+Create pseudonymized DICOM files in `candidate_release_mri/`.
 Possible options include:
 
 - DCMTK commands such as `dcmodify` for targeted metadata edits
@@ -91,7 +85,7 @@ minimum address:
 - protocol names that may contain subject, site, or study information
 - pseudonym consistency across subject, visit, study, and series
 
-## Step 3: run dicomqc as the release gate
+## Step 3: audit before sharing
 
 Run dicomqc on the pseudonymized `.dcm` output:
 
@@ -110,11 +104,10 @@ Interpret the result:
 
 ## Step 4: remediate findings and rerun
 
-Use the report recommendations to update the pseudonymization/de-identification
-workflow, not just one file by hand. Then regenerate the candidate release and
-rerun dicomqc.
+Use the recommended fixes to update the pseudonymization process. Generate a
+new copy of the dataset and rerun dicomqc so the fixes apply to every affected file.
 
-The goal is a reproducible pipeline:
+The same input and settings should give the same audit result:
 
 ```text
 same raw input + same pseudonymization policy -> same dicomqc result
@@ -129,11 +122,9 @@ For head MRI, de-identification may also require image-level handling such as
 defacing, skull stripping, or another approved facial-feature protection method,
 depending on the release policy and downstream analysis needs.
 
-If the dataset will be converted to BIDS, keep dicomqc as a pre-conversion
-metadata audit and then run BIDS-specific validation on the converted dataset.
-The BIDS MRI specification includes de-identification information and defacing
-mask concepts, so those checks should become a future dicomqc/BIDS profile
-rather than an implicit v0.1 claim.
+If you convert the dataset to BIDS, audit the DICOM metadata first and run a
+BIDS validator after conversion. dicomqc v0.1 does not check BIDS requirements;
+a BIDS profile is planned.
 
 ## Release checklist
 

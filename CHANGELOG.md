@@ -7,6 +7,14 @@ and this project follows [Semantic Versioning](https://semver.org/spec/v2.0.0.ht
 
 ## [Unreleased]
 
+### Added
+
+- `dicomqc compare` checks paired source and candidate datasets for file
+  completeness, missing or unchanged patient IDs, inconsistent pseudonyms, and
+  pseudonym collisions. It also runs existing privacy checks on candidate files.
+- Explicit CSV pairing manifests and comparison reports that omit original paths
+  and raw metadata, with JSON coverage counts and CSV findings.
+
 ### Changed
 
 - Moved installation guidance to a dedicated documentation page and added

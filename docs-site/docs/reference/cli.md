@@ -27,7 +27,7 @@ dicomqc scan PATH [PATH ...] [--json FILE] [--csv FILE] [--multiqc [DIR]] [--pro
 
 | Option | Description |
 | --- | --- |
-| `--json FILE` | Write a redaction-safe JSON report. |
+| `--json FILE` | Write a JSON report without raw DICOM tag values. |
 | `--csv FILE` | Write a CSV findings report. |
 | `--multiqc [DIR]` | Write a MultiQC custom-content directory. Defaults to `dicomqc_mqc/`. |
 | `--profile PROFILE` | Select a rule profile. v0.1 supports `research-release-v0.1`. |
@@ -40,6 +40,19 @@ dicomqc scan PATH [PATH ...] [--json FILE] [--csv FILE] [--multiqc [DIR]] [--pro
 | `0` | Clean scan |
 | `1` | Warnings only |
 | `2` | Errors or fatal scan failures |
+
+## `dicomqc compare`
+
+Available in the source checkout; see [Compare datasets](../usage/compare.md):
+
+```bash
+dicomqc compare SOURCE CANDIDATE --manifest FILE [--json FILE] [--csv FILE] [--quiet]
+```
+
+This checks file completeness and patient pseudonym consistency using an explicit
+CSV pairing manifest. It also audits candidate metadata. Comparison reports use
+manifest row references and omit original paths and raw metadata. Exit codes are
+the same as `scan`. The published v0.1.0 package does not include this command.
 
 ## `dicomqc demo`
 

@@ -12,10 +12,11 @@ dicomqc scan study/ --json report.json --csv findings.csv --multiqc
 
 ## Redaction
 
-Reports do not include raw DICOM values by default. Findings and tag inventory
+Reports omit raw DICOM tag values. Findings and the tag list
 show whether a value is absent, empty, or present, but not the observed value.
 
-This protects audit artifacts from becoming a second source of PHI.
+File paths and other report details may still identify people or datasets.
+Review reports before sharing them.
 
 ## JSON
 
@@ -24,7 +25,7 @@ The JSON report includes:
 - tool metadata
 - selected profile
 - summary counts
-- normalized record inventory
+- scanned files and their metadata
 - findings
 - skipped files
 
@@ -52,9 +53,8 @@ multiqc .
 
 The directory contains small `*_mqc.yaml` custom-content files. MultiQC renders
 these as dicomqc general statistics, a compact audit-status table, and a
-redaction-safe findings table. The JSON and CSV reports remain the primary
-evidence artifacts; MultiQC is a companion view for projects that already
-aggregate QC results.
+findings table without raw tag values. Keep the JSON and CSV files as the audit
+records. Use MultiQC to view the results alongside other QC reports.
 
 Use a custom output directory when needed:
 
@@ -65,7 +65,7 @@ dicomqc scan study/ --multiqc reports/dicomqc_mqc
 ## Example Report
 
 The CLI includes a reproducible demo that generates synthetic DICOM files and
-writes redaction-safe dicomqc reports:
+writes dicomqc reports without raw tag values:
 
 ```bash
 dicomqc demo --output-dir dicomqc-demo --force

@@ -127,6 +127,14 @@
   background: var(--home-bg);
 }
 
+.workflowImage {
+  display: block;
+  width: 100%;
+  height: auto;
+  margin-bottom: 3rem;
+  border-radius: 1.5rem;
+}
+
 .docsSection {
   background: var(--home-surface);
 }

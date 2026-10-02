@@ -41,7 +41,7 @@
   </defs>
 
   <text x="24" y="30" class="pageTitle">dicomqc v0.1 data flow</text>
-  <text x="24" y="52" class="note">Metadata audit and reporting boundary</text>
+  <text x="24" y="52" class="note">Read metadata, run checks, write reports</text>
 
   <rect x="24" y="74" width="352" height="72" rx="4" class="node"/>
   <text x="42" y="96" class="phase">INPUT</text>
@@ -50,7 +50,7 @@
   <line x1="200" y1="147" x2="200" y2="162" class="flow"/>
 
   <rect x="24" y="165" width="352" height="72" rx="4" class="node"/>
-  <text x="42" y="187" class="phase">ORCHESTRATE</text>
+  <text x="42" y="187" class="phase">FIND FILES</text>
   <text x="42" y="212" class="nodeTitle">CLI + discovery</text>
   <text x="225" y="212" class="code">scan_paths()</text>
   <line x1="200" y1="238" x2="200" y2="253" class="flow"/>
@@ -96,5 +96,5 @@
 
   <rect x="176" y="758" width="200" height="58" rx="4" class="node"/>
   <text x="194" y="783" class="nodeTitle">JSON / CSV / MultiQC</text>
-  <text x="194" y="802" class="detail">Review evidence</text>
+  <text x="194" y="802" class="detail">Review reports</text>
 </svg>

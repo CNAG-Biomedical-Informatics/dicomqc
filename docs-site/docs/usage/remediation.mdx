@@ -6,11 +6,8 @@ import useBaseUrl from '@docusaurus/useBaseUrl';
 
 # Remediation
 
-dicomqc is a validator for DICOM de-identification policies. Like a schema
-validator, it reports non-compliance but does not rewrite the source files.
-
-When dicomqc finds a problem, fix the candidate release dataset with a
-pseudonymization or anonymization tool, then run dicomqc again.
+dicomqc reports metadata problems without changing the files. Fix the reported
+problems with your pseudonymization or anonymization tool, then audit the output again.
 
 <figure className="dicomqcRemediationFigure">
   <picture>
@@ -20,12 +17,12 @@ pseudonymization or anonymization tool, then run dicomqc again.
     />
     <img
       src={useBaseUrl('/img/dicomqc-remediation-loop.svg')}
-      alt="Read-only dicomqc audit and external remediation loop from immutable source DICOM to release evidence"
+      alt="Copy source DICOM files, de-identify them, audit with dicomqc, and fix problems before sharing"
     />
   </picture>
   <figcaption>
-    Remediation changes the external transformation workflow and regenerates the
-    candidate dataset. dicomqc remains read-only and evaluates each new output.
+    Update the de-identification settings, generate a new copy, and rerun
+    dicomqc to check that the problems are fixed.
   </figcaption>
 </figure>
 
@@ -112,19 +109,16 @@ store.
 For XNAT-based workflows, apply XNAT anonymization scripts or containerized
 pipeline steps first, then run dicomqc on the resulting DICOM export.
 
-This keeps dicomqc independent of the site platform while still making it useful
-as a release gate.
+You can audit exported files this way regardless of the platform used to manage them.
 
 ## Custom `pydicom` scripts
 
-Small projects sometimes use custom `pydicom` scripts to remediate metadata.
-Keep those scripts separate from dicomqc and make them explicit pipeline steps.
-
-The dicomqc role is to validate the output and produce redaction-safe evidence.
+You can also edit metadata with a custom `pydicom` script. Run the script as a
+separate step, then use dicomqc to check its output and save the results.
 
 ## Future remediation plans
 
-A future dicomqc release may emit a machine-readable remediation plan such as:
+A future release may write recommended fixes in a format that other tools can read:
 
 ```yaml
 required_changes:

@@ -41,7 +41,7 @@ requireText(
   "useBaseUrl('/img/dicomqc-architecture-mobile.svg')",
   'docs/technical-details/architecture.mdx',
 );
-requireText(architecture, 'Metadata and reporting boundary', 'docs/technical-details/architecture.mdx');
+requireText(architecture, 'What stays out of reports', 'docs/technical-details/architecture.mdx');
 
 const overview = read('docs/overview.md');
 requireText(overview, 'Project status', 'docs/overview.md');
@@ -94,6 +94,12 @@ requireText(homeStyles, '.objectiveFigure {', 'src/pages/index.module.css');
 requireText(homeStyles, 'display: none;', 'src/pages/index.module.css');
 
 requireAccessibleSvg('static/img/dicomqc-objective.svg');
+requireAccessibleSvg('static/img/dicomqc-audit.svg');
+requireAccessibleSvg('static/img/dicomqc-audit-mobile.svg');
+for (const [content, location] of [[home, 'src/pages/index.tsx'], [overview, 'docs/overview.md']]) {
+  requireText(content, "useBaseUrl('/img/dicomqc-audit-mobile.svg')", location);
+  requireText(content, 'media="(max-width: 760px)"', location);
+}
 requireAccessibleSvg('static/img/dicomqc-architecture.svg');
 requireAccessibleSvg('static/img/dicomqc-architecture-mobile.svg');
 requireAccessibleSvg('static/img/dicomqc-ms-mri-workflow.svg');

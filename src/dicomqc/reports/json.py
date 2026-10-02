@@ -12,7 +12,7 @@ from dicomqc.model.results import Finding, ScanResult
 
 
 def result_to_dict(result: ScanResult) -> dict[str, Any]:
-    return {
+    payload = {
         "tool": {"name": "dicomqc", "version": __version__},
         "profile_id": result.profile_id,
         "summary": {
@@ -28,6 +28,11 @@ def result_to_dict(result: ScanResult) -> dict[str, Any]:
         "findings": [_finding_to_dict(finding) for finding in result.findings],
         "skipped_files": result.skipped_files,
     }
+    if hasattr(result, "comparison"):
+        payload["comparison"] = result.comparison
+        # Comparison reports intentionally carry no raw record context.
+        payload["records"] = [{"path": str(record.path)} for record in result.records]
+    return payload
 
 
 def write_json(result: ScanResult, path: Path) -> None:

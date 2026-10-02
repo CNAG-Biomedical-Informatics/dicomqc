@@ -7,9 +7,9 @@ import useBaseUrl from '@docusaurus/useBaseUrl';
 
 # Architecture
 
-dicomqc separates file discovery, DICOM parsing, policy evaluation, and report
-generation. The separation keeps the audit read-only and prevents report
-formats from becoming coupled to pydicom objects.
+dicomqc finds files, reads their metadata, runs checks, and writes reports.
+Each step has its own module. The checks and report writers use dicomqc's data
+models rather than pydicom objects.
 
 <figure className="dicomqcArchitectureFigure">
   <picture>
@@ -19,45 +19,44 @@ formats from becoming coupled to pydicom objects.
     />
     <img
       src={useBaseUrl('/img/dicomqc-architecture.svg')}
-      alt="dicomqc data flow from candidate DICOM files through metadata parsing and policy evaluation to structured reports"
+      alt="DICOM files pass through metadata reading and checks to JSON, CSV, and MultiQC reports"
     />
   </picture>
   <figcaption>
-    Current v0.1 data flow. Raw tag values remain internal to the audit process;
-    report writers emit findings, value states, and aggregate evidence.
+    Version 0.1 reads tag values to run its checks. Reports contain findings,
+    value states, and counts, without copying raw tag values.
   </figcaption>
 </figure>
 
-## Component boundaries
+## Components
 
 | Component | Current responsibility |
 | --- | --- |
-| CLI and scanner | Expand input paths, discover files recursively, select a profile, and coordinate outputs. |
-| `DicomBackend` | Read one file and return a normalized `MetadataRecord`. |
+| CLI and scanner | Find input files recursively, select a profile, and request reports. |
+| `DicomBackend` | Read one file and return its metadata as a `MetadataRecord`. |
 | `PydicomBackend` | Parse DICOM metadata with `stop_before_pixels=True`; pixel data is not loaded. |
-| Metadata model | Represent file context, normalized tags, private-tag status, and `ValueState`. |
+| Metadata model | Store file details, tags, private-tag status, and `ValueState`. |
 | Built-in rules | Evaluate direct PHI fields, pseudonym patterns, and private tags under `research-release-v0.1`. |
 | Result model | Collect records, findings, skipped files, counts, and the process exit status. |
-| Report writers | Produce JSON, CSV, and MultiQC-compatible artifacts without serializing raw tag values. |
+| Report writers | Write JSON, CSV, and MultiQC-compatible reports without raw tag values. |
 
 ## Data flow
 
-1. `scan_paths()` expands files and directories into a deterministic audit set.
+1. `scan_paths()` collects input files in a repeatable order.
 2. The backend reads each file as DICOM metadata. Files that cannot be parsed are
    recorded as skipped rather than silently ignored.
-3. pydicom elements are normalized into `DicomTag` objects inside a
+3. pydicom elements are converted to `DicomTag` objects inside a
    `MetadataRecord`.
-4. Built-in rules may inspect internal values and produce structured `Finding`
-   objects with severity, tag context, and remediation guidance.
+4. Built-in rules inspect metadata and create `Finding` objects with severity,
+   tag details, and recommended fixes.
 5. `ScanResult` combines records, findings, and skipped-file reasons. Its exit
    code is `0` for pass, `1` for review warnings, and `2` for errors or skipped
    files.
-6. Report writers convert that result into review artifacts. Raw DICOM values
-   are deliberately excluded from report serialization.
+6. Report writers save the results without raw DICOM tag values.
 
-## Backend boundary
+## Reading metadata
 
-The parser is isolated behind a small protocol:
+Metadata readers implement this protocol:
 
 ```python
 class DicomBackend(Protocol):
@@ -65,26 +64,22 @@ class DicomBackend(Protocol):
         ...
 ```
 
-The scanner and rule modules operate on normalized records and do not depend on
-pydicom dataset objects. This makes parser behavior testable and leaves room for
-alternative metadata readers without changing policy logic.
+The scanner and rules use `MetadataRecord` objects. Another reader could return
+the same objects without requiring changes to the rules.
 
-## Metadata and reporting boundary
+## What stays out of reports
 
-`MetadataRecord` includes file-level context such as modality, manufacturer,
-Study Instance UID, and Series Instance UID, together with normalized tag
-records. Each `DicomTag` tracks its number, keyword, value representation,
+`MetadataRecord` stores modality, manufacturer, Study Instance UID,
+Series Instance UID, and tags. Each `DicomTag` stores its number, keyword, value representation,
 private-tag status, value state, and an internal raw value.
 
-The raw value is available to rules because pattern checks require it. It is not
-written to JSON, CSV, or MultiQC outputs. This is a reporting boundary, not a
-claim that every remaining metadata field is non-identifying; release artifacts
-still require appropriate governance and access control.
+Rules need raw tag values for checks such as pseudonym matching. Report writers
+omit those values. Reports still contain file paths and other context that may
+identify people or datasets, so review them before sharing and restrict access
+when needed.
 
-## Extension direction
+## Planned extensions
 
-The current package ships one built-in profile. Planned plugin discovery,
-policy-language support, vendor fingerprinting, and standards-specific rule
-packs should extend the rule and backend boundaries rather than bypass them.
-See [Extending dicomqc](./extending-dicomqc.md) for the proposed interfaces and
-the distinction between current and planned capabilities.
+The current package has one built-in profile. Future plugins, configurable
+policies, vendor metadata summaries, and standards-specific checks would use
+the same reader and rule interfaces. See [Planned Features](./extending-dicomqc.md).

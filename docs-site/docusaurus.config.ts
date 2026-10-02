@@ -4,7 +4,7 @@ import type * as Preset from '@docusaurus/preset-classic';
 
 const config: Config = {
   title: 'dicomqc documentation',
-  tagline: 'A policy-driven, standards-aware audit framework for validating DICOM de-identification and research-release readiness',
+  tagline: 'Audit de-identified DICOM metadata for privacy risks',
   url: 'https://cnag-biomedical-informatics.github.io',
   baseUrl: '/dicomqc/',
   organizationName: 'CNAG-Biomedical-Informatics',

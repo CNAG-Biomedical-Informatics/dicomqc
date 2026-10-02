@@ -1,6 +1,6 @@
 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 900 810" role="img" aria-labelledby="title desc">
   <title id="title">dicomqc remediation loop</title>
-  <desc id="desc">An immutable DICOM source is processed by an external transformation tool to create a candidate dataset. dicomqc audits the candidate. Findings return to the external tool for remediation and regeneration, while a passing result proceeds to release evidence.</desc>
+  <desc id="desc">An immutable DICOM source is processed by an external transformation tool to create a candidate dataset. dicomqc audits the candidate. Findings return to the external tool for remediation and regeneration, while a passing result proceeds to audit reports.</desc>
   <defs>
     <marker id="arrow" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse">
       <path d="M 0 0 L 10 5 L 0 10 z" class="arrowHead"/>
@@ -42,7 +42,7 @@
   </defs>
 
   <text x="30" y="35" class="pageTitle">Read-only audit and remediation loop</text>
-  <text x="30" y="63" class="note">Transform files externally, evaluate the candidate, and regenerate rather than patching the only source copy</text>
+  <text x="30" y="63" class="note">De-identify a copy, audit it, fix problems, and rerun</text>
 
   <rect x="180" y="90" width="540" height="82" rx="4" class="node"/>
   <text x="204" y="116" class="phase">SOURCE CONTROL</text>
@@ -59,19 +59,19 @@
   <rect x="180" y="334" width="540" height="82" rx="4" class="node"/>
   <text x="204" y="360" class="phase">WORKING OUTPUT</text>
   <text x="204" y="389" class="nodeTitle">Candidate release DICOM</text>
-  <text x="503" y="388" class="detail">Derived working copy</text>
+  <text x="503" y="388" class="detail">De-identified working copy</text>
   <line x1="450" y1="417" x2="450" y2="446" class="flow"/>
 
   <rect x="180" y="449" width="540" height="96" rx="4" class="node audit"/>
   <text x="204" y="476" class="phase">INDEPENDENT QC</text>
   <text x="204" y="505" class="nodeTitle">dicomqc metadata audit</text>
-  <text x="204" y="528" class="detail">Read-only policy evaluation</text>
+  <text x="204" y="528" class="detail">Read-only metadata checks</text>
   <text x="494" y="527" class="code">JSON / CSV / MultiQC</text>
   <line x1="450" y1="546" x2="450" y2="575" class="flow"/>
 
   <rect x="180" y="578" width="540" height="100" rx="4" class="node result"/>
   <text x="204" y="605" class="phase">DECISION</text>
-  <text x="204" y="634" class="nodeTitle">Pass or actionable findings</text>
+  <text x="204" y="634" class="nodeTitle">Pass or findings to review</text>
   <text x="559" y="633" class="code">exit 0 / 1 / 2</text>
   <text x="204" y="657" class="detail">Recommendations update the transformation workflow</text>
 
@@ -84,5 +84,5 @@
   <text x="467" y="709" class="phase">PASSED AND REVIEWED</text>
   <rect x="275" y="725" width="350" height="62" rx="4" class="node"/>
   <text x="299" y="750" class="phase">RELEASE RECORD</text>
-  <text x="299" y="775" class="nodeTitle">DICOM + audit evidence</text>
+  <text x="299" y="775" class="nodeTitle">DICOM + audit reports</text>
 </svg>

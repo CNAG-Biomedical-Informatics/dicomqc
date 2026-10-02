@@ -28,6 +28,11 @@ const sidebars: SidebarsConfig = {
         },
         {
           type: 'doc',
+          id: 'usage/compare',
+          label: 'Compare datasets',
+        },
+        {
+          type: 'doc',
           id: 'usage/remediation',
           label: 'Remediation',
         },

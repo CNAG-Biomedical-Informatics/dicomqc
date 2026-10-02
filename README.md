@@ -3,7 +3,7 @@
     <img src="https://raw.githubusercontent.com/CNAG-Biomedical-Informatics/dicomqc/main/docs-site/static/img/dicomqc-logo.png"
          width="300" alt="dicomqc">
   </a>
-  <p><em>Policy-driven DICOM de-identification audit and research-release readiness reporting</em></p>
+  <p><em>Audit de-identified DICOM metadata for privacy risks</em></p>
 </div>
 
 [![Build](https://github.com/CNAG-Biomedical-Informatics/dicomqc/actions/workflows/build-and-test.yml/badge.svg)](https://github.com/CNAG-Biomedical-Informatics/dicomqc/actions/workflows/build-and-test.yml)
@@ -14,12 +14,13 @@
 
 ---
 
-**dicomqc** is a policy-driven, standards-aware audit framework for validating
-DICOM de-identification and research-release readiness.
+**dicomqc** audits de-identified DICOM metadata for privacy risks.
 
-dicomqc inspects DICOM metadata after pseudonymization or anonymization and
-produces redaction-safe audit evidence in JSON, CSV, and MultiQC-compatible
-formats.
+It flags identifying fields, unexpected pseudonym formats, private tags, and
+unreadable files. It writes JSON, CSV, and MultiQC-compatible reports without
+copying raw DICOM tag values.
+
+![How dicomqc audits metadata and writes reports.](docs-site/static/img/dicomqc-audit.svg)
 
 **Documentation:** <https://cnag-biomedical-informatics.github.io/dicomqc/>
 
@@ -27,22 +28,22 @@ dicomqc is **not an anonymizer**. It never modifies original DICOM files. If it
 reports required changes, apply them with an external pseudonymization or
 anonymization tool and rerun the audit.
 
-The intended operating mode is DICOM-in and DICOM-out: raw `.dcm` files are
-pseudonymized into release-candidate `.dcm` files, and dicomqc audits those
-outputs before research sharing.
+Pseudonymize the source DICOM files with your chosen tool, then audit the
+resulting DICOM files with dicomqc before sharing them.
 
-## Key Points
+## Features
 
 - Metadata-only DICOM scanning with `pydicom`
 - Built-in research-release checks for direct PHI, pseudonym format, and private tags
-- Redaction-safe reports that do not emit raw DICOM values
-- JSON and CSV outputs for pipeline evidence
+- Reports that omit raw DICOM tag values
+- JSON and CSV reports for automated workflows and review
 - MultiQC custom-content output with a styled example report
 - Synthetic DICOM fixtures for reproducible tests and demonstrations
-- Read-only design: remediation is performed by external tools such as DCMTK,
-  Orthanc, XNAT workflows, or custom pipeline steps
-- Future scope for policy DSLs, DICOM PS3.15 profiles, BIDS-oriented checks,
-  plugin architecture, and vendor metadata fingerprinting
+- Fix findings with external tools such as DCMTK, Orthanc, XNAT, or custom scripts
+
+Version 0.1 does not inspect pixels or facial features, or certify compliance
+with DICOM PS3.15, BIDS, HIPAA, or GDPR. Configurable policies, standards-specific
+checks, plugins, and vendor metadata summaries are planned.
 
 ## Installation
 
@@ -84,7 +85,7 @@ dicomqc demo
 
 This creates `dicomqc-demo/` with synthetic `.dcm` files, `report.json`,
 `findings.csv`, and MultiQC custom-content files. The demo includes intentional
-findings so users can see what a failed release gate looks like.
+findings so you can see how problems appear in the reports.
 
 Run an audit on a directory of candidate release `.dcm` files:
 
@@ -98,11 +99,24 @@ Exit codes:
 - `1`: warnings only
 - `2`: validation errors or fatal scan failure
 
+## Compare datasets
+
+The source checkout also includes `dicomqc compare` for checking file completeness
+and patient pseudonym consistency between source and de-identified datasets:
+
+```bash
+dicomqc compare raw_mri/ candidate_mri/ --manifest pairs.csv --json comparison.json
+```
+
+The CSV manifest pairs source and output paths explicitly. See
+[Compare datasets](docs-site/docs/usage/compare.md) for its format and limitations.
+This command is not included in the published v0.1.0 package.
+
 ## Reports
 
 | Output | Purpose |
 | --- | --- |
-| JSON | Full structured audit result for pipelines and archival evidence |
+| JSON | Complete audit results for automated workflows and record keeping |
 | CSV | One row per finding for review and spreadsheet workflows |
 | MultiQC | Custom-content summary for projects that aggregate QC reports |
 
@@ -138,17 +152,19 @@ Important docs:
 
 ## Prior Work
 
-dicomqc is intended to build on and complement related work, not duplicate it.
-Known related projects include:
+Related projects include:
 
 - [`SPMIC-UoN/xnat-dicomqc`](https://github.com/SPMIC-UoN/xnat-dicomqc): an XNAT
   container script for configurable tag-based QC on scan DICOMs.
 - [`IUSCA/SQAN`](https://github.com/IUSCA/SQAN): Scalable Quality Assurance for
   Neuroimaging, a broader DICOM metadata ETL and QC verification system.
 
-The initial dicomqc direction is a backend-independent, policy-driven audit
-framework focused on de-identification validation, release-readiness evidence,
-and future standards-aware rule packs.
+dicomqc runs locally without XNAT or a data-management platform. Its focus is
+auditing metadata after de-identification and saving the results for review.
+Like xnat-dicomqc, it checks DICOM tags against rules. xnat-dicomqc supports
+project-defined tests in an Excel configuration file; dicomqc v0.1 has one
+built-in privacy profile. See the [prior-work comparison](https://cnag-biomedical-informatics.github.io/dicomqc/docs/about/prior-work)
+for differences in setup, checks, and reporting.
 
 ## Citation
 

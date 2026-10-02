@@ -1,0 +1,71 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="440" height="1450" viewBox="0 0 440 1450" role="img" aria-labelledby="title desc">
+  <title id="title">DICOM metadata audit: mobile illustration</title>
+  <desc id="desc">A vertical example shows a fictional DICOM file with a synthetic MRI preview and metadata. dicomqc reads only metadata, flags a birth date and private tags, and writes reports without tag values. An external tool removes the birth date and reviewed private tags from a new copy. Rescanning passes with zero errors and warnings. Pixel privacy and sharing still need review.</desc>
+  <defs>
+    <marker id="arrow" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="7" markerHeight="7" orient="auto"><path d="M0 0L10 5L0 10Z" fill="#0b6b76"/></marker>
+    <g id="brain">
+      <ellipse rx="73" ry="83" fill="#394550" stroke="#a1abb5" stroke-width="3"/>
+      <ellipse rx="67" ry="76" fill="#17212c"/>
+      <path id="half" d="M-5-69C-32-79-59-49-60-20C-71 13-54 55-28 68C-15 76-7 52-5 32Z" fill="#8d98a2" stroke="#c7cdd3" stroke-width="2"/>
+      <use href="#half" transform="scale(-1 1)"/>
+      <g fill="none" stroke="#394550" stroke-width="3" stroke-linecap="round">
+        <path id="folds" d="M-16-56C-46-50-30-30-53-19M-9-36C-40-34-14-12-50-4M-12-6C-38-3-22 17-53 21M-10 24C-44 19-25 45-40 50M-22-65C-12-47-29-42-19-28M-52-34C-39-23-50-8-37 3M-54 32C-37 30-46 48-28 58"/>
+        <use href="#folds" transform="scale(-1 1)"/>
+      </g>
+      <path id="ventricle" d="M-6-20C-22-24-26-3-14 10L-6 24Z" fill="#17212c"/>
+      <use href="#ventricle" transform="scale(-1 1)"/>
+    </g>
+  </defs>
+  <rect width="440" height="1450" rx="20" fill="#f1f6f6"/>
+  <g font-family="system-ui, sans-serif" fill="#0f172a">
+    <text x="24" y="34" font-size="12" font-weight="700" fill="#0b6b76">DICOM → METADATA → AUDIT</text>
+    <text x="24" y="69" font-size="26" font-weight="700">What’s still in the file?</text>
+    <text x="24" y="96" font-size="15" fill="#52636a">After de-identification · fictional data</text>
+
+    <rect x="24" y="120" width="392" height="570" rx="14" fill="#fff" stroke="#ccd5d4"/>
+    <path d="M38 120H402Q416 120 416 134V166H24V134Q24 120 38 120" fill="#e5eeee"/>
+    <text x="40" y="149" font-size="15" font-weight="700">series-01 / image-001.dcm</text>
+    <rect x="40" y="182" width="360" height="214" rx="9" fill="#0d1520"/>
+    <use href="#brain" transform="translate(220 290)"/>
+    <g font-family="monospace" font-size="12" fill="#c7d4df"><text x="52" y="204">MR / AXIAL</text><text x="52" y="379">SYNTHETIC ILLUSTRATION</text></g>
+    <text x="40" y="424" font-size="14" font-weight="700" fill="#0b6b76">METADATA / SAMPLE VALUES</text>
+    <g font-size="15">
+      <text x="40" y="454">PatientID</text><text x="40" y="478" font-family="monospace" fill="#52636a">(0010,0020)  sub-001</text>
+      <rect x="34" y="490" width="372" height="62" rx="5" fill="#fff1ed"/>
+      <text x="40" y="513">PatientBirthDate</text><text x="40" y="537" font-family="monospace" fill="#a33f2e">(0010,0030)  19700101</text>
+      <rect x="34" y="559" width="372" height="62" rx="5" fill="#fff8e7"/>
+      <text x="40" y="582">Private creator</text><text x="40" y="606" font-family="monospace" fill="#895f08">(0029,0010)  DEMO_VENDOR</text>
+      <text x="40" y="644">Modality</text><text x="40" y="668" font-family="monospace" fill="#52636a">(0008,0060)  MR</text>
+    </g>
+    <path d="M220 700V764" stroke="#0b6b76" stroke-width="2" marker-end="url(#arrow)"/>
+    <rect x="91" y="708" width="258" height="46" rx="8" fill="#f1f6f6"/>
+    <text x="220" y="726" text-anchor="middle" font-size="14" font-weight="700" fill="#0b6b76">Only metadata is read</text>
+    <text x="220" y="747" text-anchor="middle" font-size="13" fill="#52636a">Pixels are not inspected</text>
+
+    <rect x="24" y="782" width="392" height="116" rx="14" fill="#0b6b76"/>
+    <text x="40" y="817" font-size="26" font-weight="700" fill="#fff">dicomqc</text>
+    <text x="40" y="844" font-size="15" fill="#fff">Identifiers · pseudonyms · private tags</text>
+    <text x="40" y="876" font-size="15" font-family="monospace" fill="#dcf3f3">$ dicomqc scan series-01/</text>
+    <path d="M220 907V929" stroke="#0b6b76" stroke-width="2" marker-end="url(#arrow)"/>
+
+    <rect x="24" y="948" width="392" height="146" rx="14" fill="#fff" stroke="#ccd5d4"/>
+    <text x="40" y="976" font-size="14" font-weight="700">FIRST AUDIT</text>
+    <text x="40" y="1005" font-size="15" fill="#a33f2e">ERROR · PatientBirthDate is present</text>
+    <text x="40" y="1033" font-size="15" fill="#895f08">WARN · Private tags need review</text>
+    <text x="40" y="1060" font-size="13" fill="#52636a">JSON / CSV / MultiQC · Tag values omitted</text>
+    <text x="40" y="1081" font-size="13" fill="#52636a">Input unchanged · Exit code 2</text>
+    <path d="M220 1103V1125" stroke="#0b6b76" stroke-width="2" marker-end="url(#arrow)"/>
+
+    <rect x="24" y="1144" width="392" height="115" rx="14" fill="#fff" stroke="#ccd5d4"/>
+    <text x="40" y="1172" font-size="14" font-weight="700">FIX WITH AN EXTERNAL TOOL</text>
+    <text x="40" y="1198" font-size="15" fill="#52636a">Remove birth date and reviewed private tags.</text>
+    <text x="40" y="1223" font-size="15" fill="#52636a">Generate a new copy; keep sub-001.</text>
+    <text x="40" y="1246" font-size="13" fill="#52636a">Rerun dicomqc on the new copy.</text>
+    <path d="M220 1268V1290" stroke="#0b6b76" stroke-width="2" marker-end="url(#arrow)"/>
+    <rect x="24" y="1309" width="392" height="90" rx="14" fill="#edf7f0" stroke="#81af92"/>
+    <text x="40" y="1336" font-size="14" font-weight="700" fill="#287346">RESCANNED WITH dicomqc</text>
+    <text x="40" y="1363" font-size="21" font-weight="700" fill="#287346">0 errors · 0 warnings</text>
+    <text x="40" y="1386" font-size="13" fill="#52636a">Metadata checks passed · Exit code 0</text>
+    <text x="24" y="1425" font-size="13" fill="#52636a">Image privacy and sharing still need review.</text>
+  </g>
+</svg>
