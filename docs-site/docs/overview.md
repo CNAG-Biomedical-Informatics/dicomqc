@@ -11,6 +11,9 @@ It reports patient-identifying fields, unexpected pseudonym
 formats, private tags, and files that could not be read. It never changes the
 DICOM files.
 
+Use the [desktop app](usage/desktop.md) for file selection, run history, and
+report review, or the CLI for scripted workflows. Both use the same audit engine.
+
 <picture>
   <source media="(max-width: 760px)" srcSet={useBaseUrl('/img/dicomqc-audit-mobile.svg')} />
   <img src={useBaseUrl('/img/dicomqc-audit.svg')} alt="A fictional DICOM metadata audit flags a birth date and private tags. After external fixes, a rescan passes. Pixels and sharing still need review." />
@@ -18,14 +21,30 @@ DICOM files.
 
 :::info Project status
 
-This documentation covers **v0.2.0**. It includes a metadata-only scanner,
-built-in privacy checks, offline HTML reports, JSON and CSV reports, and
+dicomqc includes a metadata-only scanner, built-in privacy checks,
+offline HTML reports, JSON and CSV reports, and
 MultiQC-compatible scan output.
-The new [dataset comparison](usage/compare.md) checks file completeness and
+[Dataset comparison](usage/compare.md) checks file completeness and
 patient pseudonym consistency between source and de-identified files.
-Standards-specific checks and plugins are planned for later releases.
+[Project policies](usage/policies.md) add site-specific metadata requirements.
+[Scanner inventory](usage/vendor-summary.md) optionally lists declared scanner
+and software labels and private creator blocks. These labels may contain
+identifying information; review them before sharing.
+[UID integrity](usage/uid-integrity.md) checks identifier syntax, role reuse,
+and conflicting study/series relationships.
 
 :::
+
+## Use the desktop app
+
+In **Setup**, select files or folders and choose an **Output folder**. Run an
+audit, then select **Findings** or **Reports** to review its results. Sources and
+searchable run history remain in the sidebar. Each audit has a separate output
+subfolder; changing the output folder preserves selected inputs.
+
+**Explore with synthetic data** runs five built-in examples without patient data.
+The app and its audit service run locally. See [Desktop app](usage/desktop.md)
+for source-build instructions; installers have not been published.
 
 ## Run from the command line
 
@@ -64,7 +83,7 @@ The recommended process is:
   is a term from US health-privacy law, dicomqc uses it in rule names for
   identifiable DICOM metadata.
 - **Value state** says whether a tag value is present, empty, or absent.
-  Reports include this state without copying the raw tag value.
+  Findings include this state without copying the raw tag value.
 - **Private tag** means a vendor- or organization-defined DICOM data element.
   Private tags are not automatically safe or unsafe; they require review.
 
@@ -77,12 +96,17 @@ The built-in `research-release-v0.1` profile checks for:
 - private DICOM tags that require review;
 - unreadable or skipped input files.
 
+[YAML policies](usage/policies.md) add requirements
+for empty fields, required values, approved descriptions, and patient-ID formats.
+They do not replace the built-in checks.
+
 Reports identify the file, rule, tag, severity, and recommended action for each
-finding. They also include summary counts. Raw DICOM tag values are omitted.
+finding. They also include summary counts. Findings omit observed tag values;
+see [what stays out of reports](technical-details/architecture.mdx#what-stays-out-of-reports) before sharing.
 
 :::caution Limits
 
-dicomqc v0.2 does not modify files, inspect pixel data or facial features, or
+dicomqc does not modify files, inspect pixel data or facial features, or
 certify compliance with DICOM PS3.15, BIDS, HIPAA, or GDPR. A qualified reviewer
 must still decide whether the data can be shared.
 
@@ -93,10 +117,14 @@ must still decide whether the data can be shared.
 | Task | Documentation |
 | --- | --- |
 | Install the CLI | [Install](usage/install.md) |
+| Select files and review audits in the desktop app | [Desktop app](usage/desktop.md) |
 | Generate the demo and run an audit | [Quickstart](usage/quickstart.md) |
 | Compare source and de-identified datasets | [Compare datasets](usage/compare.md) |
+| Add project-specific checks | [Project policies](usage/policies.md) |
+| Inspect scanner labels and private creator blocks | [Scanner inventory](usage/vendor-summary.md) |
+| Check identifiers and study/series relationships | [UID integrity](usage/uid-integrity.md) |
 | Audit a large MS MRI collection | [MS MRI workflow](usage/ms-mri-workflow.mdx) |
-| Read reports and view them in MultiQC | [Reports](usage/reports.md) |
+| Review a scan in HTML or MultiQC | [Scan walkthrough](usage/quickstart.md#open-the-reports) |
 | Fix reported problems with external tools | [Remediation](usage/remediation.mdx) |
 | Understand the implementation | [Architecture](technical-details/architecture.mdx) |
 | Compare related software | [Prior work](about/prior-work.md) |

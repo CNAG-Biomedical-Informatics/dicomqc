@@ -10,6 +10,9 @@ from pathlib import Path
 
 from dicomqc import __version__
 from dicomqc.model.results import Finding, ScanResult
+from dicomqc.reports.status import audit_guidance, audit_status
+from dicomqc.reports.vendor import VENDOR_STYLE, render_vendor_inventory
+from dicomqc.reports.uid import render_uid_coverage
 
 
 _STYLE = """
@@ -71,7 +74,11 @@ def _bars(items: list[tuple[str, int, str]], maximum: int, *, interactive: bool 
 
 
 def _category(finding: Finding) -> str:
+    if finding.profile_id == "uid-integrity-v0.1":
+        return "UID integrity"
     """Share classification between chart controls and finding rows."""
+    if finding.profile_id.startswith("policy."):
+        return "Project policy"
     name = finding.rule_id.removeprefix(finding.profile_id + ".")
     if name.startswith("direct_phi."):
         return "Identifying fields"
@@ -243,11 +250,13 @@ def _issue(group: list[Finding], number: int) -> str:
 def render_html(result: ScanResult, *, synthetic: bool = False, demo_phase: str | None = None) -> str:
     """Render findings only; never embed raw records, JSON, or parser messages."""
     comparison = getattr(result, "comparison", None)
-    if demo_phase is not None and (not synthetic or comparison is None or demo_phase not in {"before", "after"}):
-        raise ValueError("Demo navigation requires a synthetic comparison and a before/after phase.")
+    if demo_phase is not None and (
+        not synthetic or (comparison is None and result.policy is None and result.uid_checks is None) or demo_phase not in {"before", "after"}
+    ):
+        raise ValueError("Demo navigation requires a synthetic comparison, policy, or UID audit and a before/after phase.")
     demo_nav = ""
     if demo_phase is not None:
-        demo_nav = '<nav class="demo-nav" aria-label="Comparison demo">'
+        demo_nav = '<nav class="demo-nav" aria-label="Before and after demo">'
         for phase, label in (("before", "Before corrections"), ("after", "After corrections")):
             current = ' aria-current="page"' if phase == demo_phase else ""
             demo_nav += f'<a href="{phase}.html"{current}>{label}</a>'
@@ -255,22 +264,8 @@ def render_html(result: ScanResult, *, synthetic: bool = False, demo_phase: str 
     title = "Dataset comparison" if comparison is not None else "DICOM metadata audit"
     demo_note = '<aside class="demo-note"><strong>Synthetic demo</strong> · These results use generated example data, not patient files.</aside>' if synthetic else ""
     code = result.exit_code()
-    status, status_class = (
-        ("Errors require attention", "error") if code == 2 else
-        ("Warnings require review", "warning") if code == 1 else
-        ("No readable files", "warning") if not result.files_scanned else
-        ("Checks passed", "pass")
-    )
-    if result.skipped_files:
-        next_step = "Some files could not be read. Resolve the unreadable inputs, review any findings, and rerun the audit. Coverage is incomplete."
-    elif code == 2:
-        next_step = "Review the issues below, correct the files or pairing externally, then rerun the audit."
-    elif code == 1:
-        next_step = "Review each warning and its recommended action. Apply any required changes with your external tools, then rerun the audit."
-    elif not result.files_scanned:
-        next_step = "No readable DICOM files were audited. Check the input location and file selection before interpreting this result."
-    else:
-        next_step = "No errors or warnings were recorded. Retain this report and complete the remaining data-sharing review; pixels and facial features were not checked."
+    status, status_class = audit_status(result)
+    next_step = audit_guidance(result)
     groups = _groups(result.findings)
     rows = [_issue(group, number) for number, group in enumerate(groups, 1)]
     inventory_items = (
@@ -304,16 +299,34 @@ def render_html(result: ScanResult, *, synthetic: bool = False, demo_phase: str 
         skipped += '</ul></div></section>'
     script_hash = base64.b64encode(hashlib.sha256(_SCRIPT.encode()).digest()).decode()
     category_options = "".join(f'<option>{escape(label)}</option>' for label in sorted({_category(finding) for finding in result.findings}))
+    policy_meta = ""
+    if result.policy is not None:
+        policy_meta = (
+            f'<p><span>Project policy</span><code>{escape(result.policy["id"])}</code> · Additive checks</p>'
+            f'<p><span>Policy SHA-256</span><code>{escape(result.policy["sha256"])}</code></p>'
+        )
     overview = (
         f'{_charts(result)}{inventory}<p class="coverage-note">{coverage_note}</p>'
         f'<div class="audit-meta"><p><span>Audit profile</span><code>{escape(result.profile_id)}</code></p>'
         f'<p><span>Engine</span>dicomqc {escape(__version__)} · Exit code {code}</p>'
+        f'{policy_meta}'
         '<p><span>Scope</span>Metadata only · Read-only</p></div>'
+        f'{render_uid_coverage(result.uid_checks)}'
+    )
+    vendor_body = render_vendor_inventory(result.vendor_summary) if result.vendor_summary is not None else ""
+    vendor_panel = (
+        '<details class="supporting" id="vendor-panel"><summary>Scanner and private-tag inventory</summary>'
+        f'<div class="supporting-content">{vendor_body}</div></details>'
+        f'<div class="print-overview">{vendor_body}</div>'
+    ) if vendor_body else ""
+    privacy_note = (
+        "Vendor inventory includes observed metadata labels. Findings omit raw tag values."
+        if vendor_body else "Raw tag values are omitted."
     )
     return f'''<!doctype html>
 <html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1">
 <meta http-equiv="Content-Security-Policy" content="default-src 'none'; script-src 'sha256-{script_hash}'; style-src 'unsafe-inline'; base-uri 'none'; form-action 'none'">
-<title>dicomqc — {title}</title><style>{_STYLE}</style></head>
+<title>dicomqc — {title}</title><style>{_STYLE}{VENDOR_STYLE if vendor_body else ""}</style></head>
 <body><a class="skip-link" href="#findings-title">Skip to findings</a>
 <div class="topbar"><div class="brand">dicomqc <small>Audit workspace</small></div><button type="button" id="print" hidden>Print report</button></div>
 <main>{demo_note}{demo_nav}<header class="hero" id="summary">
@@ -322,6 +335,7 @@ def render_html(result: ScanResult, *, synthetic: bool = False, demo_phase: str 
 </header>
 <details class="supporting" id="overview-panel"><summary>{"Pairing coverage, charts and audit details" if comparison is not None else "Charts and audit details"}</summary><div class="supporting-content">{overview}</div></details>
 <div class="print-overview">{overview}</div>
+{vendor_panel}
 <div class="workspace"><div class="review"><section aria-labelledby="findings-title"><div class="section-heading"><h2 id="findings-title" tabindex="-1">Issues to review</h2></div>
 <details class="filter-panel" id="filter-panel" hidden><summary>Search and filter</summary>
 <div class="controls" id="controls" hidden>
@@ -334,7 +348,7 @@ def render_html(result: ScanResult, *, synthetic: bool = False, demo_phase: str 
 <p id="no-matches" hidden>No findings match these filters. Change your search or choose Reset filters to see all findings.</p>
 <div id="findings-body">{"".join(rows)}</div></section>{skipped}</div></div>
 <footer id="report-notes"><p>Metadata audit only. Pixels and facial features are not inspected. A passing result is not approval to share data.</p>
-<p>Raw tag values are omitted. Scan paths may still identify people; review reports before sharing. Comparison reports use manifest references.</p>
+<p>{privacy_note} Scan paths may still identify people; review reports before sharing. Comparison reports use manifest references.</p>
 <p>This report works offline. Printing includes all findings, regardless of active filters.</p></footer>
 </main><script>{_SCRIPT}</script></body></html>
 '''

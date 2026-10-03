@@ -1,4 +1,4 @@
-import {readFileSync} from 'node:fs';
+import {existsSync, readFileSync} from 'node:fs';
 import {fileURLToPath} from 'node:url';
 import {dirname, join} from 'node:path';
 
@@ -24,7 +24,7 @@ function requireAccessibleSvg(relativePath) {
 const home = read('src/pages/index.tsx');
 requireText(home, "useBaseUrl('/img/dicomqc-objective.svg')", 'src/pages/index.tsx');
 requireText(home, 'Check DICOM metadata before sharing research data.', 'src/pages/index.tsx');
-requireText(home, 'Version 0.2 does not pseudonymize', 'src/pages/index.tsx');
+requireText(home, 'dicomqc does not pseudonymize', 'src/pages/index.tsx');
 
 if (home.includes('dicomqc-logo.png')) {
   throw new Error('The landing page should use the lowercase wordmark, not the legacy logo image');
@@ -53,7 +53,7 @@ const plannedFeatures = read('docs/technical-details/extending-dicomqc.md');
 requireText(plannedFeatures, '# Planned Features', 'docs/technical-details/extending-dicomqc.md');
 requireText(
   plannedFeatures,
-  'not available in dicomqc v0.2',
+  '## Broader standards coverage',
   'docs/technical-details/extending-dicomqc.md',
 );
 
@@ -64,6 +64,33 @@ requireText(install, 'python -m pip install -e ".[test]"', 'docs/usage/install.m
 
 const quickstart = read('docs/usage/quickstart.md');
 requireText(quickstart, '[Install](install.md)', 'docs/usage/quickstart.md');
+requireText(quickstart, '/img/html-report-scan.png', 'docs/usage/quickstart.md');
+requireText(quickstart, '/img/multiqc-dicomqc-module.png', 'docs/usage/quickstart.md');
+const comparison = read('docs/usage/compare.md');
+requireText(comparison, '/img/html-report-before.png', 'docs/usage/compare.md');
+requireText(comparison, '/img/html-report-after.png', 'docs/usage/compare.md');
+requireText(comparison, 'Example JSON finding', 'docs/usage/compare.md');
+requireText(comparison, 'Example CSV rows', 'docs/usage/compare.md');
+const policies = read('docs/usage/policies.md');
+requireText(policies, '/img/html-report-policy.png', 'docs/usage/policies.md');
+requireText(policies, '/img/html-report-policy-after.png', 'docs/usage/policies.md');
+const vendor = read('docs/usage/vendor-summary.md');
+const uid = read('docs/usage/uid-integrity.md');
+requireText(uid, '/img/html-report-uid.png', 'docs/usage/uid-integrity.md');
+requireText(uid, '/img/html-report-uid-after.png', 'docs/usage/uid-integrity.md');
+requireText(uid, '--uid-checks', 'docs/usage/uid-integrity.md');
+requireText(vendor, '/img/html-report-vendor.png', 'docs/usage/vendor-summary.md');
+requireText(vendor, '--vendor-summary', 'docs/usage/vendor-summary.md');
+if (existsSync(join(root, 'docs/usage/reports.md'))) {
+  throw new Error('Report documentation belongs with the walkthroughs and CLI reference');
+}
+for (const location of ['docusaurus.config.ts', 'sidebars.ts', 'src/pages/index.tsx']) {
+  if (read(location).includes('usage/reports')) {
+    throw new Error(location + ' must not link to the removed Reports page');
+  }
+}
+requireText(quickstart, '### Review the HTML report', 'docs/usage/quickstart.md');
+requireText(read('docs/reference/cli.md'), '## Output formats', 'docs/reference/cli.md');
 
 const msMriWorkflow = read('docs/usage/ms-mri-workflow.mdx');
 requireText(

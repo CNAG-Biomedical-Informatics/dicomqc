@@ -1,0 +1,25 @@
+# Example project requirements, not a universal de-identification profile.
+# Keep this file outside the DICOM directories being scanned.
+version: 1
+id: research-example
+rules:
+  - id: no-patient-comments
+    keyword: PatientComments
+    check: absent_or_empty
+
+  - id: approved-study-description
+    keyword: StudyDescription
+    check: allowed_values
+    values: ["Brain MRI", "Chest CT"]
+
+  - id: identity-removal-declared
+    keyword: PatientIdentityRemoved
+    scope: top_level
+    check: allowed_values
+    values: ["YES"]
+
+  - id: patient-id-format
+    keyword: PatientID
+    scope: top_level
+    check: matches
+    pattern: "sub-[0-9][0-9][0-9]"

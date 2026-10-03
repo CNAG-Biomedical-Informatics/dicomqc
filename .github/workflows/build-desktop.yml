@@ -1,0 +1,121 @@
+name: Build desktop test artifacts
+
+on:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  desktop:
+    name: ${{ matrix.platform }}
+    runs-on: ${{ matrix.os }}
+    timeout-minutes: 90
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - {platform: macos-x64, os: macos-15-intel, bundle: dmg}
+          - {platform: macos-arm64, os: macos-15, bundle: dmg}
+          - {platform: windows-x64, os: windows-2022, bundle: nsis}
+          - {platform: linux-x64, os: ubuntu-22.04, bundle: appimage}
+          - {platform: linux-arm64, os: ubuntu-24.04-arm, bundle: appimage}
+    steps:
+      - uses: actions/checkout@v5
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - uses: actions/setup-node@v6
+        with:
+          node-version: '24'
+          cache: npm
+          cache-dependency-path: app/package-lock.json
+      - uses: dtolnay/rust-toolchain@stable
+
+      - name: Verify package, app and Tauri versions
+        run: python scripts/build_desktop_engine.py --check-versions
+
+      - name: Install Linux native dependencies
+        if: runner.os == 'Linux'
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y build-essential libssl-dev libgtk-3-dev libwebkit2gtk-4.1-dev libayatana-appindicator3-dev librsvg2-dev patchelf libfuse2 xvfb xauth
+
+      - name: Install Python engine and build dependencies
+        run: python -m pip install ".[api,desktop-build,test,api-test]"
+
+      - name: Test Python engine and packaging
+        run: python -m pytest --junitxml=build/python-tests.xml
+
+      - name: Install frontend dependencies
+        working-directory: app
+        run: npm ci
+
+      - name: Test frontend
+        working-directory: app
+        run: npm test
+
+      - name: Build native Python engine
+        run: python scripts/build_desktop_engine.py
+
+      - name: Smoke test relocated frozen engine and worker processes
+        env:
+          DICOMQC_DESKTOP_ENGINE: app/src-tauri/engine
+        run: python -m pytest tests/test_desktop_build.py -k frozen --no-cov --junitxml=build/frozen-tests.xml
+
+      - name: Build frontend
+        working-directory: app
+        run: npm run build
+
+      - name: Test Rust launcher
+        run: cargo test --manifest-path app/src-tauri/Cargo.toml --locked
+
+      - name: Test native bridge with frozen engine
+        env:
+          DICOMQC_TEST_ENGINE: ${{ github.workspace }}/app/src-tauri/engine/dicomqc-api${{ runner.os == 'Windows' && '.exe' || '' }}
+        run: cargo test --manifest-path app/src-tauri/Cargo.toml --locked -- --ignored
+
+      - name: Smoke test Linux native GUI
+        if: runner.os == 'Linux'
+        env:
+          DICOMQC_SMOKE_DIR: ${{ github.workspace }}/build/native-verification
+          DICOMQC_DESKTOP_ENGINE: ${{ github.workspace }}/app/src-tauri/engine/dicomqc-api
+          GDK_BACKEND: x11
+          WEBKIT_DISABLE_COMPOSITING_MODE: '1'
+        run: xvfb-run -a timeout 120s cargo run --manifest-path app/src-tauri/Cargo.toml --features native-smoke --locked
+
+      - name: Build native installer
+        working-directory: app
+        run: npm run tauri -- build --bundles ${{ matrix.bundle }}
+
+      - name: Upload test installer
+        uses: actions/upload-artifact@v4
+        with:
+          name: dicomqc-desktop-${{ matrix.platform }}-test
+          path: |
+            app/src-tauri/target/release/bundle/dmg/*.dmg
+            app/src-tauri/target/release/bundle/nsis/*-setup.exe
+            app/src-tauri/target/release/bundle/appimage/*.AppImage
+          if-no-files-found: error
+          retention-days: 7
+
+      - name: Upload test results
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: dicomqc-desktop-${{ matrix.platform }}-tests
+          path: build/*-tests.xml
+          if-no-files-found: ignore
+          retention-days: 7
+
+      - name: Upload Linux native GUI evidence
+        if: always() && runner.os == 'Linux'
+        uses: actions/upload-artifact@v4
+        with:
+          name: dicomqc-desktop-${{ matrix.platform }}-native-gui
+          path: |
+            build/native-verification/*.png
+            build/native-verification/*.json
+            !build/native-verification/app-data/**
+          if-no-files-found: warn
+          retention-days: 7

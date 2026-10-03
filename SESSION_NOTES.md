@@ -1,0 +1,397 @@
+# dicomqc development — 2026-10-03
+
+## Current direction
+
+The user confirmed that Python remains the authoritative audit engine and CLI.
+The native Tauri shell talks to the local authenticated FastAPI service. It does
+not run or parse the CLI for desktop operations. The sibling Rust port remains
+an earlier experiment; do not resume that rewrite.
+
+The user's latest priority is **UI and desktop workflow**, before packaging or
+release. Use Convert-Pheno and digital-genome-workstation as design references:
+persistent navigation, sources and runs, a working toolbar, distinct setup,
+findings and report views, and a desktop status/task area. Do not publish anything.
+
+## Current implementation
+
+- `app/src-tauri/` now contains the native Rust shell, authenticated API bridge,
+  service lifecycle, native menus/dialogs, workspace switching, isolated report
+  previews, exports that never overwrite existing files, and run deletion.
+- Python API reliability work covers readiness, stdin-parent supervision, worker
+  lifecycle, queue resilience, input/workspace identity checks, progress, and
+  deletion of finished runs. Real workers call the shared Python engine directly.
+- Frontend redesigned as a desktop workspace: persistent Sources/Runs sidebar,
+  searchable history, Setup/Findings/Reports tabs, split report preview, native
+  menu events and enabled states, light/dark/system themes, and task/status bars.
+  Component/bridge tests: 45 passed. Playwright checks three widths (390, 760,
+  1440) in all three themes, including long paths and multiline history rows.
+- Setup now exposes **Output folder / Choose output folder** directly. Native
+  selection preserves inputs with newly registered handles, remembers the folder,
+  and rejects output/input overlap before initializing a new workspace. Runs get
+  individual subfolders. Cancelled or failed folder changes retain prior inputs.
+- `native-smoke` is an explicit Linux-only verification feature, excluded from
+  ordinary builds. `app/tests/native-smoke.js` drives real UI/API workflows and
+  captures WebKit screenshots into the chosen `DICOMQC_SMOKE_DIR`.
+- Native Linux ARM64 smoke passes all five synthetic demos, HTML preview,
+  native menu event navigation, history search, light/dark themes and resizing
+  to 760 px. Current evidence is `build/native-workspace-checked/`; earlier
+  verification folders capture superseded layouts. Native WebKit needed explicit
+  nonshrinking flex history rows to prevent overlapping text after resizing.
+- Desktop engine packaging scripts and a manually dispatched five-platform
+  workflow exist, but packaging work is now deferred. A local installer attempt
+  stopped at a Tauri minor-version mismatch: Rust is locked to 2.11.6 for the
+  installed Rust 1.86 compiler; npm API resolved to 2.12.1. Align these versions
+  before installer builds. Do not confuse this with a native dev build failure.
+- Python wheel/sdist build, Twine checks, and installed-wheel synthetic CLI demos
+  passed. Desktop files and these session notes are excluded from the CLI sdist.
+- Latest complete Python suite including run deletion: 523 passed, 2 skipped,
+  99.14% coverage. Backend source is frozen. The coverage gate is 95.01%.
+- Native API bridge integration passes all five demos, exports, restart, deletion,
+  input transfer and an audit writing into the new output folder. Deletion uses
+  the native credential after confirmation; the renderer proxy rejects DELETE.
+  Rust tests: 4 passed including the real-engine integration test.
+- Built-in examples generate synthetic DICOM data and immediately run an audit.
+  They do not yet preload Setup inputs for an editable, pre-run demo workflow.
+
+## Workspace and tools
+
+All current source is in this permanent repository. Do not use `/tmp` as a source
+checkout. The previous Rust port's temporary checkout is missing; its deletion
+mechanism was not established. `/tmp` was inspected and no dicomqc leftovers
+existed before this session. Remove disposable task-generated temp files after
+verification, as the user requested.
+
+This host is Linux ARM64, Python 3.12.3, Rust 1.86, WebKitGTK 4.1 available.
+The repository `.venv` has been updated with API, test and desktop-build extras;
+it is usable on this host. `app/node_modules` and the npm lockfile exist. Source
+edits have been approved for a development commit. The separate untracked
+`README` user-notes file must remain outside that commit. No push or release is
+authorized by this commit request. The final pre-commit Python suite passed
+523 tests with 2 skips and 99.14% coverage (`build/coverage-commit.xml`).
+
+Read the history below for feature details and the earlier authorized Git history
+correction. Statements below about a missing Tauri shell or unusable `.venv` are
+historical and superseded by the current notes above.
+
+---
+
+# Historical handoff — 2026-10-02
+
+## Resume here
+
+The user asked to implement a native desktop application following Convert-Pheno,
+then paused to move to another machine. **Implementation is incomplete.**
+The API foundation and frontend source exist; there is no native Tauri shell yet.
+Do not describe the desktop app, installers, or coordinated release as finished.
+
+Read this file, inspect `git status`, and preserve all existing changes before
+continuing. At the user's subsequent request, implementation, documentation, tests,
+screenshots, and these notes are being staged for handoff; none is committed yet.
+Confirm the index with `git diff --cached --stat`. Before staging, many important
+files were untracked, including source, tests, and screenshots.
+The untracked file named `README` (without `.md`) contains user notes: do not edit,
+delete, or accidentally include it in a commit or release.
+
+## Moving to another machine
+
+- These notes explain the work; they are not an export of the work.
+- If the same SSD/repository directory is used, everything under the repository
+  is already there. Recreate development environments on the new machine.
+- For a different checkout, transfer the complete working directory including
+  untracked files and `.git`, or make an explicitly approved WIP branch/commit
+  and push it first. A normal `git diff` does not include untracked files.
+- Do not copy `.venv`, `node_modules`, compiled native outputs, or Python caches
+  as usable environments; rebuild them. `/tmp` paths below are machine-local.
+- The newest GitHub main does not contain the uncommitted feature/API/UI work.
+
+Repository on this machine:
+`/media/mrueda/2TBS/CNAG/Project_DICOMqc/dicomqc`
+
+Reference Convert-Pheno repository:
+`/media/mrueda/2TBS/CNAG/Project_ConvertPheno/convert-pheno`
+
+## Agreed architecture and release decisions
+
+1. Preserve `pip install dicomqc` as an independent CLI installation.
+2. CLI and local API use the same Python audit engine. No audit rules in Rust or
+   React; no bridge that parses CLI output.
+3. Tauri 2 + React + TypeScript desktop, with embedded Vite-built assets. Native
+   development only, not a browser application or frontend development server.
+4. Desktop starts a bundled, authenticated local Python API. A standalone API
+   is independently usable by local scripts through optional Python dependencies.
+5. The first API is **local only**: no remote hosting, uploads, cloud service,
+   or multi-user server deployment.
+6. Release the CLI to PyPI and desktop installers **together as v0.2.0** after
+   validation. The user explicitly selected “Release together.”
+7. Target the Convert-Pheno platform matrix: macOS Intel and Apple Silicon DMGs,
+   Windows x86-64 installer, Linux x86-64 and ARM64 AppImages.
+8. Bundle Python and dependencies so desktop users need no separate Python or
+   Node installation. Proposed packaging: PyInstaller directory bundle in Tauri.
+9. First release: one active audit and a FIFO queue, isolated Python worker per
+   job, SQLite run history, progress, cancellation, and interrupted-run recovery.
+   No Redis, RabbitMQ, Celery, or RQ. Concurrency is currently hardcoded to one;
+   user was told this and did not request configurable concurrency yet.
+10. No plugin system. User explicitly discarded the plugin roadmap.
+11. No publication, new release tag, or installer upload has been authorized.
+
+Desktop workflows: Scan, Compare, all existing synthetic demos; project policies,
+UID checks, scanner inventory, reports. Respect current CLI capability differences:
+UID checks, vendor inventory, and MultiQC are scan-only; policy also works in Compare.
+
+Planned layout: New audit / Runs / Settings. Large readable controls, advanced
+options folded, native dialogs/menus, theme preferences, grouped findings, export
+and isolated report preview. No raw DICOM/pixel viewer or portable project format.
+
+## GitHub corrections already completed
+
+At explicit user request:
+
+- Deleted `v0.2.0` locally and remotely. Keep `v0.1.0` unchanged.
+- Queried GitHub: no GitHub release entry existed for `v0.2.0`.
+- Reworded the old “Release v0.2.0…” commit to
+  `Prepare v0.2.0: dataset comparisons and offline HTML reports`.
+- Recreated its descendant with identical file trees and pushed main using an
+  explicit force-with-lease. Working-tree and staged diffs were verified unchanged.
+- Current main: `422607617bfb67f076da5d33c7ea1f9208acd076`.
+- Reworded preparation commit: `9e51372`.
+- Old main: `d6dee0d7ba2ea80ca0ccb10bb40bf097f6a01959`.
+- Recovery reference: `refs/backup/pre-release-message-rewrite` points at old main.
+  It is local only; keep it if copying `.git`.
+- GitHub About description is now: `Audit DICOM metadata for privacy risks.`
+
+An older clone may have divergent history after this authorized rewrite. Do not
+force-push its old main back, or discard uncommitted work to synchronize it.
+
+The prior tag-triggered publication failed before publishing: checkout peeled the
+annotated tag, and validation expected a tag object. The release workflow still
+needs to restore/verify the remote annotated tag object before checking it.
+Convert-Pheno's installer workflow already demonstrates this fix. Do not recreate
+the release tag until the coordinated release is ready.
+
+## Existing feature work to preserve
+
+All of this predates desktop implementation and is still uncommitted:
+
+- YAML project policies: `rules/policy.py`, scan/compare `--policy`, demo,
+  strict bounded YAML validation, redacted configured/observed values.
+- Scanner/software and dataset-local private creator inventory:
+  `vendor.py`, `scan --vendor-summary`, demo. Raw labels are explicitly opt-in;
+  private payloads remain excluded.
+- UID integrity: `rules/uid.py`, `scan --uid-checks`, `demo --uid-demo`.
+  Checks top-level study/series/instance UID syntax, role reuse, series/study
+  conflicts, and instance-context conflicts. Missing fields are coverage gaps,
+  not IOD-required-attribute errors. No global uniqueness or full compliance claim.
+- UID-enabled scan JSON omits legacy raw record-context fields. HTML/MultiQC
+  include value-free UID coverage. The UID demo has 7 errors in 4 groups before
+  correction and no findings afterward, using four synthetic files per side.
+- Shared HTML/MultiQC vocabulary and folded supporting panels.
+- Documentation restructuring, real report screenshots, compact architecture
+  SVGs, and concise changelog under `0.2.0 — Unreleased`.
+
+Documentation preferences:
+
+- Preserve the beloved `dicomqc-audit.svg` home/README illustration.
+- No Reports tab/page: it was removed deliberately. Reports and screenshots
+  belong beside the relevant data walkthrough.
+- JSON examples are collapsed code; CSV examples are collapsed actual tables.
+- Do not add “Implemented” labels or “included in v0.2.0” notices.
+- Keep text direct, reports uncluttered, and screenshots real rendered reports.
+
+## Desktop/API implementation so far
+
+### Shared execution and progress
+
+- `execution.py`: moved `_load_requested_policy` and `_validate_multiqc_output`
+  out of CLI; CLI imports them. Remaining CLI preflight checks have **not** all
+  been extracted/shared yet.
+- `progress.py`: optional value-free progress events.
+- `scan_paths(..., progress=None)` and `compare_datasets(..., progress=None)`
+  emit discovery, reading, and relationship phases.
+- Current reading count is emitted before processing a file/pair. Review this:
+  the displayed `completed` count should describe completed work accurately.
+- `pyproject.toml` adds optional extras `api`, `api-test`, and `desktop-build`.
+  Base runtime dependencies remain pydicom and PyYAML.
+- CLI routes `dicomqc serve` lazily to the optional API launcher.
+
+### Local API files (`src/dicomqc/api/`)
+
+- `app.py`: FastAPI, strict request models, versioned `/api/v1` endpoints.
+  Includes health, capabilities, authenticated OpenAPI, privileged local-input
+  registration, submit/list/status/cancel jobs, paginated findings, indexed
+  report downloads, privileged shutdown.
+- `server.py`: loopback-only Uvicorn launch, `--state-dir`, `--port`, token-file
+  options; also reads `DICOMQC_API_TOKEN` and `DICOMQC_LOCAL_TOKEN`. Distinct
+  tokens must each contain at least 32 characters. Private readiness-file support
+  is intended for the future Rust launcher.
+- `storage.py`: private atomic JSON writes and selected-input identity checks.
+- `jobs.py`: SQLite state, workspace ownership lock, in-memory opaque input
+  handles, single active worker, FIFO scheduling, cancellation, interrupted-run
+  recovery, artifact lookup restricted to the run's artifact list.
+- `worker.py`: directly invokes core scans/comparisons and existing demos;
+  writes reports to a pending directory then renames it; publishes completion
+  separately. Live review JSON omits `records`; downloadable report JSON retains
+  documented CLI semantics.
+- `runner.py`: private loopback watchdog handshake; worker exits if its
+  supervisor connection disappears. No external queue service.
+
+Important distinction: a completed audit with errors has job status `completed`
+and audit exit code 2. A worker failure has job status `failed`, with no published
+artifact list. Never conflate findings with process failure.
+
+### Frontend source (`app/`)
+
+Added `package.json`, `tsconfig.json`, `vite.config.ts`, `index.html`, and:
+
+- `src/desktop.ts`: typed Rust invocation boundary, job/result types, audit labels.
+- `src/main.tsx`: initial Scan/Compare forms, native-selection calls, folded
+  options, all five synthetic examples, job polling/history/cancellation,
+  paginated grouped findings, report preview/export, workspace and theme settings.
+- `src/style.css`: initial desktop layout and light/dark/system styling.
+
+**Not installed, compiled, tested, or visually inspected yet.** There is no
+`app/package-lock.json`, no `app/src-tauri`, no Rust code, no native configuration,
+no native icons, no desktop screenshots, and no packaging workflow yet.
+
+Frontend currently expects these Rust commands, all still to implement:
+`api_request`, `select_input`, `workspace`, `choose_workspace`, `read_report`,
+`save_report`, and `reveal_run`.
+
+The intended Rust layer retains both API tokens; renderer uses restricted Rust
+commands rather than receiving credentials. Native input dialogs register paths
+with the privileged API endpoint. Workspace switching must reject active jobs,
+stop the old service, start the new one, persist settings, and invalidate handles.
+Report preview is a sandboxed iframe without script/native permissions; exported
+HTML retains its existing standalone controls.
+
+## Tests actually run
+
+Before desktop changes:
+
+- Full Python suite: **407 passed, 1 skipped**, coverage **99.86%**.
+- Skip: optional DCMTK interoperability test.
+- Docs production build and documentation browser checks passed, including 11
+  real report snapshots beside walkthroughs at desktop/mobile widths.
+- UID HTML browser tests passed: groups, folded details, coverage, filters,
+  mobile, print, no-JS, redaction, offline behavior, and MultiQC alignment.
+- Wheel + sdist built and passed Twine metadata checks. A clean installed-wheel
+  environment passed scan/comparison/policy/vendor/UID demos.
+
+After shared validation/progress/API changes:
+
+- Existing suite before adding API tests: **407 passed, 1 skipped**, `--no-cov`.
+- New `tests/test_api.py`: **19 passed**, `--no-cov`, with optional dependencies.
+  Covers authentication/host/origin/privileged routes, real subprocess UID scan
+  parity and read-only behavior, comparisons, policies/MultiQC, five demos,
+  invalid requests, changed inputs, queued cancellation, workspace locking,
+  restart recovery, generic worker failure, and atomic storage.
+- These API tests required execution outside this tool's network sandbox:
+  inside it, Starlette's asynchronous test client hung and loopback connections
+  were restricted. The two hung test sessions were stopped with Ctrl-C.
+- Warning: current Starlette TestClient says httpx is deprecated in favor of
+  httpx2. Resolve/pin compatible optional test dependencies before release.
+- No combined full-suite coverage run since adding the API files/tests.
+- No native or frontend tests/build have been run.
+- Last `git diff --check` passed.
+
+## Development environments and machine limitations
+
+This host is Linux Mint 20.3 (Ubuntu focal baseline), Node 20.20.2, GTK 3.24.20.
+Rust/cargo were not on PATH or in `/home/mrueda/.cargo/bin`. WebKitGTK 4.1
+development files were unavailable through pkg-config.
+
+An approved attempt at `sudo -n apt-get ...` stopped immediately because sudo
+requires a password. No host system packages were installed. Never request or
+store the user's password.
+
+Docker was discussed as a **build-only fallback** for a newer Linux baseline.
+Only `docker image ls` was executed. No Docker image/container/Dockerfile was
+created. The user asked why Docker was needed; it is not an application runtime
+requirement. Prefer native setup if the next machine supports Tauri prerequisites.
+
+Working temporary Python environment on this machine:
+
+```bash
+/tmp/dicomqc-test-env/bin/python -m pytest
+/tmp/dicomqc-test-env/bin/python -m pytest tests/test_api.py --no-cov
+PYTHONPATH=src /tmp/dicomqc-test-env/bin/python -m dicomqc.cli --help
+```
+
+The checked-in-directory `.venv` is stale from another machine. Do not reuse it.
+System Python here is 3.8; the temporary test environment uses Python 3.12.15.
+For a fresh machine, create a new Python >=3.10 environment (prefer 3.12) and use:
+
+```bash
+python -m pip install -e '.[test,release,api,api-test,desktop-build]'
+python -m pytest
+```
+
+Optional API tools installed only into `/tmp/dicomqc-test-env`:
+FastAPI 0.142.2, Uvicorn 0.54.0, httpx 0.28.1, PyInstaller 6.22.3,
+Starlette 1.7.0, anyio 4.15.1. Native/frontend dependencies were not installed.
+
+Existing report preview base: `/tmp/dicomqc-workspace-design`.
+Contains scan/comparison/policy/vendor/UID examples. Always use a subdirectory
+for a new demo; do not force-replace the root and delete other examples.
+Documentation screenshots are already copied into `docs-site/static/img` and
+will transfer with the working tree. The temporary previews will not.
+
+Playwright/browser assets: `/tmp/dicomqc-playwright`.
+Docs preview previously ran at `http://127.0.0.1:3017/dicomqc/`.
+Latest pre-API distribution smoke environment:
+`/tmp/dicomqc-uid-package-UnfES6` (not a build of the new API).
+
+## Next steps and review priorities
+
+1. Inspect the new API code before extending it. Harden path ownership and
+   lifecycle behavior: existing workspace database/lock symlinks, input changes
+   after queueing, output/input overlap, worker handshake failure, cancellation
+   during startup/report publication, supervisor crash, and real running-job
+   cancellation. Tests currently cover only some of these paths.
+2. Complete shared execution validation. Preserve CLI behavior while applying
+   consistent manifest/policy/report protections to API jobs.
+3. Review API error redaction (including validation errors), token comparisons,
+   bounded request/result handling, and startup readiness. `ready-file` currently
+   records the bound port before lifespan startup; native code must still poll
+   authenticated health and check engine/API versions.
+4. Ensure large-result handling is genuinely bounded. HTTP findings are paginated,
+   but current `review()` loads the whole JSON; this is not yet scalable streaming.
+5. Add run deletion with ownership checks and confirmation, secure native report
+   export/reveal, graceful close prompts, settings persistence, and robust
+   service cleanup. These agreed behaviors are not fully implemented.
+6. Implement native Tauri shell and launcher, then install frontend dependencies,
+   generate its lockfile, run typecheck/build/component tests, and prove a real
+   synthetic scan inside the native app. Do not substitute a browser-only preview.
+7. Fix style/code issues surfaced by first build; the UI was written but not
+   compiled or visually verified. Capture real native screenshots only afterward.
+8. Build the frozen Python engine and test it away from the checkout, including
+   watchdog subprocess startup. Then implement five-target installer CI and
+   installed-app smoke tests. No release publication without authorization.
+9. Keep API/desktop dependencies optional and GUI/runtime artifacts out of wheel
+   and sdist. Ensure internal session notes/user notes are excluded as needed.
+10. Run the full test suite with coverage after installing API test dependencies.
+    Update CI to exercise optional API tests without making them base CLI runtime
+    dependencies. Preserve the 95% coverage gate.
+11. Add API/Desktop docs and real screenshots beside synthetic workflows; concise
+    changelog update. Current docs do not yet describe the new API/Desktop work.
+12. Prepare both CLI and desktop artifacts from the same candidate revision;
+    validate all target platforms before the coordinated v0.2.0 release.
+
+## Convert-Pheno reference files
+
+Read its `AGENTS.md` before working there; this task only needs reference reads.
+Useful references:
+
+- `SESSION_NOTES.md`: Desktop Direction and later release/platform lessons.
+- `app/src-tauri/src/main.rs`: managed local engine, two tokens, native dialogs,
+  menus, shutdown, workspace/resource settings, platform-specific startup.
+- `api/perl/README.md`, `api/perl/main.pl`, `lib/Convert/Pheno/HTTP/Jobs.pm`:
+  shared API and job execution patterns.
+- `scripts/stage-desktop-engine.pl`, `scripts/test-desktop-engine.pl`:
+  relocatable runtime staging and packaged-engine smoke tests.
+- `.github/workflows/desktop-installers.yml`: five-target builds, real installed
+  startup checks, artifact checksums, annotated-tag validation.
+- `docs-site/docs/graphical-interface.md`: workflow documentation and actual
+  desktop screenshots.
+
+Use its architecture as a reference, not a wholesale copy of Perl infrastructure
+or unrelated features. Review licensing before copying code/assets.

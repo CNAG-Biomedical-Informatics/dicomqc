@@ -16,6 +16,7 @@ from dicomqc.backend.pydicom_backend import PydicomBackend
 from dicomqc.model.metadata import MetadataRecord
 from dicomqc.model.results import Finding, ScanResult, Severity
 from dicomqc.rules.builtin import evaluate_record
+from dicomqc.rules.policy import Policy, evaluate_policy
 
 COMPARE_PROFILE = "dataset-comparison-v0.1"
 
@@ -114,13 +115,17 @@ def _read(reader: DicomBackend, path: Path) -> MetadataRecord:
 
 
 def compare_datasets(
-    source: Path, candidate: Path, manifest: Path, *, backend: DicomBackend | None = None
+    source: Path, candidate: Path, manifest: Path, *, backend: DicomBackend | None = None,
+    policy: Policy | None = None,
+    progress=None,
 ) -> ComparisonResult:
     """Check coverage, candidate metadata, and PatientID mapping consistency.
 
     The manifest is trusted pairing evidence, not proof of file correspondence.
     Paths and patient identifiers remain internal; reports use pair ordinals.
     """
+    from dicomqc.progress import emit
+    emit(progress, "discovery")
     source, candidate = comparison_roots(source, candidate)
     manifest = manifest.resolve()
     if source in manifest.parents or candidate in manifest.parents:
@@ -150,6 +155,7 @@ def compare_datasets(
                   "Check the complete input inventory and update the pairing manifest.")
 
     for number, pair in enumerate(pairs, 1):
+        emit(progress, "reading", number - 1, len(pairs))
         loaded = []
         for side, (root, relative) in enumerate(zip((source, candidate), pair)):
             role = ("source", "candidate")[side]
@@ -172,6 +178,8 @@ def compare_datasets(
             if side == 1:
                 safe_record = replace(record, path=Path(reference))
                 findings.extend(evaluate_record(safe_record))
+                if policy is not None:
+                    findings.extend(evaluate_policy(safe_record, policy))
                 # Do not serialize paths, UIDs, manufacturer, or other raw context.
                 records.append(MetadataRecord(Path(reference), None, None, None, None, None, {}))
         before, after = loaded
@@ -191,6 +199,7 @@ def compare_datasets(
             error("unchanged_patient_id", reference, "PatientID was not changed.",
                   "Verify the de-identification process replaces the source identifier.")
 
+    emit(progress, "relationships", len(pairs), len(pairs))
     forward: dict[tuple[str, str], set[str]] = defaultdict(set)
     reverse: dict[str, set[tuple[str, str]]] = defaultdict(set)
     for identity, pseudonym, _ in mappings:
@@ -206,6 +215,7 @@ def compare_datasets(
 
     return ComparisonResult(
         profile_id=COMPARE_PROFILE, records=records, findings=findings, skipped_files=skipped,
+        policy={"id": policy.id, "sha256": policy.sha256} if policy else None,
         comparison={"source_files": len(inventories[0]), "candidate_files": len(inventories[1]),
                     "manifest_pairs": len(pairs), "readable_pairs": readable_pairs,
                     "identity_pairs_checked": len(mappings)},

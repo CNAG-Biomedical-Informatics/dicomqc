@@ -24,6 +24,8 @@ class DicomTag:
     is_private: bool
     value_state: ValueState
     raw_value: Any = None
+    is_nested: bool = False
+    dataset_path: tuple[str, ...] = ()
 
 
 @dataclass(frozen=True)

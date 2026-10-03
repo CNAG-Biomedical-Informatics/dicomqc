@@ -20,15 +20,10 @@ models rather than pydicom objects.
     />
     <img
       src={useBaseUrl('/img/dicomqc-architecture.svg')}
-      alt="DICOM files pass through metadata reading and checks to JSON, CSV, and MultiQC reports"
+      alt="Scan files or compare paired datasets: read metadata, run checks, and write HTML, MultiQC, JSON, and CSV reports. Inputs stay unchanged; pixels are not inspected."
     />
   </picture>
   </a>
-  <figcaption>
-    Version 0.2 reads tag values to run its checks. Reports contain findings,
-    value states, and counts, without copying raw tag values. Click the diagram
-    to open it at full size.
-  </figcaption>
 </figure>
 
 ## Components
@@ -40,8 +35,23 @@ models rather than pydicom objects.
 | `PydicomBackend` | Parse DICOM metadata with `stop_before_pixels=True`; pixel data is not loaded. |
 | Metadata model | Store file details, tags, private-tag status, and `ValueState`. |
 | Built-in rules | Evaluate direct PHI fields, pseudonym patterns, and private tags under `research-release-v0.1`. |
+| Project policies | Add user-defined metadata requirements without replacing built-in rules. |
+| Scanner inventory | Optionally summarize declared equipment labels and private creator blocks without changing findings. |
 | Result model | Collect records, findings, skipped files, counts, and the process exit status. |
-| Report writers | Write JSON, CSV, and MultiQC-compatible reports without raw tag values. |
+| Report writers | Write standalone HTML, JSON, CSV, and MultiQC-compatible reports without observed values in findings. |
+
+## Desktop and CLI
+
+The CLI and desktop use the same Python audit functions. The Tauri native shell
+starts a bundled, authenticated FastAPI service on loopback and sends structured
+requests to it. React handles the interface; Rust handles native dialogs, service
+lifecycle, and report exports. The desktop does not parse CLI output.
+
+The service maintains a SQLite run history and a queue with one active worker.
+Each audit runs in a separate Python process. The native shell retains API
+credentials and restricts which operations the interface can request. Selecting
+files uses native dialogs; HTML previews are isolated from native commands.
+See the [desktop app](../usage/desktop.md) for usage and build status.
 
 ## Data flow
 
@@ -50,12 +60,13 @@ models rather than pydicom objects.
    recorded as skipped rather than silently ignored.
 3. pydicom elements are converted to `DicomTag` objects inside a
    `MetadataRecord`.
-4. Built-in rules inspect metadata and create `Finding` objects with severity,
-   tag details, and recommended fixes.
+4. Built-in rules and optional project policies
+   inspect metadata and create `Finding` objects with severity, tag details,
+   and recommended fixes.
 5. `ScanResult` combines records, findings, and skipped-file reasons. Its exit
    code is `0` for pass, `1` for review warnings, and `2` for errors or skipped
    files.
-6. Report writers save the results without raw DICOM tag values.
+6. Report writers save findings without their observed tag values.
 
 ## Reading metadata
 
@@ -70,16 +81,42 @@ class DicomBackend(Protocol):
 The scanner and rules use `MetadataRecord` objects. Another reader could return
 the same objects without requiring changes to the rules.
 
+Readers must retain the owning dataset for nested private tags. The pydicom
+reader sets `DicomTag.dataset_path` to sequence tags and zero-based item indexes,
+with an empty tuple for the root dataset. The vendor inventory refuses nested
+private tags without that path; it cannot safely infer creator ownership from
+`is_nested` alone.
+
 ## What stays out of reports
 
 `MetadataRecord` stores modality, manufacturer, Study Instance UID,
 Series Instance UID, and tags. Each `DicomTag` stores its number, keyword, value representation,
 private-tag status, value state, and an internal raw value.
 
-Rules need raw tag values for checks such as pseudonym matching. Report writers
-omit those values. Reports still contain file paths and other context that may
+Rules need raw tag values for checks such as pseudonym matching. Findings omit
+those values. Ordinary scan JSON retains study/series UIDs, manufacturer, and
+modality; policy-scan JSON, UID-enabled scan JSON, and comparison reports omit this raw context.
+By default, HTML does not embed raw records or tag values. Policy reports also omit
+configured allowed values and patterns; only the policy ID, rule IDs, and file
+digest identify the applied configuration. Use non-identifying policy and rule IDs.
+
+`scan --vendor-summary` explicitly adds raw manufacturer, model, software-version,
+and private creator labels to HTML, JSON, and MultiQC. These labels may contain
+identifying information, including when a policy or UID checks are applied. The option never
+exports private payload values and is not available for comparisons. See the
+[scanner inventory](../usage/vendor-summary.md) for an example.
+
+Reports still contain file paths or references and other details that may
 identify people or datasets, so review them before sharing and restrict access
 when needed.
+
+## UID integrity
+
+For within-collection identifier checks, `scan --uid-checks` evaluates normalized
+top-level study, series, and instance UIDs after all readable files are collected.
+It adds syntax and relationship findings plus value-free coverage counts; see
+[UID integrity](../usage/uid-integrity.md). It does not compare UID remapping
+between source and candidate collections.
 
 ## Dataset comparison
 
@@ -96,6 +133,5 @@ of the package version. See [Compare datasets](../usage/compare.md) for details.
 
 ## Planned extensions
 
-The current package has one built-in profile. Future plugins, configurable
-policies, vendor metadata summaries, and standards-specific checks would use
-the same reader and rule interfaces. See [Planned Features](./extending-dicomqc.md).
+Further standards-specific checks can use the existing reader and rule
+interfaces. See [Planned Features](./extending-dicomqc.md).

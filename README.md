@@ -14,6 +14,7 @@
 
 <p align="center">
   <a href="https://cnag-biomedical-informatics.github.io/dicomqc/">📚 Documentation</a> ·
+  <a href="https://cnag-biomedical-informatics.github.io/dicomqc/docs/usage/desktop">Desktop app</a> ·
   <a href="https://pypi.org/project/dicomqc/">📦 PyPI</a> ·
   <a href="https://cnag-biomedical-informatics.github.io/dicomqc/docs/usage/quickstart">🧪 Try a demo</a> ·
   <a href="CHANGELOG.md">📝 Changelog</a> ·
@@ -22,11 +23,13 @@
 
 ---
 
-**dicomqc** audits de-identified DICOM metadata for privacy risks.
+**dicomqc** audits de-identified DICOM metadata for privacy risks through a
+desktop app or the command line. Both use the same Python audit engine.
 
 It flags identifying fields, unexpected pseudonym formats, private tags, and
-unreadable files. It writes JSON, CSV, and MultiQC-compatible reports without
-copying raw DICOM tag values.
+unreadable files. It writes HTML, JSON, CSV, and MultiQC-compatible reports.
+Findings omit raw tag values; the optional scanner inventory exports observed
+labels and must be reviewed before sharing.
 
 ![How dicomqc audits metadata and writes reports.](docs-site/static/img/dicomqc-audit.svg)
 
@@ -35,6 +38,24 @@ reports required changes, apply them with an external pseudonymization or
 anonymization tool and rerun the audit.
 
 ## Get started
+
+### Desktop app
+
+Select DICOM files or folders, choose an output folder, and run an audit.
+The desktop workspace keeps sources and searchable run history beside
+**Setup**, **Findings**, and **Reports** views. Each run has its own output
+subfolder, with an HTML preview and report export controls.
+
+**Explore with synthetic data** runs built-in scan, comparison, policy, UID,
+and scanner-inventory examples without patient data.
+
+![dicomqc desktop workspace with run history and an HTML report preview.](docs-site/static/img/desktop-workspace.png)
+
+The desktop app currently runs from source; installers are not published.
+See [Desktop setup and usage](https://cnag-biomedical-informatics.github.io/dicomqc/docs/usage/desktop).
+The app starts its audit service locally; no remote server is required.
+
+### Command line
 
 Install in a Python environment and try the synthetic demo:
 

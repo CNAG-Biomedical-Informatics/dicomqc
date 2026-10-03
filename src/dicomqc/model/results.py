@@ -4,6 +4,7 @@ from __future__ import annotations
 
 from dataclasses import dataclass, field
 from enum import Enum
+from typing import Any
 
 from dicomqc.model.metadata import MetadataRecord, ValueState
 
@@ -34,6 +35,9 @@ class ScanResult:
     records: list[MetadataRecord] = field(default_factory=list)
     findings: list[Finding] = field(default_factory=list)
     skipped_files: dict[str, str] = field(default_factory=dict)
+    policy: dict[str, str] | None = None
+    vendor_summary: dict[str, Any] | None = None
+    uid_checks: dict[str, Any] | None = None
 
     @property
     def error_count(self) -> int:

@@ -83,7 +83,7 @@ def test_repeated_sequence_tags_do_not_hide_identifiers(tmp_path):
 def test_lazy_metadata_error_is_wrapped_and_redacted(tmp_path, monkeypatch):
     from dicomqc.backend.base import DicomReadError
     class InvalidDataset:
-        def iterall(self):
+        def __iter__(self):
             raise ValueError("SECRET_VALUE")
     monkeypatch.setattr(pydicom, "dcmread", lambda *args, **kwargs: InvalidDataset())
     with pytest.raises(DicomReadError, match="Cannot read DICOM metadata") as error:

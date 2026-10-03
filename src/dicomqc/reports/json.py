@@ -24,10 +24,16 @@ def result_to_dict(result: ScanResult) -> dict[str, Any]:
             "info": result.info_count,
             "skipped_files": len(result.skipped_files),
         },
-        "records": [_record_to_dict(record) for record in result.records],
+        "records": [_record_to_dict(record, include_context=result.policy is None and result.uid_checks is None) for record in result.records],
         "findings": [_finding_to_dict(finding) for finding in result.findings],
         "skipped_files": result.skipped_files,
     }
+    if result.policy is not None:
+        payload["policy"] = result.policy
+    if result.uid_checks is not None:
+        payload["uid_checks"] = result.uid_checks
+    if result.vendor_summary is not None:
+        payload["vendor_summary"] = result.vendor_summary
     if hasattr(result, "comparison"):
         payload["comparison"] = result.comparison
         # Comparison reports intentionally carry no raw record context.
@@ -39,14 +45,16 @@ def write_json(result: ScanResult, path: Path) -> None:
     path.write_text(json.dumps(result_to_dict(result), indent=2, sort_keys=True) + "\n", encoding="utf-8")
 
 
-def _record_to_dict(record: MetadataRecord) -> dict[str, Any]:
+def _record_to_dict(record: MetadataRecord, *, include_context: bool = True) -> dict[str, Any]:
     return {
         "path": str(record.path),
         "patient_id_present": record.patient_id is not None,
-        "study_uid": record.study_uid,
-        "series_uid": record.series_uid,
-        "manufacturer": record.manufacturer,
-        "modality": record.modality,
+        **({
+            "study_uid": record.study_uid,
+            "series_uid": record.series_uid,
+            "manufacturer": record.manufacturer,
+            "modality": record.modality,
+        } if include_context else {}),
         "tags": [
             {
                 "tag": tag.tag,

@@ -4,55 +4,134 @@ title: Compare datasets
 
 # Compare source and de-identified files
 
-Available since v0.2.0, `dicomqc compare` checks that a de-identification
+`dicomqc compare` checks that a de-identification
 run accounts for every input file and uses patient pseudonyms consistently.
 
 ## Try the comparison demo
 
-Run:
+### 1. Generate the data
 
 ```bash
 dicomqc demo --compare --output-dir comparison-demo
 ```
 
-The demo creates three synthetic source files for two patients. The first
-candidate dataset is missing one file and assigns different pseudonyms to two
-visits from the same patient. Its comparison exits `2`. Each existing candidate
-file passes the individual metadata checks, so this shows problems that require
-comparing the datasets.
+The demo creates three source files for two patients, a flawed candidate dataset,
+and a separate corrected dataset. All names and identifiers below are synthetic.
+`pairs.csv` pairs the source and output filenames in this order:
 
-The demo also creates a separate corrected dataset with all three files and
-consistent pseudonyms. Its comparison exits `0`. The generator creates both
-examples; the audit itself never edits DICOM files.
+| Source file | Source PatientID | Output file | Candidate PatientID | Corrected PatientID |
+| --- | --- | --- | --- | --- |
+| `patient-a-visit-1.dcm` | `LOCAL001` | `image-001.dcm` | `sub-001` | `sub-001` |
+| `patient-a-visit-2.dcm` | `LOCAL001` | `image-002.dcm` | `sub-099` | `sub-001` |
+| `patient-b-visit-1.dcm` | `LOCAL002` | `image-003.dcm` | File missing | `sub-002` |
 
-```text
-comparison-demo/
-  source/                 # three synthetic source files
-  candidate/              # two files; inconsistent pseudonyms
-  corrected/              # three files; consistent pseudonyms
-  pairs.csv               # same pairing manifest for both runs
-  before.html             # failing comparison
-  before.json
-  before.csv
-  after.html              # corrected comparison
-  after.json
-  after.csv
-```
+The command writes these datasets to `source/`, `candidate/`, and `corrected/`
+under `comparison-demo/`. It also runs both comparisons and writes
+`before.html`, `before.json`, `before.csv` and their `after` equivalents.
+The generator creates both examples; the audit itself never edits DICOM files.
 
-Rerun either comparison yourself:
+### 2. Inspect the failing comparison
+
+To rerun the first comparison:
 
 ```bash
-dicomqc compare comparison-demo/source comparison-demo/candidate --manifest comparison-demo/pairs.csv
-dicomqc compare comparison-demo/source comparison-demo/corrected --manifest comparison-demo/pairs.csv
+dicomqc compare comparison-demo/source comparison-demo/candidate \
+  --manifest comparison-demo/pairs.csv \
+  --html comparison-demo/before.html \
+  --json comparison-demo/before.json \
+  --csv comparison-demo/before.csv
 ```
 
-The `demo` command exits `0` when generation succeeds, even though the first
-comparison intentionally fails. Unexpected audit results make the demo exit `2`.
-Use `--force` to replace a demo directory created by v0.2.0 or later. It refuses
-unmarked directories, including old demos; choose a new output path for those.
-Without `--output-dir`, it writes to `dicomqc-demo/`, just like the
-regular demo. Comparison demos write HTML, JSON, and CSV reports. Open either
-`before.html` or `after.html` directly in a browser; MultiQC is not needed.
+This exits `2`: only two of the three pairs are readable, and the report contains
+**three error findings in two issue groups**:
+
+- One missing candidate file: manifest row 3.
+- Inconsistent pseudonyms for one source patient: one finding each for rows 1 and 2.
+
+Both existing candidate files pass the built-in metadata checks on their own.
+The missing output and split patient identity only emerge when comparing the
+datasets. Open `comparison-demo/before.html` directly in a browser; MultiQC is
+not needed. Reports use manifest-row references instead of the synthetic IDs
+shown in the input table above.
+
+<details>
+<summary>View the comparison report before corrections</summary>
+
+![HTML comparison report showing three error findings grouped into missing output and inconsistent patient pseudonyms.](/img/html-report-before.png)
+
+</details>
+
+### JSON and CSV from this comparison
+
+<details>
+<summary>Example JSON finding — synthetic comparison demo</summary>
+
+This is the missing-file entry in `before.json`'s `findings` array, not the full
+report. `pair-000003/candidate` identifies the third manifest row without
+exposing the source patient ID.
+
+```json
+{
+  "keyword": null,
+  "message": "The listed candidate file is missing.",
+  "path": "pair-000003/candidate",
+  "profile_id": "dataset-comparison-v0.1",
+  "recommendation": "Check the manifest and regenerate missing output files.",
+  "rule_id": "dataset-comparison-v0.1.missing_candidate",
+  "severity": "error",
+  "standard_refs": [],
+  "tag": null,
+  "value_state": "absent"
+}
+```
+
+</details>
+
+<details>
+<summary>Example CSV rows — synthetic comparison demo</summary>
+
+The three findings in `before.csv`, shown as a table with selected columns for
+readability. The CSV also includes rule and profile IDs, tag, keyword, value
+state, and standards references.
+
+| path | severity | message | recommendation |
+| --- | --- | --- | --- |
+| pair-000003/candidate | error | The listed candidate file is missing. | Check the manifest and regenerate missing output files. |
+| pair-000001/candidate | error | One source patient maps to multiple PatientIDs. | Use the same pseudonym for every file belonging to this source patient. |
+| pair-000002/candidate | error | One source patient maps to multiple PatientIDs. | Use the same pseudonym for every file belonging to this source patient. |
+
+</details>
+
+### 3. Inspect the corrected comparison
+
+The corrected dataset includes the missing file and uses `sub-001` for both
+visits from `LOCAL001`. Compare it using the same manifest:
+
+```bash
+dicomqc compare comparison-demo/source comparison-demo/corrected \
+  --manifest comparison-demo/pairs.csv \
+  --html comparison-demo/after.html \
+  --json comparison-demo/after.json \
+  --csv comparison-demo/after.csv
+```
+
+This exits `0`: all three pairs are readable and there are no findings.
+Open `comparison-demo/after.html` to see the passing result. This means the
+checked metadata and pairings passed, not that every privacy risk was assessed.
+Keep both demo HTML files in the same directory for their before/after links.
+
+<details>
+<summary>View the comparison report after corrections</summary>
+
+![HTML comparison report after corrections, showing checks passed and no findings.](/img/html-report-after.png)
+
+</details>
+
+The `demo` command itself exits `0` when both examples are generated with their
+expected results, and `2` otherwise. Use `--force` to replace a marked demo
+directory; unmarked directories are refused. Without `--output-dir`, the demo
+writes to `dicomqc-demo/`. See [output formats](../reference/cli.md#output-formats)
+and [HTML review controls](quickstart.md#review-the-html-report) for details.
 
 ## Prepare a pairing manifest
 
@@ -98,6 +177,7 @@ It checks for:
 
 It also runs the existing `research-release-v0.1` privacy checks on each readable,
 listed candidate file. Original source files are not expected to pass those checks.
+Add `--policy FILE` for [project-specific checks](policies.md) on candidate files.
 
 Source patients are grouped by `IssuerOfPatientID` and `PatientID`. If the issuer
 is absent, equal source IDs are treated as the same patient. Use a single source
@@ -126,6 +206,12 @@ The JSON `comparison` section counts source files, candidate files, manifest pai
 readable pairs, and pairs checked for identity consistency. The usual scan counts
 refer to readable, listed **candidate** files. Dataset errors can therefore exist
 even when all scanned candidates pass their individual checks.
+
+In HTML, **Charts and audit details** shows pairing coverage: both files
+readable, a missing file, or an unreadable file. Missing takes precedence when
+a pair also has an unreadable file; files outside the manifest are excluded
+from this chart. These are coverage counts, not privacy verdicts: a readable
+pair can still have findings.
 
 ## Limits of this first implementation
 

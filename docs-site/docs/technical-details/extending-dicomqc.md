@@ -4,30 +4,9 @@ title: Planned Features
 
 # Planned Features
 
-The features on this page are not available in dicomqc v0.2. They describe
-ideas for later releases.
+## Broader standards coverage
 
-## Policy files
-
-A policy file would let users define metadata checks. For example, it could require
-`PatientBirthDate` to be absent or `PatientID` to match an approved pseudonym
-format. The policy would define what dicomqc checks, not how files are modified.
-
-## Plugins
-
-Plugins would let separately installed packages add
-checks, report formats, DICOM readers, standards profiles, or vendor-specific
-metadata checks.
-
-## Standards profiles
-
-Planned DICOM PS3.15 and BIDS profiles would identify every check with a stable
-rule ID and a reference to its source standard. The v0.2 result model already
-contains `profile_id`, `rule_id`, and `standard_refs`, but the current built-in
-profile does not claim compliance with either standard.
-
-## Vendor metadata summaries
-
-A vendor summary would list manufacturer, scanner
-model, software version, and private creator blocks. Reviewers could use that
-summary to identify private tags and protocol fields that need manual inspection.
+[UID integrity](../usage/uid-integrity.md) covers a small set of DICOM identifier
+rules with standard references. Broader profiles would need equally explicit
+scope and realistic fixtures for each additional check. There is no claim of
+full DICOM PS3.15 or BIDS compliance.

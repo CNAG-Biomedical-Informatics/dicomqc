@@ -14,7 +14,7 @@ data:
     private_tag_findings: 2
 headers:
   files_scanned:
-    title: DICOM files
+    title: Files read
     description: DICOM files successfully scanned
     scale: Blues
   errors:
@@ -26,7 +26,7 @@ headers:
     description: Warnings reported by dicomqc
     scale: YlOrBr
   skipped_files:
-    title: Skipped files
+    title: Unreadable files
     description: Files that could not be read as DICOM
     scale: Purples
   private_tag_findings:

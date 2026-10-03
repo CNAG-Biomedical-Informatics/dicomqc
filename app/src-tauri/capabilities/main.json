@@ -1,0 +1,6 @@
+{
+  "identifier": "main-window",
+  "description": "Native commands mediate local API and selected file access.",
+  "windows": ["main"],
+  "permissions": ["core:default"]
+}

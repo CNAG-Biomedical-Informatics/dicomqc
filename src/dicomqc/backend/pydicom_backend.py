@@ -27,22 +27,31 @@ class PydicomBackend:
 
     def _normalize(self, dataset: Any, path: Path) -> MetadataRecord:
         tags: dict[str, DicomTag] = {}
-        for elem in dataset.iterall():
-            if elem.keyword == "PixelData":
-                continue
-            tag_key = f"({elem.tag.group:04X},{elem.tag.element:04X})"
-            keyword = elem.keyword or elem.name or tag_key
-            raw_value = elem.value
-            # Sequences can contain repeated tags, including identifiers. Keep every occurrence.
-            occurrence_key = tag_key if tag_key not in tags else f"{tag_key}#{len(tags)}"
-            tags[occurrence_key] = DicomTag(
-                tag=tag_key,
-                keyword=keyword,
-                vr=str(elem.VR),
-                is_private=bool(elem.tag.is_private),
-                value_state=value_state(raw_value),
-                raw_value=raw_value,
-            )
+
+        def walk(current: Any, dataset_path: tuple[str, ...] = ()) -> None:
+            for elem in current:
+                if elem.keyword in {"PixelData", "FloatPixelData", "DoubleFloatPixelData"}:
+                    continue
+                tag_key = f"({elem.tag.group:04X},{elem.tag.element:04X})"
+                keyword = elem.keyword or elem.name or tag_key
+                raw_value = elem.value
+                # Keep every occurrence and the owning dataset, including private SQ items.
+                occurrence_key = tag_key if tag_key not in tags else f"{tag_key}#{len(tags)}"
+                tags[occurrence_key] = DicomTag(
+                    tag=tag_key,
+                    keyword=keyword,
+                    vr=str(elem.VR),
+                    is_private=bool(elem.tag.is_private),
+                    value_state=value_state(raw_value),
+                    raw_value=raw_value,
+                    is_nested=bool(dataset_path),
+                    dataset_path=dataset_path,
+                )
+                if elem.VR == "SQ":
+                    for index, item in enumerate(raw_value):
+                        walk(item, (*dataset_path, f"{tag_key}[{index}]"))
+
+        walk(dataset)
 
         return MetadataRecord(
             path=path,

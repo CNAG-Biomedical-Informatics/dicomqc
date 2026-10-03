@@ -115,7 +115,7 @@ same raw input + same pseudonymization policy -> same dicomqc result
 
 ## MRI-specific privacy risks
 
-dicomqc v0.2 audits metadata. It does not inspect pixel data and does not deface
+dicomqc audits metadata. It does not inspect pixel data and does not deface
 brain MRI volumes.
 
 For head MRI, de-identification may also require image-level handling such as
@@ -123,7 +123,7 @@ defacing, skull stripping, or another approved facial-feature protection method,
 depending on the release policy and downstream analysis needs.
 
 If you convert the dataset to BIDS, audit the DICOM metadata first and run a
-BIDS validator after conversion. dicomqc v0.2 does not check BIDS requirements;
+BIDS validator after conversion. dicomqc does not check BIDS requirements;
 a BIDS profile is planned.
 
 ## Release checklist

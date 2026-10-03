@@ -14,7 +14,7 @@ title: CLI Reference
 ## `dicomqc scan`
 
 ```bash
-dicomqc scan PATH [PATH ...] [--json FILE] [--csv FILE] [--html FILE] [--multiqc [DIR]] [--profile PROFILE] [--quiet]
+dicomqc scan PATH [PATH ...] [--json FILE] [--csv FILE] [--html FILE] [--multiqc [DIR]] [--profile PROFILE] [--policy FILE] [--vendor-summary] [--uid-checks] [--quiet]
 ```
 
 ### Arguments
@@ -27,11 +27,14 @@ dicomqc scan PATH [PATH ...] [--json FILE] [--csv FILE] [--html FILE] [--multiqc
 
 | Option | Description |
 | --- | --- |
-| `--json FILE` | Write a JSON report without raw DICOM tag values. |
+| `--json FILE` | Write JSON findings and scan metadata. See [redaction details](../technical-details/architecture.mdx#what-stays-out-of-reports). |
 | `--csv FILE` | Write a CSV findings report. |
 | `--html FILE` | Write a standalone HTML report with search and severity filters. Works offline. |
 | `--multiqc [DIR]` | Write a MultiQC custom-content directory. Defaults to `dicomqc_mqc/`. |
-| `--profile PROFILE` | Select a rule profile. v0.2 supports `research-release-v0.1`. |
+| `--profile PROFILE` | Select a rule profile. Supports `research-release-v0.1`. |
+| `--policy FILE` | Add project-specific YAML checks without disabling built-in checks. See [Project policies](../usage/policies.md). |
+| `--uid-checks` | Check top-level study, series, and instance UID syntax, role reuse, and hierarchy within this scan. See [UID integrity](../usage/uid-integrity.md). |
+| `--vendor-summary` | Include declared scanner/software labels and private creator blocks. Exports metadata text that may identify people; see [Scanner inventory](../usage/vendor-summary.md). |
 | `--quiet` | Suppress the text summary. |
 
 ### Exit codes
@@ -44,10 +47,10 @@ dicomqc scan PATH [PATH ...] [--json FILE] [--csv FILE] [--html FILE] [--multiqc
 
 ## `dicomqc compare`
 
-Available since v0.2.0; see [Compare datasets](../usage/compare.md):
+See [Compare datasets](../usage/compare.md):
 
 ```bash
-dicomqc compare SOURCE CANDIDATE --manifest FILE [--json FILE] [--csv FILE] [--html FILE] [--quiet]
+dicomqc compare SOURCE CANDIDATE --manifest FILE [--json FILE] [--csv FILE] [--html FILE] [--policy FILE] [--quiet]
 ```
 
 This checks file completeness and patient pseudonym consistency using an explicit
@@ -57,10 +60,15 @@ the same as `scan`. `--html FILE` writes an offline report including pairing
 coverage and searchable findings. Reports must use distinct output paths outside
 the input directories and must not overwrite the manifest.
 
+`--policy FILE` adds [project checks](../usage/policies.md)
+to readable, listed candidate files only. Keep the policy outside the input
+directories; reports must not overwrite it. The same policy option is available
+for `scan`.
+
 ## `dicomqc demo`
 
 ```bash
-dicomqc demo [--compare] [--output-dir DIR] [--force]
+dicomqc demo [--compare | --policy-demo | --vendor-demo | --uid-demo] [--output-dir DIR] [--force]
 ```
 
 Generate a synthetic DICOM dataset and a complete dicomqc report bundle.
@@ -70,8 +78,13 @@ Generate a synthetic DICOM dataset and a complete dicomqc report bundle.
 | Option | Description |
 | --- | --- |
 | `--output-dir DIR` | Write demo files under `DIR` instead of `dicomqc-demo/`. |
-| `--force` | Replace an existing marked demo directory created by v0.2.0 or later. Unmarked directories are refused. |
-| `--compare` | Generate source, failing candidate, and corrected datasets, a pairing manifest, and JSON/CSV/HTML reports for both comparisons. Available since v0.2.0. |
+| `--force` | Replace an existing marked demo directory. Unmarked directories are refused. |
+| `--compare` | Generate source, failing candidate, and corrected datasets, a pairing manifest, and JSON/CSV/HTML reports for both comparisons. |
+| `--policy-demo` | Generate a policy file, failing and corrected synthetic datasets, and before/after JSON/CSV/HTML reports. |
+| `--vendor-demo` | Generate three synthetic files and a scan with scanner/private-tag inventory in HTML, JSON, and MultiQC, plus CSV findings. |
+| `--uid-demo` | Generate four failing and four corrected synthetic files, with before/after HTML, JSON, CSV, and MultiQC content. See [UID integrity](../usage/uid-integrity.md#try-the-uid-demo). |
+
+`--compare`, `--policy-demo`, `--vendor-demo`, and `--uid-demo` are mutually exclusive.
 
 The demo command exits `0` when generation succeeds, even though the synthetic
 scan result contains intentional findings. The reported scan exit code is shown
@@ -79,5 +92,68 @@ in the command output.
 
 With `--compare`, the two comparison exit codes are `2` (intentional failures)
 and `0` (corrected dataset). The demo command still exits `0` on successful
-generation. Both demo modes exit `2` if their audit results differ from the
+generation. Demo generation exits `2` if its audit results differ from the
 expected results. See the [comparison demo](../usage/compare.md#try-the-comparison-demo).
+
+The `--policy-demo` mode has audit exit codes
+`2` before correction and `0` afterward. It writes `before.html`, `after.html`,
+their JSON/CSV equivalents, and `policy.yaml` under the output directory.
+The demo command exits `0` on successful generation. See [Project policies](../usage/policies.md).
+
+With `--vendor-demo`, the scan exits `1` for three private-tag warnings; the demo
+command exits `0` on successful generation. See the
+[inventory walkthrough](../usage/vendor-summary.md#try-the-inventory-demo).
+
+## Output formats
+
+| Format | Use it for | Option |
+| --- | --- | --- |
+| HTML | Reviewing grouped findings in an offline browser report | `--html report.html` |
+| JSON | Processing the full audit result in scripts | `--json report.json` |
+| CSV | Working with individual findings in a spreadsheet | `--csv findings.csv` |
+| MultiQC | Viewing scan results alongside other QC tools | `--multiqc dicomqc_mqc` |
+
+Request several formats in one run:
+
+```bash
+dicomqc scan study/ --html report.html --json report.json --csv findings.csv --multiqc
+```
+
+Use distinct output paths outside the DICOM inputs; do not overwrite a policy
+or manifest file. HTML, JSON, and CSV also work with `compare`; MultiQC export
+is available for `scan`.
+
+HTML embeds its styles and scripts, so no server or internet connection is
+needed. See the [HTML review controls](../usage/quickstart.md#review-the-html-report).
+`--multiqc` writes custom-content files, not a finished HTML report; run MultiQC
+separately as shown in the [scan walkthrough](../usage/quickstart.md#view-the-same-scan-in-multiqc).
+
+### JSON
+
+JSON contains `tool`, `profile_id`, `summary`, `records`, `findings`, and
+`skipped_files`. Comparisons add `comparison` pairing counts and use
+manifest-row references instead of original paths. Policy audits add a
+`policy` object containing `id` and the policy file's `sha256` digest, not its
+configured values or patterns.
+
+Ordinary scan JSON includes study/series UIDs, manufacturer, and modality;
+policy-scan JSON, UID-enabled scan JSON, and comparison reports omit these record-context fields.
+UID-enabled scans add `uid_checks` with the check profile and coverage counts;
+see the [UID output examples](../usage/uid-integrity.md#json-and-csv-from-this-scan).
+Explicitly adding `--vendor-summary` to a scan adds a separate `vendor_summary`
+object with raw scanner/software labels and private creator labels, even when
+`--policy` or `--uid-checks` is used. Those labels may contain identifying information; private
+payload values are never exported. Review the
+[redaction details](../technical-details/architecture.mdx#what-stays-out-of-reports)
+before sharing reports.
+
+### CSV
+
+CSV has one row per finding, with columns `path`, `rule_id`, `profile_id`,
+`severity`, `tag`, `keyword`, `value_state`, `message`, `recommendation`, and
+`standard_refs`. A result without findings produces only the header. CSV does
+not include audit summary counts, UID coverage, the policy digest, or the scanner inventory; keep JSON alongside it
+for that context.
+
+The [comparison walkthrough](../usage/compare.md#json-and-csv-from-this-comparison)
+shows a JSON finding and the corresponding CSV rows as a table.

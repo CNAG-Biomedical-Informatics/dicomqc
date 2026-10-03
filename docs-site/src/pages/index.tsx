@@ -6,7 +6,7 @@ import styles from './index.module.css';
 const primaryLinks = [
   {label: 'Install', to: '/docs/usage/install'},
   {label: 'Quickstart', to: '/docs/usage/quickstart'},
-  {label: 'Reports', to: '/docs/usage/reports'},
+  {label: 'Desktop app', to: '/docs/usage/desktop'},
 ];
 
 const auditOperations = [
@@ -33,6 +33,11 @@ const auditOperations = [
 ];
 
 const documentationPaths = [
+  {
+    title: 'Use the desktop app',
+    text: 'Select inputs and an output folder, run an audit, and review findings and reports.',
+    to: '/docs/usage/desktop',
+  },
   {
     title: 'Install dicomqc',
     text: 'Install the PyPI release, optional MultiQC support, or a source checkout.',
@@ -80,6 +85,7 @@ export default function Home() {
                 dicomqc audits de-identified DICOM metadata for privacy risks.
                 It flags patient identifiers, unexpected pseudonym formats, and
                 private tags, and writes HTML, JSON, CSV, and MultiQC reports.
+                Use the desktop app for interactive audits or the CLI for automation.
                 It never changes the DICOM files.
               </p>
               <nav className={styles.primaryLinks} aria-label="Primary documentation">
@@ -141,7 +147,7 @@ export default function Home() {
               <h2 id="scope-title">What dicomqc does not check</h2>
             </div>
             <p>
-              Version 0.2 does not pseudonymize or modify DICOM files, inspect
+              dicomqc does not pseudonymize or modify DICOM files, inspect
               pixels or facial features, or certify DICOM PS3.15, BIDS, HIPAA, or
               GDPR compliance. A qualified reviewer must still decide whether the
               data can be shared.

@@ -1,4 +1,14 @@
 .venv/
+app/node_modules/
+app/dist/
+app/test-results/
+app/playwright-report/
+app/src-tauri/target/
+app/src-tauri/engine/
+app/src-tauri/gen/
+app/src-tauri/icons/android/
+app/src-tauri/icons/ios/
+app/*.tsbuildinfo
 .pytest_cache/
 .coverage
 __pycache__/

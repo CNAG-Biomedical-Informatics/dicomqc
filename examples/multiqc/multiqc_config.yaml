@@ -1,5 +1,5 @@
 title: dicomqc example audit
-subtitle: Policy-driven DICOM release-readiness report
+subtitle: DICOM metadata audit report
 output_fn_name: multiqc_report.html
 data_dir_name: multiqc_data
 custom_logo: assets/dicomqc-logo.png

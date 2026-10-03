@@ -4,8 +4,13 @@ title: Install
 
 # Install
 
-dicomqc requires Python 3.10 or newer. Install the published package from
-[PyPI](https://pypi.org/project/dicomqc/) for normal use.
+dicomqc provides a desktop app and a command-line interface, using the same
+Python audit engine.
+
+- **Desktop app:** follow the [desktop source-build instructions](desktop.md#build-from-source).
+  Installers have not been published.
+- **CLI:** install from [PyPI](https://pypi.org/project/dicomqc/) with Python 3.10
+  or newer, as shown below. The PyPI package does not install the desktop app.
 
 ## Install from PyPI
 
@@ -33,15 +38,15 @@ python -m pip install --upgrade dicomqc
 
 ## Optional MultiQC installation
 
-dicomqc can write MultiQC-compatible custom content without MultiQC being
-installed. Install MultiQC when an interactive HTML report is required:
+dicomqc writes standalone HTML reports without extra packages. Install MultiQC
+only if you want to combine dicomqc results with other QC reports:
 
 ```bash
 python -m pip install multiqc
 ```
 
-See [Reports](reports.md) for report-generation commands and the example
-configuration.
+See the [scan walkthrough](quickstart.md#view-the-same-scan-in-multiqc)
+for the rendering command and its matching report screenshots.
 
 ## Install from source
 
@@ -63,6 +68,10 @@ python -m pip install -e ".[test]"
 ```
 
 The `test` extra is not needed for normal use.
+
+For the complete suite, including the optional local API, install
+`".[test,api,api-test]"`. The [desktop app](desktop.md) has separate native build
+requirements; installing the PyPI package provides the CLI.
 
 ## External DICOM tools
 

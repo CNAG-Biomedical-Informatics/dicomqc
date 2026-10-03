@@ -5,20 +5,27 @@ All notable changes to dicomqc are documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project follows [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
-## [Unreleased]
-
-## [0.2.0] - 2026-10-02
+## [0.2.0] - Unreleased
 
 ### Added
 
 - Dataset comparisons for file completeness and patient pseudonym consistency,
   with explicit CSV pairing manifests and a before/after demo.
 - Offline HTML reports with grouped findings, charts, filters, and print support.
+- YAML project policies for metadata checks in scans and comparisons.
+- Opt-in scanner/software and private-tag inventory, with a synthetic demo.
+- UID syntax, role reuse, and hierarchy checks, with a before/after demo.
+- Native desktop source with a bundled local Python API, audit queue, run history,
+  cancellation, report previews and exports, and synthetic examples.
+- Desktop navigation with Setup, Findings, and Reports views, searchable history,
+  and output-folder selection that preserves selected inputs.
+- Manual desktop test builds for macOS, Windows, and Linux.
 
 ### Changed
 
 - Simplified documentation and demos; require pydicom 3.0 or newer.
 - Safer demo overwrite checks and automated wheel/sdist release validation.
+- Align HTML and MultiQC status wording and styling; refresh report screenshots.
 
 ### Fixed
 
@@ -49,6 +56,5 @@ Comparisons check metadata and file pairing, not pixels, date shifts, or UID ref
 - The built-in profile does not certify DICOM PS3.15, BIDS, HIPAA, or GDPR
   compliance.
 
-[Unreleased]: https://github.com/CNAG-Biomedical-Informatics/dicomqc/compare/v0.2.0...HEAD
-[0.2.0]: https://github.com/CNAG-Biomedical-Informatics/dicomqc/compare/v0.1.0...v0.2.0
+[0.2.0]: https://github.com/CNAG-Biomedical-Informatics/dicomqc/compare/v0.1.0...HEAD
 [0.1.0]: https://github.com/CNAG-Biomedical-Informatics/dicomqc/tree/v0.1.0

@@ -70,11 +70,6 @@ const config: Config = {
           position: 'left',
         },
         {
-          to: '/docs/usage/reports',
-          label: 'Reports',
-          position: 'left',
-        },
-        {
           href: 'https://github.com/CNAG-Biomedical-Informatics/dicomqc',
           label: 'GitHub',
           position: 'right',

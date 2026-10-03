@@ -23,13 +23,28 @@ const sidebars: SidebarsConfig = {
         },
         {
           type: 'doc',
-          id: 'usage/reports',
-          label: 'Reports',
+          id: 'usage/desktop',
+          label: 'Desktop app',
         },
         {
           type: 'doc',
           id: 'usage/compare',
           label: 'Compare datasets',
+        },
+        {
+          type: 'doc',
+          id: 'usage/policies',
+          label: 'Project policies',
+        },
+        {
+          type: 'doc',
+          id: 'usage/vendor-summary',
+          label: 'Scanner inventory',
+        },
+        {
+          type: 'doc',
+          id: 'usage/uid-integrity',
+          label: 'UID integrity',
         },
         {
           type: 'doc',

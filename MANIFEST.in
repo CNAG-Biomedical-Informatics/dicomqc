@@ -1,3 +1,7 @@
 include CHANGELOG.md
 include scripts/smoke_distribution.py
 exclude README
+exclude SESSION_NOTES.md
+exclude tests/test_desktop_build.py
+prune app
+prune docs-site

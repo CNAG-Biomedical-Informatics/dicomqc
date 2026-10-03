@@ -126,13 +126,16 @@ body,
 }
 
 .dicomqcArchitectureFigure {
-  max-width: 640px;
+  width: 100%;
+  max-width: 800px;
   margin-inline: auto;
+  border: 0;
+  border-radius: 0;
+  background: transparent;
 }
 
 .dicomqcArchitectureFigure img {
-  max-height: 540px;
-  object-fit: contain;
+  padding: 0;
 }
 
 .dicomqcArchitectureFigure figcaption,

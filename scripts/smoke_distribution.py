@@ -47,7 +47,26 @@ def main() -> None:
                 "--csv", f"{directory}.csv", "--html", f"{directory}.html", expected_exit=code)
             assert (root / f"{directory}.html").is_file()
         cli("demo", "--compare", "--output-dir", "comparison-demo", "--force")
-    print(f"Installed dicomqc {expected}: scan demo, comparison demo, and comparisons passed.")
+        cli("demo", "--policy-demo", "--output-dir", "policy-demo")
+        for phase, errors in (("before", 3), ("after", 0)):
+            payload = json.loads((root / f"policy-demo/{phase}.json").read_text())
+            assert payload["summary"]["errors"] == errors
+            assert payload["policy"]["id"] == "research-demo"
+            assert len(payload["policy"]["sha256"]) == 64
+        cli("scan", "policy-demo/corrected", "--policy", "policy-demo/policy.yaml",
+            "--html", "policy-scan.html")
+        cli("demo", "--vendor-demo", "--output-dir", "vendor-demo")
+        vendor = json.loads((root / "vendor-demo/dicomqc/report.json").read_text())
+        assert vendor["summary"]["warnings"] == 3
+        assert vendor["vendor_summary"]["unassigned_private_elements"] == 1
+        assert vendor["vendor_summary"]["private_elements"] == 5
+        cli("demo", "--uid-demo", "--output-dir", "uid-demo")
+        for phase, errors in (("before", 7), ("after", 0)):
+            payload = json.loads((root / f"uid-demo/{phase}.json").read_text())
+            assert payload["summary"]["errors"] == errors
+            assert payload["uid_checks"]["files_checked"] == 4
+        cli("scan", "uid-demo/corrected", "--uid-checks", "--html", "uid.html")
+    print(f"Installed dicomqc {expected}: scan, comparison, policy, vendor and UID demos passed.")
 
 
 if __name__ == "__main__":
