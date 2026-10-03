@@ -21,3 +21,12 @@ Outputs are written under `dicomqc-demo/`:
 - `multiqc_report.html`: rendered MultiQC report, if MultiQC is installed
 
 Generated outputs are ignored by git.
+
+To refresh the documentation screenshots after rendering the report, run:
+
+```bash
+npm --prefix docs-site run screenshots:multiqc
+```
+
+The capture script reads `dicomqc-demo/multiqc_report.html` by default. Pass a
+different report path after `--` if the demo was generated elsewhere.

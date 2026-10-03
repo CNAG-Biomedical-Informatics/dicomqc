@@ -7,9 +7,9 @@ import useBaseUrl from '@docusaurus/useBaseUrl';
 
 # Architecture
 
-dicomqc finds files, reads their metadata, runs checks, and writes reports.
-Each step has its own module. The checks and report writers use dicomqc's data
-models rather than pydicom objects.
+**Desktop and CLI share one Python audit engine.** It reads DICOM metadata,
+runs the selected checks, and writes reports. Input files remain unchanged;
+pixel data is not loaded or inspected.
 
 <figure className="dicomqcArchitectureFigure">
   <a href={useBaseUrl('/img/dicomqc-architecture.svg')} target="_blank" rel="noopener noreferrer" aria-label="Open the full-size architecture diagram">
@@ -26,112 +26,51 @@ models rather than pydicom objects.
   </a>
 </figure>
 
-## Components
+## Main components
 
-| Component | Current responsibility |
+| Component | Responsibility |
 | --- | --- |
-| CLI and scanner | Find input files recursively, select a profile, and request reports. |
-| `DicomBackend` | Read one file and return its metadata as a `MetadataRecord`. |
-| `PydicomBackend` | Parse DICOM metadata with `stop_before_pixels=True`; pixel data is not loaded. |
-| Metadata model | Store file details, tags, private-tag status, and `ValueState`. |
-| Built-in rules | Evaluate direct PHI fields, pseudonym patterns, and private tags under `research-release-v0.1`. |
-| Project policies | Add user-defined metadata requirements without replacing built-in rules. |
-| Scanner inventory | Optionally summarize declared equipment labels and private creator blocks without changing findings. |
-| Result model | Collect records, findings, skipped files, counts, and the process exit status. |
-| Report writers | Write standalone HTML, JSON, CSV, and MultiQC-compatible reports without observed values in findings. |
+| Desktop | React interface and Tauri shell for native dialogs, projects, and report previews. Calls an authenticated local FastAPI service, not the CLI. |
+| CLI | Calls the same Python audit functions for scripted workflows. |
+| Metadata reader | Uses pydicom to read files into a common metadata model used by the checks. |
+| Audit engine | Runs privacy checks or compares paired datasets, with optional checks supported by each mode. |
+| Report writers | Produce HTML, JSON, and CSV. Privacy audits can also produce MultiQC custom content. |
 
-## Desktop and CLI
+See [Audit modes](../usage/audit-modes.md) for the checks available in each mode.
 
-The CLI and desktop use the same Python audit functions. The Tauri native shell
-starts a bundled, authenticated FastAPI service on loopback and sends structured
-requests to it. React handles the interface; Rust handles native dialogs, service
-lifecycle, and report exports. The desktop does not parse CLI output.
+## Execution and storage
 
-The service maintains a SQLite run history and a queue with one active worker.
-Each audit runs in a separate Python process. The native shell retains API
-credentials and restricts which operations the interface can request. Selecting
-files uses native dialogs; HTML previews are isolated from native commands.
-See the [desktop app](../usage/desktop.md) for usage and build status.
+The Desktop service runs locally with **one active audit at a time**. Each audit
+runs in a separate Python process; the thread setting controls batch workers
+within it. Additional audits wait in a queue.
 
-## Data flow
+The app manages its working files and SQLite run database. Saving a
+**`.dicomqc` project** stores settings, runs, logs, reports, and policy/manifest
+copies in one archive. Original DICOM files remain external references.
+Opening a project restores its results into a private working session.
 
-1. `scan_paths()` collects input files in a repeatable order.
-2. The backend reads each file as DICOM metadata. Files that cannot be parsed are
-   recorded as skipped rather than silently ignored.
-3. pydicom elements are converted to `DicomTag` objects inside a
-   `MetadataRecord`.
-4. Built-in rules and optional project policies
-   inspect metadata and create `Finding` objects with severity, tag details,
-   and recommended fixes.
-5. `ScanResult` combines records, findings, and skipped-file reasons. Its exit
-   code is `0` for pass, `1` for review warnings, and `2` for errors or skipped
-   files.
-6. Report writers save findings without their observed tag values.
-
-## Reading metadata
-
-Metadata readers implement this protocol:
-
-```python
-class DicomBackend(Protocol):
-    def read_metadata(self, path: Path) -> MetadataRecord:
-        ...
-```
-
-The scanner and rules use `MetadataRecord` objects. Another reader could return
-the same objects without requiring changes to the rules.
-
-Readers must retain the owning dataset for nested private tags. The pydicom
-reader sets `DicomTag.dataset_path` to sequence tags and zero-based item indexes,
-with an empty tuple for the root dataset. The vendor inventory refuses nested
-private tags without that path; it cannot safely infer creator ownership from
-`is_nested` alone.
+The native shell holds API credentials. HTML previews are isolated from native
+commands. See [Desktop projects](../usage/desktop.md#save-a-project-or-export-a-report)
+for saving and exporting. The CLI writes reports to the paths supplied by the user.
 
 ## What stays out of reports
 
-`MetadataRecord` stores modality, manufacturer, Study Instance UID,
-Series Instance UID, and tags. Each `DicomTag` stores its number, keyword, value representation,
-private-tag status, value state, and an internal raw value.
+Checks use raw metadata values internally, but **findings omit observed tag
+values**. This does not make every report anonymous:
 
-Rules need raw tag values for checks such as pseudonym matching. Findings omit
-those values. Ordinary scan JSON retains study/series UIDs, manufacturer, and
-modality; policy-scan JSON, UID-enabled scan JSON, and comparison reports omit this raw context.
-By default, HTML does not embed raw records or tag values. Policy reports also omit
-configured allowed values and patterns; only the policy ID, rule IDs, and file
-digest identify the applied configuration. Use non-identifying policy and rule IDs.
+- Ordinary scan JSON includes study/series UIDs, manufacturer, and modality.
+  Policy-enabled scans, UID-enabled scans, and comparisons omit that raw context.
+- HTML does not embed raw records by default. Policy reports omit allowed values
+  and patterns, but retain policy/rule IDs and the policy file digest.
+- Optional [scanner inventory](../usage/vendor-summary.md) includes observed
+  equipment and private-creator labels, even with policy or UID checks enabled.
+  It never exports private payload values.
+- Reports can contain paths or file references. Saved projects also contain
+  policy and manifest copies.
 
-`scan --vendor-summary` explicitly adds raw manufacturer, model, software-version,
-and private creator labels to HTML, JSON, and MultiQC. These labels may contain
-identifying information, including when a policy or UID checks are applied. The option never
-exports private payload values and is not available for comparisons. See the
-[scanner inventory](../usage/vendor-summary.md) for an example.
+:::caution Before sharing
 
-Reports still contain file paths or references and other details that may
-identify people or datasets, so review them before sharing and restrict access
-when needed.
+Review reports and projects for sensitive information. Use non-identifying
+policy and rule IDs. Passing an audit does not certify that data can be shared.
 
-## UID integrity
-
-For within-collection identifier checks, `scan --uid-checks` evaluates normalized
-top-level study, series, and instance UIDs after all readable files are collected.
-It adds syntax and relationship findings plus value-free coverage counts; see
-[UID integrity](../usage/uid-integrity.md). It does not compare UID remapping
-between source and candidate collections.
-
-## Dataset comparison
-
-`compare_datasets()` checks a one-to-one CSV manifest against both directory
-inventories, reads each pair, and runs the privacy rules on candidate files.
-It groups source patients by top-level `IssuerOfPatientID` and `PatientID`, then
-checks for inconsistent output IDs and collisions. Repeated tags inside sequences
-are retained so each occurrence can be checked.
-
-Comparison results use manifest-row references and omit raw file context.
-The comparison profile is `dataset-comparison-v0.1`; candidate privacy findings
-retain their `research-release-v0.1` rule IDs. Profile versions are independent
-of the package version. See [Compare datasets](../usage/compare.md) for details.
-
-## Planned extensions
-
-Further standards-specific checks can use the existing reader and rule
-interfaces. See [Planned Features](./extending-dicomqc.md).
+:::

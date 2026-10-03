@@ -9,12 +9,14 @@ from typing import Sequence
 
 from dicomqc import __version__
 from dicomqc.compare import compare_datasets, comparison_roots
-from dicomqc.demo import run_comparison_demo, run_demo, run_policy_demo, run_vendor_demo, run_uid_demo
+from dicomqc.demo import run_comparison_demo, run_demo, run_large_demo, run_policy_demo, run_vendor_demo, run_uid_demo
+from dicomqc.fixtures import LARGE_DEMO_FILES
 from dicomqc.reports import write_csv, write_html, write_json, write_multiqc
 from dicomqc.rules.builtin import DEFAULT_PROFILE_ID
 from dicomqc.rules.policy import Policy, load_policy
 from dicomqc.scanner import scan_paths
 from dicomqc.execution import _load_requested_policy, _validate_multiqc_output
+from dicomqc.parallel import DEFAULT_THREADS, MAX_THREADS
 
 
 def main(argv: Sequence[str] | None = None) -> int:
@@ -57,6 +59,8 @@ def _build_parser() -> argparse.ArgumentParser:
                       help="Check top-level study, series and instance UID syntax, role reuse and hierarchy within this scan.")
     scan.add_argument("--vendor-summary", action="store_true",
                       help="Include declared manufacturer, model, software and private creator labels in reports. These values may identify people or sites.")
+    scan.add_argument("-t", "--threads", type=int, default=DEFAULT_THREADS,
+                      help=f"Metadata threads within this audit. Default: {DEFAULT_THREADS}; maximum: {MAX_THREADS}.")
     scan.add_argument("--quiet", action="store_true", help="Suppress the text summary.")
     demo = subparsers.add_parser("demo", help="Generate a synthetic DICOM demo dataset and dicomqc reports.")
     demo.add_argument(
@@ -71,6 +75,7 @@ def _build_parser() -> argparse.ArgumentParser:
     demo_mode.add_argument("--policy-demo", action="store_true", help="Demonstrate project policy checks on synthetic metadata.")
     demo_mode.add_argument("--vendor-demo", action="store_true", help="Demonstrate scanner metadata and nested private creator blocks.")
     demo_mode.add_argument("--uid-demo", action="store_true", help="Demonstrate failing and corrected UID integrity checks.")
+    demo_mode.add_argument("--large", action="store_true", help=f"Generate and audit {LARGE_DEMO_FILES} synthetic DICOM files with deterministic findings.")
     compare = subparsers.add_parser("compare", help="Audit paired source and de-identified datasets.")
     compare.add_argument("source", type=Path, help="Source DICOM directory.")
     compare.add_argument("candidate", type=Path, help="De-identified DICOM directory.")
@@ -80,6 +85,8 @@ def _build_parser() -> argparse.ArgumentParser:
     compare.add_argument("--html", dest="html_path", type=Path, help="Write a standalone offline HTML comparison report.")
     compare.add_argument("--quiet", action="store_true", help="Suppress the text summary.")
     compare.add_argument("--policy", type=Path, help="Add YAML policy checks on candidate metadata only.")
+    compare.add_argument("-t", "--threads", type=int, default=DEFAULT_THREADS,
+                         help=f"Metadata threads within this audit. Default: {DEFAULT_THREADS}; maximum: {MAX_THREADS}.")
     return parser
 
 
@@ -95,7 +102,7 @@ def _run_compare(args: argparse.Namespace) -> int:
                 raise ValueError("Write reports outside the inputs and do not overwrite the manifest.")
             if output.exists() and output.stat().st_nlink > 1:
                 raise ValueError("Report output must not be a hard-linked file.")
-        result = compare_datasets(*roots, args.manifest, policy=policy)
+        result = compare_datasets(*roots, args.manifest, policy=policy, threads=args.threads)
         if args.json_path:
             write_json(result, args.json_path)
         if args.csv_path:
@@ -132,7 +139,7 @@ def _run_scan(args: argparse.Namespace) -> int:
             if output.exists() and output.stat().st_nlink > 1:
                 raise ValueError("Report output must not be a hard-linked file.")
         result = scan_paths(args.paths, profile=args.profile, policy=policy, vendor_summary=args.vendor_summary,
-                            uid_checks=args.uid_checks)
+                            uid_checks=args.uid_checks, threads=args.threads)
         if args.json_path:
             write_json(result, args.json_path)
         if args.csv_path:
@@ -192,7 +199,8 @@ def _run_demo(args: argparse.Namespace) -> int:
             print(f"After HTML: {comparison.output_dir / 'after.html'}")
             print("All data is synthetic. Corrected files are generated separately; dicomqc audits are read-only.")
             return 0
-        demo = (run_vendor_demo if args.vendor_demo else run_demo)(args.output_dir, force=args.force)
+        demo_function = run_large_demo if args.large else run_vendor_demo if args.vendor_demo else run_demo
+        demo = demo_function(args.output_dir, force=args.force)
     except (FileExistsError, ValueError) as exc:
         print(f"dicomqc: {exc}", file=sys.stderr)
         return 2
@@ -206,7 +214,8 @@ def _run_demo(args: argparse.Namespace) -> int:
     print(f"CSV findings: {demo.csv_path}")
     print(f"HTML report: {demo.report_dir / 'report.html'}")
     print(f"MultiQC custom content: {demo.multiqc_dir}")
-    print(f"Demo scan exit code: {demo.scan_exit_code} (expected: synthetic findings are included)")
+    expected = "synthetic findings are included"
+    print(f"Demo scan exit code: {demo.scan_exit_code} (expected: {expected})")
     print(f"Render with MultiQC, if installed: multiqc {demo.report_dir} --outdir {demo.output_dir} --force")
     return 0
 

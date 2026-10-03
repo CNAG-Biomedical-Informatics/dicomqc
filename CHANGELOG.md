@@ -17,15 +17,17 @@ and this project follows [Semantic Versioning](https://semver.org/spec/v2.0.0.ht
 - UID syntax, role reuse, and hierarchy checks, with a before/after demo.
 - Native desktop source with a bundled local Python API, audit queue, run history,
   cancellation, report previews and exports, and synthetic examples.
-- Desktop navigation with Setup, Findings, and Reports views, searchable history,
-  and output-folder selection that preserves selected inputs.
-- Manual desktop test builds for macOS, Windows, and Linux.
+- Desktop navigation, policy editing, searchable run history, job logs, and
+  portable `.dicomqc` projects with reports and settings; DICOM inputs stay external.
+- Desktop installer builds for macOS, Windows, and Linux, with packaged-engine
+  checks, checksums, manual platform selection, and tag-triggered draft Releases.
 
 ### Changed
 
 - Simplified documentation and demos; require pydicom 3.0 or newer.
 - Safer demo overwrite checks and automated wheel/sdist release validation.
 - Align HTML and MultiQC status wording and styling; refresh report screenshots.
+- Separate Desktop and CLI documentation and distinguish the two audit modes.
 
 ### Fixed
 

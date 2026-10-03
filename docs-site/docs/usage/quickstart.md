@@ -1,24 +1,13 @@
 ---
-title: Quickstart
+title: CLI privacy audit
 ---
 
-# Quickstart
+# CLI privacy audit
 
-Choose the desktop app for interactive audits or the CLI for scripted work.
-See [Install](install.md) for setup instructions.
-
-## Try the desktop app
-
-1. Open the [desktop app](desktop.md) and review **Output folder** in **Setup**.
-2. Open **Explore with synthetic data** and select **Scan**. This generates
-   synthetic DICOM files and starts the audit immediately.
-3. Review **Findings**, then open **Reports** for the HTML preview or **Save copy**.
-
-The example remains in run history. To audit your own data, return to **Setup**,
-select **Add folder** or **Add file**, and select **Run audit**. DICOM inputs are
-never modified.
-
-## Use the command line
+This walkthrough uses the command line. See [Install](install.md) first, or
+follow the separate [Desktop privacy audit example](desktop-privacy.md).
+Read [Audit modes](audit-modes.md) to distinguish a privacy audit from a
+dataset comparison and its optional checks.
 
 Install dicomqc and verify `dicomqc --version` before running the commands below.
 

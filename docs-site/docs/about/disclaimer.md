@@ -4,7 +4,7 @@ title: Disclaimer
 
 # Disclaimer
 
-dicomqc is an audit tool for DICOM metadata quality control. It is not an
+**dicomqc** is an audit tool for DICOM metadata quality control. It is not an
 anonymizer, medical device, legal compliance system, or substitute for an
 institutional data-release review.
 

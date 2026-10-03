@@ -4,6 +4,10 @@ title: UID integrity
 
 # UID integrity
 
+UID checks are an optional addition to a privacy audit, not a separate audit
+mode. In the desktop app, expand **Advanced setup** and enable
+**Check UID syntax and relationships**. The CLI equivalent is shown below.
+
 UIDs identify studies, series, and individual DICOM instances. A broken export
 or remapping step can give two entities the same identifier or place a series
 under conflicting studies. Add `--uid-checks` to look for these problems:

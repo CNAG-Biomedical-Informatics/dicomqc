@@ -1,27 +1,71 @@
-name: Build desktop test artifacts
+name: Build desktop installers
 
 on:
+  push:
+    tags:
+      - 'v*'
   workflow_dispatch:
+    inputs:
+      platform:
+        description: Platform to build and inspect
+        type: choice
+        default: all
+        options:
+          - all
+          - macos-x64
+          - macos-arm64
+          - windows-x64
+          - linux-x64
+          - linux-arm64
 
 permissions:
   contents: read
 
+concurrency:
+  group: desktop-${{ github.ref }}-${{ inputs.platform || 'all' }}
+  cancel-in-progress: false
+
 jobs:
+  prepare:
+    runs-on: ubuntu-latest
+    outputs:
+      matrix: ${{ steps.matrix.outputs.matrix }}
+      version: ${{ steps.version.outputs.version }}
+    steps:
+      - uses: actions/checkout@v5
+        with:
+          fetch-depth: 0
+          persist-credentials: false
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - name: Restore annotated tag object
+        if: github.ref_type == 'tag'
+        env:
+          RELEASE_TAG: ${{ github.ref_name }}
+        run: git fetch --force --no-tags origin "refs/tags/$RELEASE_TAG:refs/tags/$RELEASE_TAG"
+      - name: Select platforms
+        id: matrix
+        env:
+          PLATFORM: ${{ inputs.platform || 'all' }}
+        run: python scripts/desktop_release.py matrix
+      - name: Verify versions and optional release tag
+        id: version
+        run: python scripts/desktop_release.py version
+
   desktop:
+    needs: prepare
     name: ${{ matrix.platform }}
     runs-on: ${{ matrix.os }}
     timeout-minutes: 90
     strategy:
       fail-fast: false
       matrix:
-        include:
-          - {platform: macos-x64, os: macos-15-intel, bundle: dmg}
-          - {platform: macos-arm64, os: macos-15, bundle: dmg}
-          - {platform: windows-x64, os: windows-2022, bundle: nsis}
-          - {platform: linux-x64, os: ubuntu-22.04, bundle: appimage}
-          - {platform: linux-arm64, os: ubuntu-24.04-arm, bundle: appimage}
+        include: ${{ fromJSON(needs.prepare.outputs.matrix) }}
     steps:
       - uses: actions/checkout@v5
+        with:
+          persist-credentials: false
       - uses: actions/setup-python@v5
         with:
           python-version: '3.12'
@@ -86,18 +130,69 @@ jobs:
 
       - name: Build native installer
         working-directory: app
+        env:
+          CARGO_TARGET_X86_64_PC_WINDOWS_MSVC_RUSTFLAGS: ${{ runner.os == 'Windows' && '-C target-feature=+crt-static' || '' }}
         run: npm run tauri -- build --bundles ${{ matrix.bundle }}
 
-      - name: Upload test installer
+      - name: Inspect Linux installer
+        if: runner.os == 'Linux'
+        shell: bash
+        run: |
+          set -euo pipefail
+          shopt -s nullglob
+          images=(app/src-tauri/target/release/bundle/appimage/*.AppImage)
+          test "${#images[@]}" -eq 1
+          image="$(realpath "${images[0]}")"
+          unpacked="$(mktemp -d)"
+          (cd "$unpacked" && "$image" --appimage-extract >/dev/null)
+          python scripts/desktop_release.py inspect "$unpacked/squashfs-root"
+
+      - name: Inspect macOS installer
+        if: runner.os == 'macOS'
+        shell: bash
+        run: |
+          set -euo pipefail
+          shopt -s nullglob
+          images=(app/src-tauri/target/release/bundle/dmg/*.dmg)
+          test "${#images[@]}" -eq 1
+          hdiutil verify "${images[0]}"
+          mount_dir="$(mktemp -d)"
+          hdiutil attach "${images[0]}" -readonly -nobrowse -mountpoint "$mount_dir"
+          trap 'hdiutil detach "$mount_dir"' EXIT
+          apps=("$mount_dir"/*.app)
+          test "${#apps[@]}" -eq 1
+          plutil -lint "${apps[0]}/Contents/Info.plist"
+          codesign --verify --deep --strict --verbose=2 "${apps[0]}"
+          python scripts/desktop_release.py inspect "${apps[0]}/Contents/Resources"
+
+      - name: Install and inspect Windows installer
+        if: runner.os == 'Windows'
+        shell: pwsh
+        run: |
+          $installers = @(Get-ChildItem app/src-tauri/target/release/bundle/nsis/*-setup.exe)
+          if ($installers.Count -ne 1) { throw 'Expected one Windows installer' }
+          $destination = Join-Path $env:LOCALAPPDATA "dicomqc-install-test-$env:GITHUB_RUN_ID"
+          $setup = Start-Process -FilePath $installers[0].FullName -ArgumentList @('/S', "/D=$destination") -PassThru
+          if (-not $setup.WaitForExit(180000)) { $setup.Kill(); throw 'Installer timed out' }
+          if ($setup.ExitCode -ne 0) { throw "Installer failed: $($setup.ExitCode)" }
+          python scripts/desktop_release.py inspect "$destination"
+          if ($LASTEXITCODE -ne 0) { throw 'Installed engine verification failed' }
+          $binary = Join-Path $destination 'dicomqc-desktop.exe'
+          if (-not (Test-Path $binary)) { throw 'Installed application is missing' }
+          Get-AuthenticodeSignature $installers[0].FullName | Format-List Status, StatusMessage
+
+      - name: Collect installer and checksum
+        env:
+          PLATFORM: ${{ matrix.platform }}
+        run: python scripts/desktop_release.py collect
+
+      - name: Upload inspected installer
         uses: actions/upload-artifact@v4
         with:
-          name: dicomqc-desktop-${{ matrix.platform }}-test
-          path: |
-            app/src-tauri/target/release/bundle/dmg/*.dmg
-            app/src-tauri/target/release/bundle/nsis/*-setup.exe
-            app/src-tauri/target/release/bundle/appimage/*.AppImage
+          name: dicomqc-${{ needs.prepare.outputs.version }}-${{ matrix.platform }}
+          path: build/installers/*
           if-no-files-found: error
-          retention-days: 7
+          retention-days: 30
 
       - name: Upload test results
         if: always()
@@ -119,3 +214,44 @@ jobs:
             !build/native-verification/app-data/**
           if-no-files-found: warn
           retention-days: 7
+
+  release:
+    name: Prepare draft desktop release
+    if: github.event_name == 'push' && startsWith(github.ref, 'refs/tags/v')
+    needs: [prepare, desktop]
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+    steps:
+      - uses: actions/download-artifact@v4
+        with:
+          pattern: dicomqc-${{ needs.prepare.outputs.version }}-*
+          path: release-assets
+          merge-multiple: true
+      - name: Verify and attach installers to draft
+        working-directory: release-assets
+        env:
+          GH_TOKEN: ${{ github.token }}
+          RELEASE_TAG: ${{ github.ref_name }}
+          VERSION: ${{ needs.prepare.outputs.version }}
+        shell: bash
+        run: |
+          set -euo pipefail
+          shopt -s nullglob
+          assets=(*)
+          checksums=(*.sha256)
+          test "${#assets[@]}" -eq 10
+          test "${#checksums[@]}" -eq 5
+          sha256sum --check "${checksums[@]}"
+          if gh release view "$RELEASE_TAG" --repo "$GITHUB_REPOSITORY" >/dev/null 2>&1; then
+            test "$(gh release view "$RELEASE_TAG" --repo "$GITHUB_REPOSITORY" --json isDraft --jq .isDraft)" = true || {
+              echo 'Refusing to replace assets on a published release' >&2
+              exit 1
+            }
+            gh release upload "$RELEASE_TAG" "${assets[@]}" --repo "$GITHUB_REPOSITORY" --clobber
+          else
+            gh release create "$RELEASE_TAG" "${assets[@]}" \
+              --repo "$GITHUB_REPOSITORY" --verify-tag --draft \
+              --title "dicomqc $VERSION" \
+              --notes "Desktop installers and SHA-256 checksums for dicomqc $VERSION. Review all platform checks and complete the release notes before publishing. macOS builds are not Apple-notarized; Windows installers are unsigned. Python is bundled. CLI publication to PyPI runs separately from the same tag."
+          fi

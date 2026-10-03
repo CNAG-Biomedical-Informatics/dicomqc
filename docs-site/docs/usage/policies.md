@@ -73,6 +73,14 @@ for filters and printing.
 
 ## Use your own policy
 
+In the desktop app's privacy mode, expand **Advanced setup**, then use
+**Project policy > New policy** or **Choose YAML**. The **Policy** workspace provides YAML highlighting, line numbers,
+search, undo, and validation with the dicomqc engine. **Save as and use** writes
+a new file and selects it without overwriting the original. Save the policy
+outside DICOM input folders. Saving the `.dicomqc` project embeds a copy of the
+selected YAML. Completed desktop audits also retain their policy alongside the
+reports. **Remove policy** returns to the built-in checks without deleting the YAML file.
+
 The separate four-rule example below uses different approved descriptions and
 adds a patient-ID format check. It is not the demo's generated policy.
 Save it as `research.yaml`, outside your DICOM input directory:

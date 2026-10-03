@@ -3,7 +3,7 @@ from __future__ import annotations
 import json
 import pytest
 
-from dicomqc.demo import run_comparison_demo, run_demo
+from dicomqc.demo import run_comparison_demo, run_demo, run_large_demo
 from dicomqc.compare import compare_datasets
 from dicomqc.scanner import scan_paths
 
@@ -25,6 +25,25 @@ def test_run_demo_generates_synthetic_dicom_and_reports(tmp_path):
     assert (result.multiqc_dir / "dicomqc_02_findings_mqc.yaml").exists()
     assert "Smith^Jane" not in result.json_path.read_text(encoding="utf-8")
     assert "19700101" not in result.csv_path.read_text(encoding="utf-8")
+
+
+def test_large_demo_is_generated_on_demand_with_findings(tmp_path):
+    events = []
+    result = run_large_demo(tmp_path / "large", count=25, multiqc=False, threads=1,
+                            progress=events.append)
+
+    assert result.scan_exit_code == 2
+    assert len(list(result.dicom_dir.glob("*.dcm"))) == 25
+    assert result.json_path.is_file()
+    report = json.loads(result.json_path.read_text())
+    assert report["summary"]["errors"] == 25
+    assert report["summary"]["warnings"] == 50
+    assert len(report["findings"]) == 75
+    assert events[0] == {"phase": "generation", "completed": 0, "total": 25}
+    assert {event["completed"] for event in events if event["phase"] == "generation"} == set(range(26))
+    assert all(event["total"] == 25 for event in events if event["phase"] == "reading")
+    assert events[-1]["phase"] == "reports"
+    assert not result.multiqc_dir.exists()
 
 
 def test_demo_fixtures_represent_expected_release_cases(tmp_path):
@@ -108,8 +127,8 @@ def test_force_preserves_unrecognized_directory(tmp_path):
 def test_comparison_demo_rejects_unexpected_audit(tmp_path, monkeypatch, which):
     from dataclasses import replace
     from dicomqc.demo import DemoValidationError
-    def unexpected(source, candidate, manifest):
-        result = compare_datasets(source, candidate, manifest)
+    def unexpected(source, candidate, manifest, **kwargs):
+        result = compare_datasets(source, candidate, manifest, **kwargs)
         if which == "before" and candidate.name == "candidate":
             return replace(result, findings=[])
         if which == "after" and candidate.name == "corrected":

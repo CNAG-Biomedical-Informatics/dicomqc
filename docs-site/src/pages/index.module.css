@@ -30,7 +30,7 @@
   gap: 4.5rem;
   align-items: center;
   min-height: 520px;
-  padding: 4rem 1.5rem;
+  padding: 2rem 1.5rem;
 }
 
 .heroCopy {
@@ -48,12 +48,32 @@
 }
 
 .heroCopy h1 {
-  margin: 0.55rem 0 0;
+  margin: 0;
   color: var(--home-ink);
-  font-size: 4.75rem;
+  font-size: 3rem;
   line-height: 1;
   letter-spacing: 0;
 }
+
+.brand {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+  margin-top: 0.75rem;
+}
+
+.brand img {
+  width: 176px;
+  max-width: 38%;
+  height: auto;
+  aspect-ratio: 1;
+  object-fit: contain;
+}
+
+.brandName {color: #000000;}
+.brandQc {color: #35745a;}
+:global([data-theme='dark']) .brandName {color: #f2f2f2;}
+:global([data-theme='dark']) .brandQc {color: #8fc4a8;}
 
 .claim {
   max-width: 650px;
@@ -306,11 +326,7 @@
   .heroInner {
     display: block;
     min-height: 0;
-    padding: 3.5rem 1.25rem;
-  }
-
-  .heroCopy h1 {
-    font-size: 3.4rem;
+    padding: 1.5rem 1.25rem;
   }
 
   .objectiveFigure {
@@ -339,12 +355,8 @@
 
 @media (max-width: 520px) {
   .heroInner {
-    padding-top: 3rem;
-    padding-bottom: 3rem;
-  }
-
-  .heroCopy h1 {
-    font-size: 3rem;
+    padding-top: 1.5rem;
+    padding-bottom: 1.5rem;
   }
 
   .claim {

@@ -4,9 +4,9 @@ import useBaseUrl from '@docusaurus/useBaseUrl';
 import styles from './index.module.css';
 
 const primaryLinks = [
-  {label: 'Install', to: '/docs/usage/install'},
-  {label: 'Quickstart', to: '/docs/usage/quickstart'},
   {label: 'Desktop app', to: '/docs/usage/desktop'},
+  {label: 'CLI', to: '/docs/usage/quickstart'},
+  {label: 'Audit modes', to: '/docs/usage/audit-modes'},
 ];
 
 const auditOperations = [
@@ -27,7 +27,7 @@ const auditOperations = [
   },
   {
     label: '04 / Integrate',
-    title: 'Automate the check',
+    title: 'Automate with the CLI',
     text: 'Use exit codes to continue a workflow, request review, or stop on errors.',
   },
 ];
@@ -35,7 +35,7 @@ const auditOperations = [
 const documentationPaths = [
   {
     title: 'Use the desktop app',
-    text: 'Select inputs and an output folder, run an audit, and review findings and reports.',
+    text: 'Run a privacy audit, review findings, and save runs and reports in one project.',
     to: '/docs/usage/desktop',
   },
   {
@@ -44,9 +44,9 @@ const documentationPaths = [
     to: '/docs/usage/install',
   },
   {
-    title: 'Run an audit',
-    text: 'Generate the demo, scan a directory, and interpret the result.',
-    to: '/docs/usage/quickstart',
+    title: 'Choose an audit mode',
+    text: 'Distinguish privacy checks from dataset comparison, then select optional checks.',
+    to: '/docs/usage/audit-modes',
   },
   {
     title: 'Fix reported problems',
@@ -77,7 +77,10 @@ export default function Home() {
           <div className={styles.heroInner}>
             <div className={styles.heroCopy}>
               <p className={styles.kicker}>DICOM metadata quality control</p>
-              <h1>dicomqc</h1>
+              <div className={styles.brand}>
+                <img src={useBaseUrl('/img/dicomqc-symbol.png')} width="176" height="176" alt="" />
+                <h1><span className={styles.brandName}>dicom</span><span className={styles.brandQc}>qc</span></h1>
+              </div>
               <p className={styles.claim}>
                 Check DICOM metadata before sharing research data.
               </p>

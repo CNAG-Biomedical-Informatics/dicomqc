@@ -261,7 +261,20 @@ def render_html(result: ScanResult, *, synthetic: bool = False, demo_phase: str 
             current = ' aria-current="page"' if phase == demo_phase else ""
             demo_nav += f'<a href="{phase}.html"{current}>{label}</a>'
         demo_nav += '</nav>'
-    title = "Dataset comparison" if comparison is not None else "DICOM metadata audit"
+    if comparison is not None:
+        title = "Dataset comparison"
+    else:
+        title = "Privacy audit"
+    checks = ["Privacy metadata"]
+    if comparison is not None:
+        checks.append("Dataset comparison")
+    if result.policy is not None:
+        checks.append("Project policy")
+    if result.uid_checks is not None:
+        checks.append("UID integrity")
+    if result.vendor_summary is not None:
+        checks.append("Scanner inventory")
+    checks_label = " · ".join(checks)
     demo_note = '<aside class="demo-note"><strong>Synthetic demo</strong> · These results use generated example data, not patient files.</aside>' if synthetic else ""
     code = result.exit_code()
     status, status_class = audit_status(result)
@@ -328,9 +341,10 @@ def render_html(result: ScanResult, *, synthetic: bool = False, demo_phase: str 
 <meta http-equiv="Content-Security-Policy" content="default-src 'none'; script-src 'sha256-{script_hash}'; style-src 'unsafe-inline'; base-uri 'none'; form-action 'none'">
 <title>dicomqc — {title}</title><style>{_STYLE}{VENDOR_STYLE if vendor_body else ""}</style></head>
 <body><a class="skip-link" href="#findings-title">Skip to findings</a>
-<div class="topbar"><div class="brand">dicomqc <small>Audit workspace</small></div><button type="button" id="print" hidden>Print report</button></div>
+<div class="topbar"><div class="brand">dicomqc <small>Audit report</small></div><button type="button" id="print" hidden>Print report</button></div>
 <main>{demo_note}{demo_nav}<header class="hero" id="summary">
 <div><p class="eyebrow">{title}</p><h1 class="{status_class}">{status}</h1><p class="next-step">{next_step}</p>
+<p class="coverage-note">Checks: {checks_label}</p>
 <p class="tally"><span><strong>{result.error_count}</strong> errors</span><span><strong>{result.warning_count}</strong> warnings</span><span><strong>{result.info_count}</strong> information</span><span><strong>{len(groups)}</strong> issue {'group' if len(groups) == 1 else 'groups'}</span></p></div>
 </header>
 <details class="supporting" id="overview-panel"><summary>{"Pairing coverage, charts and audit details" if comparison is not None else "Charts and audit details"}</summary><div class="supporting-content">{overview}</div></details>

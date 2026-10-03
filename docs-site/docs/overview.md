@@ -6,13 +6,27 @@ title: Overview
 
 import useBaseUrl from '@docusaurus/useBaseUrl';
 
-dicomqc audits de-identified DICOM metadata for privacy risks.
+**dicomqc** audits de-identified DICOM metadata for privacy risks.
 It reports patient-identifying fields, unexpected pseudonym
 formats, private tags, and files that could not be read. It never changes the
 DICOM files.
 
-Use the [desktop app](usage/desktop.md) for file selection, run history, and
-report review, or the CLI for scripted workflows. Both use the same audit engine.
+The [desktop app](usage/desktop.md) is the recommended interface for selecting
+data, running audits, and reviewing reports. The CLI supports automation and
+scripted workflows. Both use the same audit engine.
+
+## Two audit modes
+
+**Privacy audit** inspects one dataset for identifying metadata. **Dataset
+comparison** checks source and candidate file coverage and pseudonym consistency,
+and applies privacy checks to paired candidate files. Policies and UID checks are optional additions;
+inventory and MultiQC are optional outputs. See [Audit modes](usage/audit-modes.md)
+for which options each mode supports.
+
+| Interface | Privacy audit | Dataset comparison | Options |
+| --- | --- | --- | --- |
+| Desktop App | [Worked example](usage/desktop-privacy.md) | [Worked example](usage/desktop-comparison.md) | [Checks and outputs](usage/desktop-checks.md) |
+| CLI | [Scan walkthrough](usage/quickstart.md) | [Compare walkthrough](usage/compare.md) | [Command reference](reference/cli.md) |
 
 <picture>
   <source media="(max-width: 760px)" srcSet={useBaseUrl('/img/dicomqc-audit-mobile.svg')} />
@@ -37,16 +51,21 @@ and conflicting study/series relationships.
 
 ## Use the desktop app
 
-In **Setup**, select files or folders and choose an **Output folder**. Run an
+In **Setup**, select files or folders. Run an
 audit, then select **Findings** or **Reports** to review its results. Sources and
-searchable run history remain in the sidebar. Each audit has a separate output
-subfolder; changing the output folder preserves selected inputs.
+searchable run history remain in the sidebar. **File > Save Project** stores
+settings, policies, run history, logs, and generated reports in one `.dicomqc`
+file. Original DICOM inputs remain external; working storage is managed by the app.
 
-**Explore with synthetic data** runs five built-in examples without patient data.
+**Load example data**, beside DICOM inputs, offers built-in examples without patient data,
+including an adjustable 1,000- to 100,000-file cohort with deterministic
+privacy findings generated on demand.
+Privacy audit is the primary workflow. Policies and UID checks extend it;
+scanner inventory is optional output. Dataset comparison is a separate mode.
 The app and its audit service run locally. See [Desktop app](usage/desktop.md)
 for source-build instructions; installers have not been published.
 
-## Run from the command line
+## Automate from the command line
 
 Give `dicomqc scan` one DICOM file or a directory. Directories are scanned
 recursively:
@@ -131,9 +150,11 @@ must still decide whether the data can be shared.
 
 ## Documentation map
 
-- **Use** covers installation, routine audits, reporting, and remediation.
-- **Technical Details** explains the implementation and planned features.
-- **Reference** lists commands, options, and exit codes.
+- **Desktop App** covers interactive audits, worked examples, and saved projects.
+- **Install** covers setup for both interfaces.
+- **CLI** covers commands, optional checks, and scripted workflows.
+- **Data preparation** covers external remediation and the MS MRI workflow.
+- **Technical Details** explains the implementation.
 - **About** records citation guidance, prior work, and the project disclaimer.
 
 Project development and issue tracking take place in the

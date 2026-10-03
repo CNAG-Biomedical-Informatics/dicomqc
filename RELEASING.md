@@ -1,8 +1,8 @@
 # Releasing dicomqc
 
-Git tags are the canonical release records for dicomqc. Stable Python package
-publication is automated from annotated tags; GitHub Release objects are not
-part of the release process.
+Annotated Git tags identify release source revisions. Pushing a stable tag
+publishes the CLI to PyPI and separately builds Desktop installers into a
+**draft GitHub Release**. Review the draft before making downloads public.
 
 ## Release invariants
 
@@ -40,7 +40,7 @@ read-only repository access. Only the separate `pypi` environment job receives
 3. Install the release and test dependencies and run the complete test suite:
 
    ```bash
-   python3 -m pip install -e ".[release,test]"
+   python3 -m pip install -e ".[release,test,api,api-test]"
    pytest
    ```
 
@@ -70,9 +70,40 @@ read-only repository access. Only the separate `pypi` environment job receives
    git push origin vX.Y.Z
    ```
 
-7. Confirm that the **Publish to PyPI** workflow succeeds.
-8. If a Docker image is published, dispatch that build manually from the same
+7. Confirm that **Publish to PyPI** and **Build desktop installers** succeed.
+   The two workflows are independent: a Desktop failure does not roll back PyPI.
+8. Review the draft GitHub Release, test its installers on supported systems,
+   and complete the release notes before publishing it. Do not move the tag.
+9. If a Docker image is published, dispatch that build manually from the same
    stable tag so both distributions use the identical source revision.
+
+## Desktop installers
+
+`.github/workflows/build-desktop.yml` builds DMG installers for macOS Intel and
+Apple Silicon, an NSIS installer for Windows x64, and AppImages for Linux x64
+and ARM64. Python and the audit engine are bundled.
+
+- **Manual testing:** use **Build desktop installers > Run workflow** and select
+  one platform or `all`. Download installer/checksum artifacts from the run;
+  they are retained for 30 days. Manual runs do not create a GitHub Release.
+- **Stable tags:** every platform must succeed before the workflow creates a
+  draft Release containing five installers and five SHA-256 files. The tag must
+  be annotated and match the Python, frontend, and native package versions.
+- **Package checks:** extract AppImages, verify and mount DMGs, or silently
+  install NSIS packages; then run the frozen-engine tests against the packaged
+  copy. These cover relocation, authentication, examples, workers, and shutdown.
+  Linux also runs the native GUI smoke test before packaging.
+- **Reruns:** failed jobs can be retried; assets may be replaced only while the
+  Release remains a draft. Published Release assets are not overwritten.
+
+macOS builds are not Apple-notarized and Windows installers are unsigned.
+Installer checks do not replace manual GUI testing on each platform. The macOS
+ad-hoc signature check is not notarization. The Linux x64 build uses Ubuntu
+22.04; ARM64 uses Ubuntu 24.04, so their system requirements differ.
+
+For 0.2.0, finish the dated changelog and update all version files (including
+`CITATION.cff`) before tagging. Run a manual all-platform build first. This
+workflow does not create or push release tags on your behalf.
 
 ## TestPyPI prereleases
 

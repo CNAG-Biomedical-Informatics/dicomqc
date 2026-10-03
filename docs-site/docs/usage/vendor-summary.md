@@ -4,6 +4,10 @@ title: Scanner and private-tag inventory
 
 # Scanner and private-tag inventory
 
+In the desktop app, select **Privacy audit**, expand **Advanced setup**, and
+enable **Include scanner and private-creator inventory**. This adds inventory
+output to the privacy audit; it is not a separate audit mode.
+
 `dicomqc scan --vendor-summary` groups files by their declared manufacturer,
 model, and software versions, and lists private creator blocks. Use it to review
 mixed acquisition software and identify private metadata that needs inspection.

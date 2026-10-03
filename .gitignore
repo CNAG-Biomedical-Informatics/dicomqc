@@ -29,6 +29,6 @@ docs-site/test-results/
 docs-site/*.tsbuildinfo
 
 tests/fixtures/dicom/generated/
-examples/multiqc/output/multiqc_data/
-examples/multiqc/output/multiqc_report.html
+dicomqc-demo/
+examples/multiqc/output/
 examples/multiqc/output-test/

@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import json
+import math
 import os
 from pathlib import Path
 import re
@@ -13,19 +14,38 @@ import subprocess
 import sys
 import threading
 import time
+import unicodedata
 import uuid
 
 from dicomqc.api.storage import identity, read_json, regular_file, validate_identity, write_json
 from dicomqc.execution import validate_audit_inputs
 
 ACTIVE = {"queued", "running"}
+WORKER_EVENTS = {"synthetic demo", "generation", "discovery", "reading", "relationships", "reports"}
+MAX_LOG_EVENTS = 32
+
+
+class WorkspaceError(ValueError):
+    """A path-free workspace diagnostic safe to display in the desktop app."""
+
+
+def normalize_job_name(value: str) -> str:
+    """Return a safe display name without changing the run's stable identity."""
+    if not isinstance(value, str):
+        raise ValueError("Run name must be text.")
+    if any(unicodedata.category(character) == "Cc" for character in value):
+        raise ValueError("Run name must not contain control characters.")
+    value = value.strip()
+    if not 1 <= len(value) <= 80:
+        raise ValueError("Run name must contain between 1 and 80 characters.")
+    return value
 
 
 class Jobs:
     def __init__(self, root: Path):
         selected = root.expanduser().absolute()
         if selected.is_symlink():
-            raise ValueError("Workspace must not be a symbolic link.")
+            raise WorkspaceError("Workspace must not be a symbolic link.")
         self.root = selected.resolve()
         if self.root.exists():
             entries = {path.name for path in self.root.iterdir()}
@@ -33,14 +53,14 @@ class Jobs:
             if entries and (not {"owner.lock", "runs.sqlite"} <= entries
                             or any(name not in known and not re.fullmatch(r"[a-f0-9]{32}", name)
                                    for name in entries)):
-                raise ValueError("Select an empty directory or an existing dicomqc workspace.")
+                raise WorkspaceError("The selected output folder contains files that do not belong to a dicomqc run workspace.")
         for name in ("owner.lock", "runs.sqlite", "runs.sqlite-journal", "runs.sqlite-wal", "runs.sqlite-shm"):
             regular_file(self.root / name, missing=True)
         if (self.root / "runs.sqlite").exists():
             existing = sqlite3.connect((self.root / "runs.sqlite").as_uri() + "?mode=ro", uri=True)
             try:
                 if [row[1] for row in existing.execute("PRAGMA table_info(jobs)")] != ["id", "created", "value"]:
-                    raise ValueError("Not a dicomqc workspace database.")
+                    raise WorkspaceError("The selected output folder does not contain a valid dicomqc run database.")
             finally:
                 existing.close()
         self.root.mkdir(mode=0o700, parents=True, exist_ok=True)
@@ -62,7 +82,7 @@ class Jobs:
                 fcntl.flock(self.lock_file, fcntl.LOCK_EX | fcntl.LOCK_NB)
         except OSError:
             self.lock_file.close()
-            raise ValueError("This workspace is already open in another API process.") from None
+            raise WorkspaceError("This output folder is already open in another dicomqc process, or its filesystem does not support locking. Close the other app or choose a local output folder.") from None
         try:
             fd = os.open(self.root / "runs.sqlite", os.O_RDWR | os.O_CREAT | getattr(os, "O_NOFOLLOW", 0), 0o600)
             os.close(fd)
@@ -84,6 +104,7 @@ class Jobs:
             for job in self.list():
                 if job["status"] in ACTIVE:
                     job.update(status="interrupted", message="The application stopped before this audit completed.")
+                    self._event(job, "interrupted")
                     self._save(job)
         except Exception:
             self.db.close()
@@ -110,12 +131,67 @@ class Jobs:
             return self._progress(json.loads(row[0]))
 
     def _progress(self, job):
+        if "parameters" not in job:
+            try:
+                job["parameters"] = self._public_parameters(read_json(self.directory(job["id"]) / "request.json"))
+            except (OSError, ValueError, KeyError, TypeError):
+                pass  # Older or incomplete runs remain readable without provenance details.
+        existing = {(event.get("at"), event.get("event")) for event in job.get("log", [])
+                    if isinstance(event, dict)}
+        for event in self._worker_events(job["id"]):
+            if (event["at"], event["event"]) not in existing:
+                job.setdefault("log", []).append(event)
+        if "log" in job:
+            job["log"] = sorted(job["log"], key=lambda value: value.get("at", 0))[-MAX_LOG_EVENTS:]
         if job["status"] == "running":
             try:
                 job["progress"] = read_json(self.directory(job["id"]) / "progress.json")
             except (OSError, ValueError):
                 pass  # Progress is advisory; it must never break cancellation.
         return job
+
+    @staticmethod
+    def _public_parameters(request):
+        """Return useful run provenance without paths, handles, or DICOM values."""
+        inputs = request.get("inputs", {})
+        options = request.get("options", {})
+        counts = {key: len(values) for key, values in inputs.items()
+                  if key in {"paths", "source", "candidate", "manifest", "policy"}
+                  and isinstance(values, list) and values}
+        safe_options = {}
+        for key in ("uid_checks", "vendor_summary", "multiqc", "threads"):
+            value = options.get(key)
+            if isinstance(value, bool) and key != "threads":
+                safe_options[key] = value
+            elif key == "threads" and isinstance(value, int) and not isinstance(value, bool):
+                safe_options[key] = value
+        parameters = {"input_counts": counts, "options": safe_options}
+        files = request.get("example_files")
+        if isinstance(files, int) and not isinstance(files, bool):
+            parameters["example_files"] = files
+        return parameters
+
+    def _worker_events(self, identifier):
+        try:
+            values = read_json(self.directory(identifier) / "events.json")
+            if not isinstance(values, list):
+                return []
+            events = []
+            for value in values[-MAX_LOG_EVENTS:]:
+                if (not isinstance(value, dict) or set(value) != {"at", "event"}
+                        or isinstance(value["at"], bool) or not isinstance(value["at"], (int, float))
+                        or not math.isfinite(value["at"]) or not 0 <= value["at"] <= time.time() + 86400
+                        or value["event"] not in WORKER_EVENTS):
+                    return []
+                events.append({"at": float(value["at"]), "event": value["event"]})
+            return events
+        except (OSError, ValueError, TypeError):
+            return []
+
+    @staticmethod
+    def _event(job, event):
+        job.setdefault("log", []).append({"at": time.time(), "event": event})
+        job["log"] = job["log"][-MAX_LOG_EVENTS:]
 
     def directory(self, identifier):
         validate_identity(self.root_identity)
@@ -160,8 +236,10 @@ class Jobs:
                        "directory": identity(directory)}
             write_json(directory / "request.json", request)
             job = {"id": identifier, "created": time.time(), "mode": request["mode"],
-                   "example": request.get("example"), "status": "queued", "audit_exit_code": None,
-                   "summary": None, "artifacts": [], "message": None}
+                   "example": request.get("example"), "name": None, "status": "queued", "audit_exit_code": None,
+                   "summary": None, "artifacts": [], "message": None, "log": [],
+                   "parameters": self._public_parameters(request)}
+            self._event(job, "queued")
             self.db.execute("INSERT INTO run_directories VALUES (?, ?)",
                             (identifier, json.dumps(request["directory"])))
             self._save(job)
@@ -196,8 +274,12 @@ class Jobs:
                                 or not all(isinstance(p, str) for p in result["artifacts"])):
                             raise ValueError("Invalid completion")
                         job.update({key: result[key] for key in ("audit_exit_code", "summary", "artifacts")}, status="completed")
+                        if result.get("policy"):
+                            job["policy"] = result["policy"]
+                        self._event(job, "completed")
                     except (OSError, ValueError, TypeError, AttributeError):
                         job.update(status="failed", message="Could not complete the audit. Check the selected inputs and workspace.")
+                        self._event(job, "failed")
                     self._save(job)
                 if self.guard:
                     self.guard.close()
@@ -249,6 +331,7 @@ class Jobs:
                     process.kill()
                     process.wait()
                 job.update(status="failed", message="Could not start the audit worker.")
+                self._event(job, "failed")
                 self._save(job)
                 if guard:
                     guard.close()
@@ -256,6 +339,7 @@ class Jobs:
             guard.close()
             self.guard, self.process, self.current = connection, process, job["id"]
             job["status"] = "running"
+            self._event(job, "started")
             self._save(job)
 
     def cancel(self, identifier):
@@ -263,9 +347,17 @@ class Jobs:
             job = self.get(identifier)
             if job["status"] in ACTIVE:
                 job.update(status="cancelled", message="Audit cancelled; no complete report was published.", artifacts=[])
+                self._event(job, "cancelled")
                 self._save(job)
                 if self.current == identifier and self.process:
                     self._stop_worker()
+            return job
+
+    def rename(self, identifier, name):
+        with self.mutex:
+            job = self.get(identifier)
+            job["name"] = normalize_job_name(name)
+            self._save(job)
             return job
 
     def artifact(self, identifier, index):
@@ -341,6 +433,7 @@ class Jobs:
                 for job in self.list():
                     if job["status"] in ACTIVE:
                         job.update(status="cancelled", message="Application closed.", artifacts=[])
+                        self._event(job, "cancelled")
                         self._save(job)
         except (OSError, ValueError, sqlite3.Error):
             pass  # Do not write through a replaced workspace during cleanup.

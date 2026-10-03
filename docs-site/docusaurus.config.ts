@@ -4,6 +4,7 @@ import type * as Preset from '@docusaurus/preset-classic';
 
 const config: Config = {
   title: 'dicomqc documentation',
+  favicon: 'img/dicomqc-symbol.png',
   tagline: 'Audit de-identified DICOM metadata for privacy risks',
   url: 'https://cnag-biomedical-informatics.github.io',
   baseUrl: '/dicomqc/',
@@ -52,7 +53,18 @@ const config: Config = {
     },
     navbar: {
       title: 'dicomqc',
+      logo: {alt: 'dicomqc imaging and metadata inspection symbol', src: 'img/dicomqc-symbol.png', width: 36, height: 36},
       items: [
+        {
+          to: '/docs/usage/desktop',
+          label: 'Desktop app',
+          position: 'left',
+        },
+        {
+          to: '/docs/usage/quickstart',
+          label: 'CLI',
+          position: 'left',
+        },
         {
           type: 'docSidebar',
           sidebarId: 'docsSidebar',
@@ -65,8 +77,8 @@ const config: Config = {
           position: 'left',
         },
         {
-          to: '/docs/usage/quickstart',
-          label: 'Quick Start',
+          to: '/docs/usage/audit-modes',
+          label: 'Audit modes',
           position: 'left',
         },
         {
@@ -91,7 +103,7 @@ const config: Config = {
               to: '/docs/usage/install',
             },
             {
-              label: 'Quick Start',
+              label: 'CLI privacy audit',
               to: '/docs/usage/quickstart',
             },
             {

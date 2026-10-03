@@ -15,6 +15,7 @@ from dicomqc.api.jobs import Jobs
 from dicomqc.api.storage import identity, read_json, validate_identity, write_json
 from dicomqc.fixtures import write_uid_fixtures, write_comparison_fixtures, write_policy_fixtures, write_vendor_fixtures
 from dicomqc.scanner import scan_paths
+from dicomqc.parallel import DEFAULT_THREADS, MAX_THREADS
 
 TOKEN, LOCAL = "a" * 48, "b" * 48
 AUTH = {"Authorization": "Bearer " + TOKEN}
@@ -34,8 +35,8 @@ def register(client, path):
     return response.json()["id"]
 
 
-def finish(client, job):
-    deadline = time.monotonic() + 20
+def finish(client, job, timeout=20):
+    deadline = time.monotonic() + timeout
     while time.monotonic() < deadline:
         value = client.get("/api/v1/jobs/" + job["id"], headers=AUTH).json()
         if value["status"] not in {"queued", "running"}:
@@ -53,8 +54,40 @@ def test_authentication_host_origin_and_privileged_commands(client, tmp_path):
     assert client.post("/api/v1/inputs/local", headers=AUTH, json={"path": str(tmp_path)}).status_code == 403
     assert client.post("/api/v1/shutdown", headers=AUTH).status_code == 403
     assert client.post("/api/v1/shutdown", headers=PRIVILEGED).status_code == 200
-    assert client.get("/api/v1/capabilities", headers=AUTH).json()["max_concurrent_jobs"] == 1
+    capabilities = client.get("/api/v1/capabilities", headers=AUTH).json()
+    assert capabilities["max_concurrent_jobs"] == 1
+    assert capabilities["default_threads"] == DEFAULT_THREADS
+    assert capabilities["max_threads"] == MAX_THREADS
+    assert "threads" in capabilities["scan_options"] and "threads" in capabilities["compare_options"]
+    assert capabilities["large_demo"] == {
+        "default_files": 10_000, "min_files": 1_000, "max_files": 100_000, "step_files": 1_000,
+    }
     assert client.get("/api/v1/openapi.json", headers=AUTH).status_code == 200
+
+
+def test_policy_editor_validation_uses_strict_engine_parser(client):
+    text = """version: 1
+id: desktop-policy
+rules:
+  - id: no-comments
+    keyword: PatientComments
+    check: absent_or_empty
+"""
+    response = client.post("/api/v1/policies/validate", headers=AUTH, json={"text": text})
+    assert response.status_code == 200
+    assert response.json() == {
+        "id": "desktop-policy",
+        "sha256": hashlib.sha256(text.encode()).hexdigest(),
+        "rules": 1,
+    }
+    assert client.post("/api/v1/policies/validate", json={"text": text}).status_code == 401
+    invalid = client.post(
+        "/api/v1/policies/validate", headers=AUTH,
+        json={"text": "version: 1\nid: private-value\nrules: ["},
+    )
+    assert invalid.status_code == 400
+    assert "line 3" in invalid.json()["detail"]
+    assert "private-value" not in invalid.json()["detail"]
 
 
 @pytest.mark.parametrize("token,local", [("x", LOCAL), (TOKEN, TOKEN)])
@@ -73,6 +106,12 @@ def test_uid_scan_matches_cli_and_does_not_expose_raw_context(client, tmp_path):
     job = finish(client, response.json())
     assert job["status"] == "completed"
     assert job["audit_exit_code"] == 2
+    assert job["parameters"] == {
+        "input_counts": {"paths": 1},
+        "options": {"uid_checks": True, "vendor_summary": False, "multiqc": False,
+                    "threads": DEFAULT_THREADS},
+    }
+    assert str(folder) not in json.dumps(job["parameters"])
     expected = scan_paths([folder], uid_checks=True)
     assert job["summary"]["errors"] == expected.error_count == 7
     response = client.get(f'/api/v1/jobs/{job["id"]}/results?limit=2', headers=AUTH)
@@ -107,18 +146,72 @@ def test_comparison_policy_and_multiqc(client, tmp_path):
 
 
 @pytest.mark.parametrize("example", ["scan", "compare", "policy", "uid", "vendor"])
-def test_examples(client, example):
-    response = client.post("/api/v1/jobs", headers=AUTH, json={"mode": "demo", "example": example})
+@pytest.mark.parametrize("multiqc", [False, True])
+def test_examples(client, example, multiqc):
+    response = client.post("/api/v1/jobs", headers=AUTH, json={"mode": "demo", "example": example,
+                                                                "options": {"multiqc": multiqc}})
     job = finish(client, response.json())
     assert job["status"] == "completed"
     assert any(name.endswith(".html") for name in job["artifacts"])
+    assert any("_mqc/" in name for name in job["artifacts"]) is multiqc
+    assert ("example/policy.yaml" in job["artifacts"]) is (example == "policy")
+    assert ("example/pairs.csv" in job["artifacts"]) is (example == "compare")
+    if example == "policy":
+        assert job["policy"]["id"] == "research-demo"
+        assert len(job["policy"]["sha256"]) == 64
+    else:
+        assert "policy" not in job
     assert job["audit_exit_code"] == (1 if example == "vendor" else 2)
+    assert [event["event"] for event in job["log"]] == ["queued", "started", "synthetic demo", "completed"]
+
+
+def test_large_example_uses_production_cohort_size(client):
+    response = client.post("/api/v1/jobs", headers=AUTH, json={"mode": "demo", "example": "large"})
+    job = finish(client, response.json(), timeout=120)
+    assert job["status"] == "completed"
+    assert job["audit_exit_code"] == 2
+    assert job["summary"]["files_scanned"] == 10_000
+    assert job["summary"]["errors"] == 150
+    assert job["summary"]["warnings"] == 100
+    assert job["parameters"]["example_files"] == 10_000
+    assert job["parameters"]["input_counts"] == {}
+    assert job["parameters"]["options"]["threads"] == DEFAULT_THREADS
+
+
+def test_large_example_accepts_selected_cohort_size(client):
+    workers = min(4, MAX_THREADS)
+    response = client.post("/api/v1/jobs", headers=AUTH, json={
+        "mode": "demo", "example": "large", "example_files": 1_000,
+        "options": {"threads": workers},
+    })
+    job = finish(client, response.json())
+    assert job["status"] == "completed"
+    assert job["summary"]["files_scanned"] == 1_000
+    assert job["summary"]["errors"] == 150
+    assert job["summary"]["warnings"] == 100
+    assert job["parameters"]["example_files"] == 1_000
+    assert job["parameters"]["options"]["threads"] == workers
+    assert [event["event"] for event in job["log"]] == [
+        "queued", "started", "synthetic demo", "generation", "discovery",
+        "reading", "relationships", "reports", "completed",
+    ]
+    pages = [client.get(f'/api/v1/jobs/{job["id"]}/results?offset={offset}&limit=100', headers=AUTH).json()
+             for offset in (0, 100, 200)]
+    assert [len(page["findings"]) for page in pages] == [100, 100, 50]
+    assert {page["total_findings"] for page in pages} == {250}
 
 
 @pytest.mark.parametrize("payload", [
     {"mode": "scan"}, {"mode": "compare"}, {"mode": "demo", "options": {"uid_checks": True}},
     {"mode": "scan", "inputs": {"paths": ["unknown"]}, "command": "rm"},
     {"mode": "scan", "inputs": {"paths": ["unknown"]}, "options": {"vendor_summary": "yes"}},
+    {"mode": "scan", "inputs": {"paths": ["unknown"]}, "options": {"threads": 0}},
+    {"mode": "scan", "inputs": {"paths": ["unknown"]}, "options": {"threads": MAX_THREADS + 1}},
+    {"mode": "scan", "inputs": {"paths": ["unknown"]}, "options": {"threads": "4"}},
+    {"mode": "demo", "example": "large", "example_files": 999},
+    {"mode": "demo", "example": "large", "example_files": 1500},
+    {"mode": "demo", "example": "scan", "example_files": 1000},
+    {"mode": "scan", "inputs": {"paths": ["unknown"]}, "example_files": 1000},
 ])
 def test_invalid_requests(client, payload):
     assert client.post("/api/v1/jobs", headers=AUTH, json=payload).status_code == 422

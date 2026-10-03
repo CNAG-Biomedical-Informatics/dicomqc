@@ -7,6 +7,11 @@ title: Compare datasets
 `dicomqc compare` checks that a de-identification
 run accounts for every input file and uses patient pseudonyms consistently.
 
+In the desktop app, select **Dataset comparison** in Setup and choose the source
+folder, candidate folder, and pairing CSV. This is separate from Privacy audit;
+adding a project policy checks candidate metadata only. The walkthrough below
+uses the CLI and the same synthetic fixtures as the desktop comparison example.
+
 ## Try the comparison demo
 
 ### 1. Generate the data

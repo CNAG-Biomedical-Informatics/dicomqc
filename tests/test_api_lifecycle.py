@@ -57,7 +57,7 @@ def test_unrelated_workspace_rejected_without_writes(tmp_path):
     root = tmp_path / "inputs"
     root.mkdir()
     (root / "patient.dcm").write_bytes(b"input")
-    with pytest.raises(ValueError, match="empty directory"):
+    with pytest.raises(ValueError, match="do not belong to a dicomqc run workspace"):
         Jobs(root)
     assert [p.name for p in root.iterdir()] == ["patient.dcm"]
     link = tmp_path / "linked"
@@ -211,7 +211,7 @@ def test_unrelated_database_rejected_without_schema_change(tmp_path):
     connection.execute("CREATE TABLE unrelated (data TEXT)")
     connection.close()
     before = database.read_bytes()
-    with pytest.raises(ValueError, match="Not a dicomqc"):
+    with pytest.raises(ValueError, match="valid dicomqc run database"):
         Jobs(root)
     assert database.read_bytes() == before
 
@@ -332,6 +332,20 @@ def test_jobs_polling_includes_live_progress(client):
     assert "progress" not in client.get("/api/v1/jobs", headers=AUTH).json()[0]
 
 
+def test_run_log_merges_only_predefined_worker_events(client):
+    jobs = client.app.state.jobs
+    with jobs.mutex:
+        job = jobs.submit(DEMO)
+        assert [event["event"] for event in job["log"]] == ["queued"]
+        events = jobs.directory(job["id"]) / "events.json"
+        write_json(events, [{"at": 123.5, "event": "reading"}])
+        assert {"at": 123.5, "event": "reading"} in jobs.get(job["id"])["log"]
+        write_json(events, [{"at": 124.5, "event": "PRIVATE_PATIENT_VALUE"}])
+    response = client.get("/api/v1/jobs", headers=AUTH)
+    assert "PRIVATE_PATIENT_VALUE" not in response.text
+    assert [event["event"] for event in response.json()[0]["log"]] == ["queued"]
+
+
 def test_validation_errors_do_not_echo_inputs(client):
     secret = "PRIVATE_PATIENT_VALUE"
     response = client.post("/api/v1/jobs", headers=AUTH, json={"mode": secret})
@@ -391,7 +405,7 @@ def test_real_server_ready_and_parent_eof(tmp_path):
         while not ready.exists() and process.poll() is None and time.monotonic() < deadline:
             time.sleep(0.02)
         assert ready.exists()
-        import httpx
+        import httpx2 as httpx
         with httpx.Client(base_url=f'http://127.0.0.1:{json.loads(ready.read_text())["port"]}', trust_env=False) as http:
             assert http.get("/api/v1/health", headers=AUTH).json()["status"] == "ready"
             job = http.post("/api/v1/jobs", headers=AUTH, json=DEMO).json()

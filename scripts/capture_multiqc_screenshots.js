@@ -4,7 +4,7 @@ const path = require('path');
 
 const repoRoot = path.resolve(__dirname, '..');
 const {chromium} = require(path.join(repoRoot, 'docs-site', 'node_modules', '@playwright', 'test'));
-const reportPath = process.argv[2] ? path.resolve(process.argv[2]) : path.join(repoRoot, 'examples', 'multiqc', 'output', 'multiqc_report.html');
+const reportPath = process.argv[2] ? path.resolve(process.argv[2]) : path.join(repoRoot, 'dicomqc-demo', 'multiqc_report.html');
 const outputDir = path.join(repoRoot, 'docs-site', 'static', 'img');
 
 const chromiumExecutable = process.env.CHROMIUM;

@@ -10,11 +10,13 @@ from pathlib import Path
 import pytest
 from pydicom import dcmread
 
+import dicomqc.compare as compare_module
 from dicomqc.backend.base import DicomReadError
 from dicomqc.cli import main
 from dicomqc.compare import compare_datasets
 from dicomqc.fixtures import _write_dicom
 from dicomqc.reports.json import result_to_dict
+from dicomqc.parallel import MAX_THREADS
 
 
 def dataset(tmp_path, identities=(("LOCAL_SECRET", "sub-001"),)):
@@ -57,6 +59,31 @@ def test_clean_renamed_files_and_reports(tmp_path, capsys):
     assert "Identity pairs checked: 2" in capsys.readouterr().out
     assert all(p.read_bytes() == content for p, content in original.items())
     assert "SECRET" not in report.read_text()
+
+
+@pytest.mark.skipif(MAX_THREADS < 2, reason="requires two logical processors")
+def test_process_comparison_matches_single_worker(tmp_path, monkeypatch):
+    args = dataset(tmp_path, (
+        ("A", "sub-001"), ("A", "sub-002"), ("B", "sub-001"),
+        ("C", "sub-003"), ("D", "sub-004"),
+    ))
+
+    serial = result_to_dict(compare_datasets(*args, threads=1))
+    monkeypatch.setattr(compare_module, "COMPARISON_BATCH_SIZE", 1)
+    multiprocess = result_to_dict(compare_datasets(*args, threads=2))
+
+    assert multiprocess == serial
+
+
+@pytest.mark.parametrize("command", ["scan", "compare"])
+def test_cli_rejects_invalid_thread_count(tmp_path, capsys, command):
+    if command == "scan":
+        arguments = ["scan", str(tmp_path / "missing"), "--threads", "0"]
+    else:
+        source, candidate, manifest = dataset(tmp_path)
+        arguments = ["compare", str(source), str(candidate), "--manifest", str(manifest), "-t", str(MAX_THREADS + 1)]
+    assert main(arguments) == 2
+    assert f"Threads must be an integer between 1 and {MAX_THREADS}" in capsys.readouterr().err
 
 
 @pytest.mark.parametrize("identities,expected", [

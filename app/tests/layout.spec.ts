@@ -14,16 +14,24 @@ for (const width of [390, 760, 1440]) for (const theme of ['light', 'dark', 'sys
       localStorage.setItem('dicomqc-theme', theme);
       const job = {id: 'example', created: 1700000000, mode: 'scan', example: null, status: 'completed',
         audit_exit_code: 2, summary: {errors: 1, warnings: 0, files_scanned: 12, skipped_files: 0},
-        artifacts: ['nested/report-with-a-long-filename.html'], message: null};
+        artifacts: ['nested/report-with-a-long-filename.html'], message: null, log: [
+          {at: 1700000000, event: 'queued'}, {at: 1700000001, event: 'started'},
+          {at: 1700000002, event: 'reading'}, {at: 1700000003, event: 'completed'},
+        ]};
       Object.assign(window, {isTauri: true, __TAURI_INTERNALS__: {transformCallback: () => 1, unregisterCallback: () => {}, invoke: async (command: string, args: {path?: string}) => {
         if (command === 'plugin:event|listen') return 1;
         if (command === 'select_input') return {id: 'selected', kind: 'directory', name: 'MRI dataset', display_path: '/research/' + 'long-study-directory/'.repeat(5) + 'MRI dataset'};
         if (command === 'workspace') return '/workspace/' + 'long-directory-name/'.repeat(8);
+        if (command === 'current_project') return {projectPath: '/projects/Study.dicomqc', output: '/workspace/' + 'long-directory-name/'.repeat(8), name: 'Study', project: {mode: 'scan', inputs: {}, options: {uid_checks: false, vendor_summary: false, multiqc: false, threads: 4}}, missing: []};
         if (command === 'read_report') return '<h1>Audit report</h1>';
-        if (command === 'api_request') return args.path?.includes('/results') ? {total_findings: 1, findings: [{
-          rule_id: 'privacy', severity: 'error', message: 'Identifier requires review', recommendation: 'Review metadata',
-          path: 'nested/'.repeat(30) + 'file.dcm', keyword: 'PatientName',
-        }]} : [job, ...['uid', 'policy', 'vendor', 'compare'].map(example => ({...job, id: example, mode: 'demo', example}))];
+        if (command === 'api_request') {
+          if (args.path === '/api/v1/capabilities') return {default_threads: 4, max_threads: 8, max_concurrent_jobs: 1,
+            large_demo: {default_files: 10000, min_files: 1000, max_files: 100000, step_files: 1000}};
+          return args.path?.includes('/results') ? {total_findings: 1, findings: [{
+            rule_id: 'privacy', severity: 'error', message: 'Identifier requires review', recommendation: 'Review metadata',
+            path: 'nested/'.repeat(30) + 'file.dcm', keyword: 'PatientName',
+          }]} : [job, ...['uid', 'policy', 'vendor', 'compare'].map(example => ({...job, id: example, mode: 'demo', example}))];
+        }
         return null;
       }}});
     }, {theme});
@@ -37,19 +45,31 @@ for (const width of [390, 760, 1440]) for (const theme of ['light', 'dark', 'sys
     expect(await page.locator('.titlebar img').evaluate((img: HTMLImageElement) => img.complete && img.naturalWidth > 0)).toBe(true);
     async function checkLayout(name: string) {
       expect(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth)).toBe(true);
-      const overflow = await page.locator('button, select, .selections li, .finding').evaluateAll(nodes => nodes
+      const overflow = await page.locator('button:not(.scenario-option):not(.run-log-toggle), select, .selections li, .finding').evaluateAll(nodes => nodes
         .filter(node => (node as HTMLElement).offsetWidth > 0 && node.scrollWidth > node.clientWidth + 2)
         .map(node => node.textContent));
       expect(overflow).toEqual([]);
       expect(await page.locator('.run-list button').evaluateAll(rows => rows.every(row => [...row.children].every(child => child.getBoundingClientRect().bottom <= row.getBoundingClientRect().bottom + 2)))).toBe(true);
       await page.screenshot({path: testInfo.outputPath(`${name}.png`), fullPage: true});
     }
-    await page.getByRole('button', {name: 'Add folder', exact: true}).click();
+    await page.getByRole('button', {name: 'Load example data'}).click();
+    await expect(page.getByLabel('Large cohort files')).toHaveCount(0);
+    await page.getByRole('button', {name: 'Large privacy audit'}).click();
+    await expect(page.getByLabel('Large cohort files')).toBeVisible();
+    await checkLayout('large-example');
+    await page.getByRole('button', {name: 'Load example data'}).click();
+    await page.getByRole('button', {name: 'Choose DICOM folder', exact: true}).click();
     await expect(page.getByRole('button', {name: 'Remove MRI dataset'})).toBeVisible();
     await checkLayout('scan');
-    await page.getByRole('button', {name: 'Compare datasets', exact: true}).click(); await checkLayout('compare');
+    await page.getByText('Advanced setup', {exact: true}).click();
+    await expect(page.getByRole('button', {name: 'New policy', exact: true})).toBeVisible();
+    await expect(page.getByText('Choose output folder', {exact: true})).toHaveCount(0);
+    await checkLayout('advanced-setup');
+    await page.getByRole('button', {name: 'Dataset comparison Source and candidate datasets', exact: true}).click(); await checkLayout('compare');
     await page.getByRole('button', {name: /^Runs/}).click();
-    await page.getByRole('button', {name: /Dataset scan/}).click();
+    await page.locator('.run-select').filter({hasText: /^Privacy audit/}).click();
+    await page.getByRole('tab', {name: 'Log', exact: true}).click(); await checkLayout('run-log');
+    await page.getByRole('tab', {name: 'Findings', exact: true}).click();
     await page.getByText('Identifier requires review').click(); await checkLayout('findings');
     await page.getByRole('tab', {name: 'Reports', exact: true}).click();
     await expect(page.getByTitle('Audit report preview')).toHaveAttribute('sandbox', ''); await checkLayout('report');

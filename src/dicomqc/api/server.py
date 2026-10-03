@@ -19,6 +19,15 @@ def watch_parent(stream, shutdown) -> None:
         shutdown()
 
 
+def publish_startup_failure(path, app) -> None:
+    if path is not None and app is not None:
+        from dicomqc.api.storage import write_json
+        try:
+            write_json(path, {"error": getattr(app.state, "startup_error", "Cannot open this run workspace. Choose an empty, writable local output folder.")})
+        except OSError:
+            pass
+
+
 def main(argv=None) -> int:
     argv = list(sys.argv[1:] if argv is None else argv)
     if argv and argv[0] == "--worker":
@@ -33,6 +42,7 @@ def main(argv=None) -> int:
     parser.add_argument("--parent-stdin", action="store_true", help=argparse.SUPPRESS)
     args = parser.parse_args(argv)
     listener = None
+    app = None
     published = False
     try:
         import uvicorn
@@ -67,9 +77,11 @@ def main(argv=None) -> int:
             threading.Thread(target=watch_parent, args=(sys.stdin.buffer, lambda: setattr(server, "should_exit", True)), daemon=True).start()
         server.run(sockets=[listener])
         if not server.started:
+            publish_startup_failure(args.ready_file, app)
             print("Cannot start the local API. Check the workspace and private configuration.", file=sys.stderr)
         return 0 if server.started else 2
     except (Exception, SystemExit):
+        publish_startup_failure(args.ready_file, app)
         print("Cannot start the local API. Check workspace, port and both private tokens.", file=sys.stderr)
         return 2
     finally:

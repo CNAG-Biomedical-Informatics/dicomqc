@@ -9,6 +9,7 @@ import warnings
 from pydicom import dcmread
 from pydicom.dataset import Dataset, FileDataset, FileMetaDataset
 from pydicom.uid import ExplicitVRLittleEndian
+from dicomqc.progress import Progress, emit
 
 ROOT_UID = "1.2.826.0.1.3680043.10.54321"
 
@@ -28,6 +29,39 @@ rules:
     keyword: PatientComments
     check: absent_or_empty
 """
+
+LARGE_DEMO_FILES = 10_000
+MIN_LARGE_DEMO_FILES = 1_000
+MAX_LARGE_DEMO_FILES = 100_000
+LARGE_DEMO_STEP = 1_000
+LARGE_DEMO_ERROR_FILES = 150
+LARGE_DEMO_WARNING_FILES = 50
+
+
+def write_large_fixtures(output_dir: Path, count: int = LARGE_DEMO_FILES, *,
+                         progress: Progress | None = None) -> list[Path]:
+    """Generate a metadata-only cohort with deterministic synthetic findings."""
+    if not 1 <= count <= 100_000:
+        raise ValueError("Large demo size must be between 1 and 100000 files.")
+    output_dir.mkdir(parents=True, exist_ok=True)
+    paths = []
+    interval = max(1, count // 100)
+    emit(progress, "generation", 0, count)
+    for index in range(1, count + 1):
+        subject = f"sub-{((index - 1) // 100) + 1:04d}"
+        flagged = index <= LARGE_DEMO_WARNING_FILES
+        path = output_dir / f"image-{index:06d}.dcm"
+        _write_dicom(
+            path, fixture_index=10_000 + index,
+            patient_name=f"SYNTHETIC^{index:06d}" if flagged else subject,
+            patient_id=f"SYNTHETIC-{index:06d}" if flagged else subject,
+            patient_birth_date="19000101" if index <= LARGE_DEMO_ERROR_FILES else None,
+            private_creator=None,
+        )
+        paths.append(path)
+        if index % interval == 0 or index == count:
+            emit(progress, "generation", index, count)
+    return paths
 
 
 def write_uid_fixtures(output_dir: Path) -> None:

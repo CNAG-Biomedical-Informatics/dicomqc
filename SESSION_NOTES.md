@@ -2,6 +2,39 @@
 
 ## Current direction
 
+### Portable project sessions
+
+The user explicitly wants a DAW-style session: one `.dicomqc` file containing
+multiple runs (examples and external datasets together), settings, report artifacts,
+findings, logs, policy copies and the selected pairing manifest. Original DICOM
+files remain external. There is no user-selected database/output folder in the
+desktop UI anymore. Individual report export remains **Save copy**.
+
+Project files are now version-2 ZIP containers, not the earlier JSON references.
+The Python API has privileged save/open routes, called only by the native shell;
+the renderer cannot invoke these filesystem operations through `api_request`.
+Opening extracts into a private app-managed session and reconstructs its SQLite
+database with fresh directory identities. Saving is atomic and requires no active
+audits. Save As creates an independent snapshot. Run changes contribute to the
+unsaved indicator. Reports and policy/manifest content can be sensitive; packages
+are not anonymized data exports.
+
+Existing working folders were not deleted. Earlier JSON `.dicomqc` documents are
+not portable archives; save the existing working session using Save As to create
+the new format. Internal recovery storage remains between launches; explicit Save
+updates the portable file. Automatic cleanup of old recovery sessions is not yet
+implemented, so do not describe the internal storage as automatically reclaimed.
+
+Convert-Pheno was checked: it uses a JSON `.cpheno` plus `.cpheno.data` companion,
+and references external result history. dicomqc intentionally goes further by
+including reports in one movable project file, as confirmed by the user.
+
+Verification includes synthetic fixture runs, moving the archive, removing the
+original workspace and DICOM directory, reopening all findings/artifacts, retaining
+policy copies, and Rust-to-Python API integration. Focused Playwright desktop and
+narrow-window checks cover Advanced setup and removal of output-folder controls.
+
+
 The user confirmed that Python remains the authoritative audit engine and CLI.
 The native Tauri shell talks to the local authenticated FastAPI service. It does
 not run or parse the CLI for desktop operations. The sibling Rust port remains
@@ -12,11 +45,34 @@ release. Use Convert-Pheno and digital-genome-workstation as design references:
 persistent navigation, sources and runs, a working toolbar, distinct setup,
 findings and report views, and a desktop status/task area. Do not publish anything.
 
+The user explicitly declined resumable jobs and a preflight/dry-run summary.
+Do not add either without a new request. Performance measurements belong in the
+existing run log.
+
+Audit Setup now presents two modes: Privacy audit (default) and Dataset
+comparison. Policies and UID/scanner options extend audits; synthetic scenarios
+are separate example runs. Comparison hides scan-only controls. The next-audit
+summary names the selected policy; completed runs retain its ID and digest in
+the Log and exported job record. Generated policy YAML and pairing CSV are
+grouped as Example inputs within the selected run's Reports view.
+
+## Testing guidance
+
+The user explicitly requested proportionate testing, not the full suite after
+every change. Avoid repeating broad checks for small About/navigation edits.
+
+- Text or styling: targeted build or visual check as appropriate.
+- UI behavior: relevant component tests; browser/native checks where needed.
+- Audit logic or API changes: broader tests covering the affected behavior.
+- Before commits or releases: full validation as appropriate to the accumulated
+  changes; retain the greater-than-95% Python coverage requirement.
+- Notes-only edits: no tests needed.
+
 ## Current implementation
 
 - `app/src-tauri/` now contains the native Rust shell, authenticated API bridge,
-  service lifecycle, native menus/dialogs, workspace switching, isolated report
-  previews, exports that never overwrite existing files, and run deletion.
+  service lifecycle, native menus/dialogs, `.dicomqc` project lifecycle, isolated
+  report previews, exports that never overwrite existing files, and run deletion.
 - Python API reliability work covers readiness, stdin-parent supervision, worker
   lifecycle, queue resilience, input/workspace identity checks, progress, and
   deletion of finished runs. Real workers call the shared Python engine directly.
@@ -25,10 +81,30 @@ findings and report views, and a desktop status/task area. Do not publish anythi
   menu events and enabled states, light/dark/system themes, and task/status bars.
   Component/bridge tests: 45 passed. Playwright checks three widths (390, 760,
   1440) in all three themes, including long paths and multiline history rows.
-- Setup now exposes **Output folder / Choose output folder** directly. Native
-  selection preserves inputs with newly registered handles, remembers the folder,
-  and rejects output/input overlap before initializing a new workspace. Runs get
-  individual subfolders. Cancelled or failed folder changes retain prior inputs.
+- Project policies have a first-class Policy workspace based on Convert-Pheno's
+  CodeMirror interaction: YAML highlighting, line numbers, search, undo, strict
+  Python-engine validation, and line diagnostics. **Save as and use** validates
+  and creates a private, no-clobber YAML copy outside inputs and outputs; it
+  never overwrites the selected source. Unsaved edits block audits and project
+  saving. The project continues to reference the durable external YAML file.
+- The job log derives a compact Performance section from existing provenance:
+  threads, files read, and average end-to-end files/second. No extra worker
+  telemetry or DICOM values are captured.
+- Project files and output folders are deliberately separate. A `.dicomqc` JSON
+  file stores audit settings and references to external inputs and the selected
+  output folder. The output folder owns SQLite run history, immutable run
+  directories, and reports. Save As writes a new project document without moving
+  outputs. Open requires a trust confirmation and reconnects to the recorded output.
+  Treat project files as private because paths can disclose study or site names.
+- The visible **Load example data** control uses the same fixture-backed scenarios
+  as API, CLI, and integration tests; there is no UI-only data. It is filtered by
+  workflow: scan shows Privacy scan, Project policy, UID integrity, Scanner
+  inventory, and Large cohort; compare shows only Dataset comparison.
+- Runs have immutable IDs and mutable, searchable display names. Rename updates
+  only persisted job metadata; it never changes run directories or report paths.
+- Setup changes are tracked as dirty. The title marks them with `*`; New/Open and
+  Quit/Exit require confirmation before discarding them. Active audits continue to
+  block project changes and require confirmation before application exit.
 - `native-smoke` is an explicit Linux-only verification feature, excluded from
   ordinary builds. `app/tests/native-smoke.js` drives real UI/API workflows and
   captures WebKit screenshots into the chosen `DICOMQC_SMOKE_DIR`.
@@ -395,3 +471,74 @@ Useful references:
 
 Use its architecture as a reference, not a wholesale copy of Perl infrastructure
 or unrelated features. Review licensing before copying code/assets.
+
+## 2026-10-03: single-audit parallel metadata processing
+
+- The queue still permits exactly one running audit. Additional submissions are
+  queued FIFO; the Desktop primary action says **Queue audit** while work exists.
+- Scan and comparison now accept `-t` / `--threads` (from `1` through the
+  logical processors available to the process; default `min(4, available)`). The
+  same setting is available under **Settings > Processing** and is saved in
+  `.dicomqc` projects. Version-1 project files without the field load as four,
+  capped to available hardware.
+- Production scan and comparison work is split into bounded batches (256 files
+  or 128 manifest pairs) and dispatched to worker processes with at most twice
+  the configured worker count in flight. Results merge in deterministic input
+  order. Custom injected backends retain the thread mapper used by tests.
+  If the entire audit fits within the initial bounded lookahead, it runs serially
+  to avoid process startup and IPC overhead.
+  Dataset-wide UID/mapping aggregation remains serial. Directory traversal sorts
+  one directory at a time instead of retaining a globally sorted file tree.
+- During iterative UI work, run focused tests and compile checks. Run the broad
+  Python coverage suite and frontend/native suites after core or release-facing
+  changes; do not rerun every suite for each small visual edit.
+- A sixth **Large cohort** scenario generates metadata-only DICOM files
+  inside its run workspace. A Desktop slider spans 1,000 to 100,000 files in
+  1,000-file increments and defaults to 10,000. The first 150 files contain an
+  invented direct-PHI marker and the first 50 also produce two pseudonym-format
+  warnings, yielding 250 deterministic findings for pagination and report review.
+  It is a stress/regression example, not a committed binary artifact or a
+  performance claim. On this six-logical-CPU host, the same cached 50,000-file
+  scan took 12.04 seconds with one worker and 5.08 seconds with four process
+  workers after batching. The earlier per-file thread implementation took 40.03
+  seconds with four workers and was removed.
+- Runs have a dedicated **Log** tab with a durable job record: sanitized input-role
+  counts, options, worker count, synthetic cohort size when applicable, timing,
+  outcome, and a bounded timeline of predefined events. **Download job record**
+  writes the same provenance as JSON through a native save dialog. Records never
+  include DICOM values, source paths, input handles, parser diagnostics, or worker
+  stdout/stderr. Existing runs recover parameters from their private request when
+  available.
+- Embedded JSON, CSV, and HTML previews are capped at 8 MiB to protect the desktop
+  webview on large cohorts. The report panel explains the limit and keeps **Save
+  copy** available for opening the complete artifact externally.
+- Active-run feedback uses determinate progress for known totals (including
+  large-example generation and reading), a spinner for genuinely indeterminate
+  phases, and phase/count/elapsed-time text. Queued jobs do not animate.
+
+## Documentation and citation follow-up (2026-10-03)
+
+- Documentation navigation separates Desktop App and CLI. Audit modes explains
+  Privacy audit versus Dataset comparison before optional checks and outputs.
+- Desktop worked examples use fixture-backed Playwright captures generated by
+  `npm --prefix docs-site run screenshots:desktop`; the native bridge is mocked,
+  while report contents come from the real Python demo generators.
+- Later: add root `CITATION.cff` for version 0.2.0, using the GitHub About simple
+  description as the software title. Confirm release metadata when doing this.
+  The manuscript working title is now "dicomqc: Auditing privacy risks in
+  de-identified DICOM metadata"; CITATION.cff exists for software version 0.2.0.
+- Docs prose should be plain and specific: name the controls, inputs, checks,
+  and expected results. Avoid promotional language and unnecessary rewrites.
+
+## Release preparation (2026-10-03)
+
+- The user approved replacing the former tag-only distribution policy with
+  tag-triggered draft GitHub Releases for Desktop installers. PyPI still runs
+  separately from the same annotated stable tag. Manual installer builds remain
+  artifact-only, with a platform selector. No tag or Release was created locally.
+- Build-desktop now inspects installed/extracted Python engines, collects named
+  installers with SHA-256 files, and refuses to replace published Release assets.
+  Actual five-platform execution and manual GUI checks remain release gates.
+- Release is planned for tomorrow; do not date the changelog or tag yet.
+- Next: a separate private ../dicomqc-videos repository following convert-pheno,
+  COHORTome, and digital-genome-workstation video production conventions.

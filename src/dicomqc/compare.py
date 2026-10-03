@@ -3,22 +3,26 @@
 from __future__ import annotations
 
 import csv
-import logging
 import os
-import threading
-import warnings
 from collections import defaultdict
 from dataclasses import dataclass, field, replace
+from functools import partial
+from itertools import islice
 from pathlib import Path
 
 from dicomqc.backend.base import DicomBackend, DicomReadError
+from dicomqc.backend.diagnostics import read_metadata_safely
 from dicomqc.backend.pydicom_backend import PydicomBackend
 from dicomqc.model.metadata import MetadataRecord
 from dicomqc.model.results import Finding, ScanResult, Severity
+from dicomqc.parallel import (
+    DEFAULT_THREADS, bounded_ordered_map, bounded_ordered_process_map, validate_threads,
+)
 from dicomqc.rules.builtin import evaluate_record
 from dicomqc.rules.policy import Policy, evaluate_policy
 
 COMPARE_PROFILE = "dataset-comparison-v0.1"
+COMPARISON_BATCH_SIZE = 128
 
 
 @dataclass(frozen=True)
@@ -88,35 +92,10 @@ def _inventory(root: Path) -> set[str]:
     return paths
 
 
-class _HideParserDetails(logging.Filter):
-    """Keep pydicom diagnostics for this read out of application logs."""
-
-    def __init__(self) -> None:
-        super().__init__()
-        self.thread = threading.get_ident()
-
-    def filter(self, record: logging.LogRecord) -> bool:
-        return record.thread != self.thread
-
-
-def _read(reader: DicomBackend, path: Path) -> MetadataRecord:
-    logger = logging.getLogger("pydicom")
-    log_filter = _HideParserDetails()
-    logger.addFilter(log_filter)
-    try:
-        with warnings.catch_warnings(record=True) as diagnostics:
-            warnings.simplefilter("always")
-            record = reader.read_metadata(path)
-        if diagnostics:
-            raise DicomReadError("DICOM parser reported a warning.")
-        return record
-    finally:
-        logger.removeFilter(log_filter)
-
-
 def compare_datasets(
     source: Path, candidate: Path, manifest: Path, *, backend: DicomBackend | None = None,
     policy: Policy | None = None,
+    threads: int = DEFAULT_THREADS,
     progress=None,
 ) -> ComparisonResult:
     """Check coverage, candidate metadata, and PatientID mapping consistency.
@@ -125,6 +104,7 @@ def compare_datasets(
     Paths and patient identifiers remain internal; reports use pair ordinals.
     """
     from dicomqc.progress import emit
+    threads = validate_threads(threads)
     emit(progress, "discovery")
     source, candidate = comparison_roots(source, candidate)
     manifest = manifest.resolve()
@@ -132,7 +112,6 @@ def compare_datasets(
         raise ValueError("Keep the pairing manifest outside both input directories.")
     pairs = _manifest(manifest)
     inventories = [_inventory(source), _inventory(candidate)]
-    reader = backend or PydicomBackend()
     findings: list[Finding] = []
     skipped: dict[str, str] = {}
     records = []
@@ -154,50 +133,28 @@ def compare_datasets(
                   f"A {role} file is not covered by the manifest.",
                   "Check the complete input inventory and update the pairing manifest.")
 
-    for number, pair in enumerate(pairs, 1):
-        emit(progress, "reading", number - 1, len(pairs))
-        loaded = []
-        for side, (root, relative) in enumerate(zip((source, candidate), pair)):
-            role = ("source", "candidate")[side]
-            reference = f"pair-{number:06d}/{role}"
-            if relative not in inventories[side]:
-                error(f"missing_{role}", reference, f"The listed {role} file is missing.",
-                      "Check the manifest and regenerate missing output files.")
-                loaded.append(None)
-                continue
-            try:
-                record = _read(reader, root / relative)
-            except DicomReadError:
-                # Parser exception messages can contain identifiers or file paths.
-                skipped[reference] = "Cannot read DICOM metadata."
-                error(f"unreadable_{role}", reference, f"The {role} file is unreadable.",
-                      "Inspect the file locally and rerun the comparison.")
-                loaded.append(None)
-                continue
-            loaded.append(record)
-            if side == 1:
-                safe_record = replace(record, path=Path(reference))
-                findings.extend(evaluate_record(safe_record))
-                if policy is not None:
-                    findings.extend(evaluate_policy(safe_record, policy))
-                # Do not serialize paths, UIDs, manufacturer, or other raw context.
-                records.append(MetadataRecord(Path(reference), None, None, None, None, None, {}))
-        before, after = loaded
-        if before is None or after is None:
-            continue
-        readable_pairs += 1
-        reference = f"pair-{number:06d}/candidate"
-        if not before.patient_id or not after.patient_id:
-            error("missing_patient_id", reference, "A paired file has no usable PatientID.",
-                  "Supply PatientID on both sides so identity consistency can be checked.")
-            continue
-        # Issuer distinguishes source identifiers assigned by different institutions.
-        issuer = before.issuer_of_patient_id or ""
-        identity = (issuer, before.patient_id)
-        mappings.append((identity, after.patient_id, reference))
-        if before.patient_id == after.patient_id:
-            error("unchanged_patient_id", reference, "PatientID was not changed.",
-                  "Verify the de-identification process replaces the source identifier.")
+    numbered_pairs = ((number, pair, pair[0] in inventories[0], pair[1] in inventories[1])
+                      for number, pair in enumerate(pairs, 1))
+    if backend is None and threads > 1:
+        batches = (_ComparisonBatch(tuple(batch), source, candidate, policy)
+                   for batch in _pair_batches(numbered_pairs, COMPARISON_BATCH_SIZE))
+        inspections = (inspection
+                       for batch in bounded_ordered_process_map(_inspect_pair_batch, batches, workers=threads)
+                       for inspection in batch)
+    else:
+        inspect_pair = partial(_inspect_pair, source=source, candidate=candidate, policy=policy,
+                               reader=backend or PydicomBackend())
+        inspections = bounded_ordered_map(inspect_pair, numbered_pairs, threads=threads)
+    for number, inspection in enumerate(
+        inspections, 1,
+    ):
+        records.extend(inspection.records)
+        findings.extend(inspection.findings)
+        skipped.update(inspection.skipped)
+        readable_pairs += int(inspection.readable)
+        if inspection.mapping is not None:
+            mappings.append(inspection.mapping)
+        emit(progress, "reading", number, len(pairs))
 
     emit(progress, "relationships", len(pairs), len(pairs))
     forward: dict[tuple[str, str], set[str]] = defaultdict(set)
@@ -219,4 +176,98 @@ def compare_datasets(
         comparison={"source_files": len(inventories[0]), "candidate_files": len(inventories[1]),
                     "manifest_pairs": len(pairs), "readable_pairs": readable_pairs,
                     "identity_pairs_checked": len(mappings)},
+    )
+
+
+@dataclass(frozen=True)
+class _PairInspection:
+    records: tuple[MetadataRecord, ...]
+    findings: tuple[Finding, ...]
+    skipped: dict[str, str]
+    mapping: tuple[tuple[str, str], str, str] | None
+    readable: bool
+
+
+@dataclass(frozen=True)
+class _ComparisonBatch:
+    pairs: tuple[tuple[int, tuple[str, str], bool, bool], ...]
+    source: Path
+    candidate: Path
+    policy: Policy | None
+
+
+def _inspect_pair(
+    numbered_pair: tuple[int, tuple[str, str], bool, bool], *, source: Path,
+    candidate: Path, policy: Policy | None, reader: DicomBackend,
+) -> _PairInspection:
+    number, pair, source_exists, candidate_exists = numbered_pair
+    loaded = []
+    local_findings: list[Finding] = []
+    local_skipped: dict[str, str] = {}
+    local_records: list[MetadataRecord] = []
+
+    def pair_error(rule: str, reference: str, message: str, recommendation: str) -> None:
+        local_findings.append(_error_finding(rule, reference, message, recommendation))
+
+    for side, (root, relative, exists) in enumerate(zip(
+        (source, candidate), pair, (source_exists, candidate_exists),
+    )):
+        role = ("source", "candidate")[side]
+        reference = f"pair-{number:06d}/{role}"
+        if not exists:
+            pair_error(f"missing_{role}", reference, f"The listed {role} file is missing.",
+                       "Check the manifest and regenerate missing output files.")
+            loaded.append(None)
+            continue
+        try:
+            record = read_metadata_safely(reader, root / relative)
+        except DicomReadError:
+            local_skipped[reference] = "Cannot read DICOM metadata."
+            pair_error(f"unreadable_{role}", reference, f"The {role} file is unreadable.",
+                       "Inspect the file locally and rerun the comparison.")
+            loaded.append(None)
+            continue
+        loaded.append(record)
+        if side == 1:
+            safe_record = replace(record, path=Path(reference))
+            local_findings.extend(evaluate_record(safe_record))
+            if policy is not None:
+                local_findings.extend(evaluate_policy(safe_record, policy))
+            # Do not serialize paths, UIDs, manufacturer, or other raw context.
+            local_records.append(MetadataRecord(Path(reference), None, None, None, None, None, {}))
+    before, after = loaded
+    if before is None or after is None:
+        return _PairInspection(tuple(local_records), tuple(local_findings), local_skipped, None, False)
+    reference = f"pair-{number:06d}/candidate"
+    if not before.patient_id or not after.patient_id:
+        pair_error("missing_patient_id", reference, "A paired file has no usable PatientID.",
+                   "Supply PatientID on both sides so identity consistency can be checked.")
+        return _PairInspection(tuple(local_records), tuple(local_findings), local_skipped, None, True)
+    issuer = before.issuer_of_patient_id or ""
+    identity = (issuer, before.patient_id)
+    mapping = (identity, after.patient_id, reference)
+    if before.patient_id == after.patient_id:
+        pair_error("unchanged_patient_id", reference, "PatientID was not changed.",
+                   "Verify the de-identification process replaces the source identifier.")
+    return _PairInspection(tuple(local_records), tuple(local_findings), local_skipped, mapping, True)
+
+
+def _inspect_pair_batch(batch: _ComparisonBatch) -> tuple[_PairInspection, ...]:
+    reader = PydicomBackend()
+    inspect = partial(_inspect_pair, source=batch.source, candidate=batch.candidate,
+                      policy=batch.policy, reader=reader)
+    return tuple(inspect(pair) for pair in batch.pairs)
+
+
+def _pair_batches(values, size: int):
+    iterator = iter(values)
+    while batch := tuple(islice(iterator, size)):
+        yield batch
+
+
+def _error_finding(rule: str, reference: str, message: str, recommendation: str) -> Finding:
+    return Finding(
+        rule_id=f"{COMPARE_PROFILE}.{rule}", profile_id=COMPARE_PROFILE,
+        severity=Severity.ERROR, path=reference, message=message,
+        recommendation=recommendation,
     )

@@ -191,16 +191,25 @@ def test_entry_delegates_arguments(monkeypatch, arguments):
     assert calls == ["freeze", arguments]
 
 
-def test_workflow_is_manual_artifact_only():
+def test_workflow_builds_manual_artifacts_and_tagged_drafts():
     # BaseLoader preserves GitHub's "on" key (YAML 1.1 treats it as a boolean).
     workflow = yaml.load((ROOT / ".github/workflows/build-desktop.yml").read_text(), Loader=yaml.BaseLoader)
-    assert set(workflow["on"]) == {"workflow_dispatch"}
+    assert set(workflow["on"]) == {"workflow_dispatch", "push"}
+    assert workflow["on"]["push"]["tags"] == ["v*"]
     assert workflow["permissions"] == {"contents": "read"}
-    assert set(workflow["jobs"]) == {"desktop"}
+    assert set(workflow["jobs"]) == {"prepare", "desktop", "release"}
     job = workflow["jobs"]["desktop"]
-    assert {row["platform"] for row in job["strategy"]["matrix"]["include"]} == {
-        "macos-x64", "macos-arm64", "windows-x64", "linux-x64", "linux-arm64",
-    }
+    assert job["strategy"]["matrix"]["include"] == "${{ fromJSON(needs.prepare.outputs.matrix) }}"
+    assert job["needs"] == "prepare"
+    assert workflow["on"]["workflow_dispatch"]["inputs"]["platform"]["default"] == "all"
+    release = workflow["jobs"]["release"]
+    assert release["needs"] == ["prepare", "desktop"]
+    assert "github.event_name == 'push'" in release["if"]
+    assert release["permissions"] == {"contents": "write"}
+    publish = release["steps"][-1]["run"]
+    assert "--verify-tag --draft" in publish
+    assert "Refusing to replace assets on a published release" in publish
+    assert "sha256sum --check" in publish
     assert "permissions" not in job
     steps = job["steps"]
     assert any(step.get("uses", "").startswith("actions/upload-artifact@") for step in steps)
@@ -212,6 +221,10 @@ def test_workflow_is_manual_artifact_only():
     assert steps.index(native) > next(i for i, step in enumerate(steps) if step.get("name") == "Test Rust launcher")
     assert not any("release" in step.get("uses", "") or "gh release" in step.get("run", "")
                    or "twine" in step.get("run", "") for step in steps)
+    for platform in ("Linux", "macOS", "Windows"):
+        inspection = next(step for step in steps if step.get("name", "").endswith(f"{platform} installer"))
+        assert inspection["if"] == f"runner.os == '{platform}'"
+        assert "desktop_release.py inspect" in inspection["run"]
 
 
 def test_native_gui_workflow_is_linux_only_and_excludes_private_data():
@@ -304,7 +317,7 @@ def test_frozen_engine_relocation_workers_and_shutdown(tmp_path, shutdown_mode):
             with pytest.raises(urllib.error.HTTPError) as unauthorized:
                 request("/health", authenticated=False)
             assert unauthorized.value.code == 401
-            for example in ("scan", "compare", "policy", "uid", "vendor"):
+            for example in ("scan", "compare", "policy", "uid", "vendor", "large"):
                 job = json.loads(request("/jobs", {"mode": "demo", "example": example}))
                 deadline = time.monotonic() + 60
                 while job["status"] in {"queued", "running"}:

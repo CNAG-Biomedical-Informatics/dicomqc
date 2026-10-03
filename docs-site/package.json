@@ -12,6 +12,7 @@
     "serve": "docusaurus serve",
     "smoke": "node scripts/check-docs.mjs",
     "screenshots:multiqc": "node ../scripts/capture_multiqc_screenshots.js",
+    "screenshots:desktop": "npm --prefix ../app run build && node ../scripts/capture_desktop_screenshots.mjs",
     "typecheck": "tsc"
   },
   "dependencies": {

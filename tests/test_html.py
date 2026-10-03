@@ -6,7 +6,7 @@ import hashlib
 
 import pytest
 
-from dicomqc.demo import run_comparison_demo, run_demo
+from dicomqc.demo import run_comparison_demo, run_demo, run_policy_demo, run_uid_demo, run_vendor_demo
 from dicomqc.compare import ComparisonResult, COMPARE_PROFILE
 from dicomqc.model.metadata import MetadataRecord
 from dicomqc.model.results import Finding, ScanResult, Severity
@@ -27,6 +27,26 @@ def sample(level=Severity.ERROR):
     record = MetadataRecord(Path("image.dcm"), "SECRET_ID", "SECRET_UID", None, "SECRET_VENDOR", "MR", {})
     finding = Finding("rule", "profile", level, "image.dcm", "A field needs review.", "Remove the value.", tag="(0010,0030)", keyword="PatientBirthDate", standard_refs=("Reference",))
     return ScanResult("profile", [record], [finding])
+
+
+@pytest.mark.parametrize("runner,title,checks", [
+    (run_demo, "Privacy audit", "Privacy metadata"),
+    (run_comparison_demo, "Dataset comparison", "Privacy metadata · Dataset comparison"),
+    (run_policy_demo, "Privacy audit", "Privacy metadata · Project policy"),
+    (run_uid_demo, "Privacy audit", "Privacy metadata · UID integrity"),
+    (run_vendor_demo, "Privacy audit", "Privacy metadata · Scanner inventory"),
+])
+def test_report_names_match_audit_scenarios(tmp_path, runner, title, checks):
+    output = tmp_path / "example"
+    runner(output, multiqc=False)
+    reports = list(output.rglob("*.html"))
+    assert reports
+    for report in reports:
+        document = report.read_text()
+        assert f"<title>dicomqc — {title}</title>" in document
+        assert f'<p class="eyebrow">{title}</p>' in document
+        assert f"Checks: {checks}</p>" in document
+        assert "Audit workspace" not in document
 
 
 @pytest.mark.parametrize("level,label", [(Severity.ERROR, "Errors require attention"), (Severity.WARNING, "Warnings require review"), (Severity.INFO, "Checks passed")])

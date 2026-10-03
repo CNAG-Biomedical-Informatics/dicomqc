@@ -4,6 +4,10 @@ title: CLI Reference
 
 # CLI Reference
 
+The desktop app is the recommended interface for routine audits. Use the CLI
+when you need scripting, batch execution, pipeline integration, or explicit
+exit-code handling. Both interfaces run the same audit engine.
+
 ## Global options
 
 | Option | Description |
@@ -14,7 +18,7 @@ title: CLI Reference
 ## `dicomqc scan`
 
 ```bash
-dicomqc scan PATH [PATH ...] [--json FILE] [--csv FILE] [--html FILE] [--multiqc [DIR]] [--profile PROFILE] [--policy FILE] [--vendor-summary] [--uid-checks] [--quiet]
+dicomqc scan PATH [PATH ...] [--json FILE] [--csv FILE] [--html FILE] [--multiqc [DIR]] [--profile PROFILE] [--policy FILE] [--vendor-summary] [--uid-checks] [-t THREADS] [--quiet]
 ```
 
 ### Arguments
@@ -35,6 +39,7 @@ dicomqc scan PATH [PATH ...] [--json FILE] [--csv FILE] [--html FILE] [--multiqc
 | `--policy FILE` | Add project-specific YAML checks without disabling built-in checks. See [Project policies](../usage/policies.md). |
 | `--uid-checks` | Check top-level study, series, and instance UID syntax, role reuse, and hierarchy within this scan. See [UID integrity](../usage/uid-integrity.md). |
 | `--vendor-summary` | Include declared scanner/software labels and private creator blocks. Exports metadata text that may identify people; see [Scanner inventory](../usage/vendor-summary.md). |
+| `-t THREADS`, `--threads THREADS` | Process bounded batches of independent files with this many metadata threads. Default: `4` or fewer on smaller systems; maximum: logical processors available to dicomqc. Small audits run serially; results retain deterministic input order. |
 | `--quiet` | Suppress the text summary. |
 
 ### Exit codes
@@ -50,7 +55,7 @@ dicomqc scan PATH [PATH ...] [--json FILE] [--csv FILE] [--html FILE] [--multiqc
 See [Compare datasets](../usage/compare.md):
 
 ```bash
-dicomqc compare SOURCE CANDIDATE --manifest FILE [--json FILE] [--csv FILE] [--html FILE] [--policy FILE] [--quiet]
+dicomqc compare SOURCE CANDIDATE --manifest FILE [--json FILE] [--csv FILE] [--html FILE] [--policy FILE] [-t THREADS] [--quiet]
 ```
 
 This checks file completeness and patient pseudonym consistency using an explicit
@@ -65,10 +70,14 @@ to readable, listed candidate files only. Keep the policy outside the input
 directories; reports must not overwrite it. The same policy option is available
 for `scan`.
 
+`-t` / `--threads` uses the same hardware-derived maximum as `scan` and sends
+bounded batches of independent manifest pairs to worker processes within one
+comparison audit.
+
 ## `dicomqc demo`
 
 ```bash
-dicomqc demo [--compare | --policy-demo | --vendor-demo | --uid-demo] [--output-dir DIR] [--force]
+dicomqc demo [--compare | --policy-demo | --vendor-demo | --uid-demo | --large] [--output-dir DIR] [--force]
 ```
 
 Generate a synthetic DICOM dataset and a complete dicomqc report bundle.
@@ -83,8 +92,9 @@ Generate a synthetic DICOM dataset and a complete dicomqc report bundle.
 | `--policy-demo` | Generate a policy file, failing and corrected synthetic datasets, and before/after JSON/CSV/HTML reports. |
 | `--vendor-demo` | Generate three synthetic files and a scan with scanner/private-tag inventory in HTML, JSON, and MultiQC, plus CSV findings. |
 | `--uid-demo` | Generate four failing and four corrected synthetic files, with before/after HTML, JSON, CSV, and MultiQC content. See [UID integrity](../usage/uid-integrity.md#try-the-uid-demo). |
+| `--large` | Generate and audit 10,000 metadata-only DICOM files with 250 deterministic privacy findings. Use it to exercise scalability, pagination, and report review; it is not a performance guarantee for real storage. |
 
-`--compare`, `--policy-demo`, `--vendor-demo`, and `--uid-demo` are mutually exclusive.
+`--compare`, `--policy-demo`, `--vendor-demo`, `--uid-demo`, and `--large` are mutually exclusive.
 
 The demo command exits `0` when generation succeeds, even though the synthetic
 scan result contains intentional findings. The reported scan exit code is shown
@@ -103,6 +113,12 @@ The demo command exits `0` on successful generation. See [Project policies](../u
 With `--vendor-demo`, the scan exits `1` for three private-tag warnings; the demo
 command exits `0` on successful generation. See the
 [inventory walkthrough](../usage/vendor-summary.md#try-the-inventory-demo).
+
+With `--large`, the generated scan is clean and both the scan and demo command
+exit `0`. Files are created under the selected demo output and are not stored in
+the Python package or Git repository. Threading results depend on metadata size,
+filesystem, cache state, and Python runtime; compare settings on the target
+system instead of treating the example as a benchmark claim.
 
 ## Output formats
 

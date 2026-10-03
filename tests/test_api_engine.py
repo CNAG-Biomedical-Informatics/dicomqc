@@ -33,6 +33,7 @@ def test_worker_publishes_complete_demo_atomically(tmp_path, example):
         review = read_json(directory / "reports/review.json")
         assert "records" not in review
         assert all((directory / "reports" / name).is_file() for name in completion["artifacts"])
+        assert read_json(directory / "events.json")[0]["event"] == "synthetic demo"
     finally:
         jobs.close()
 
@@ -117,7 +118,7 @@ def test_server_in_process_native_lifetime(tmp_path, monkeypatch, capsys, ready_
     thread = threading.Thread(target=lambda: result.append(server.main(args)))
     thread.start()
     try:
-        import httpx
+        import httpx2 as httpx
         deadline = time.monotonic() + 10
         with httpx.Client(base_url=f"http://127.0.0.1:{port}", trust_env=False, timeout=0.2) as http:
             while True:
@@ -149,7 +150,10 @@ def test_startup_failure_does_not_publish_ready_or_tracebacks(tmp_path, monkeypa
     (root / "secret.dcm").write_text("PRIVATE")
     ready = tmp_path / "ready.json"
     assert server.main(["--state-dir", str(root), "--port", "0", "--ready-file", str(ready)]) == 2
-    assert not ready.exists()
+    failure = read_json(ready)
+    assert "port" not in failure
+    assert "files that do not belong to a dicomqc run workspace" in failure["error"]
+    assert "patient-data" not in failure["error"] and "secret.dcm" not in failure["error"]
     output = capsys.readouterr().err
     assert "Cannot start" in output
     assert "Traceback" not in output and "patient-data" not in output

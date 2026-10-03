@@ -1,0 +1,20 @@
+cff-version: 1.2.0
+message: >-
+  A manuscript describing dicomqc is in preparation. Until publication,
+  please cite the software using this metadata and record the version
+  used in your analysis.
+type: software
+title: "dicomqc: Auditing privacy risks in de-identified DICOM metadata"
+authors:
+  - family-names: Rueda
+    given-names: Manuel
+    affiliation: CNAG
+version: 0.2.0
+repository-code: "https://github.com/CNAG-Biomedical-Informatics/dicomqc"
+url: "https://cnag-biomedical-informatics.github.io/dicomqc/"
+license: Apache-2.0
+keywords:
+  - DICOM
+  - privacy
+  - de-identification
+  - quality control

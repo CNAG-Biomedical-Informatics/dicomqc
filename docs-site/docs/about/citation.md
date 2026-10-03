@@ -4,7 +4,11 @@ title: Citation
 
 # Citation
 
-dicomqc is an early-stage research software project. A formal citation will be
-added when the project has a stable release or manuscript.
+A manuscript describing **dicomqc** is in preparation, with the working title:
 
-For now, cite the repository URL and the version used in your analysis.
+> dicomqc: Auditing privacy risks in de-identified DICOM metadata
+
+Until publication, **cite the software** using
+[`CITATION.cff`](https://github.com/CNAG-Biomedical-Informatics/dicomqc/blob/main/CITATION.cff).
+It contains the citation metadata for version **0.2.0**. Record the version
+actually used in your analysis.

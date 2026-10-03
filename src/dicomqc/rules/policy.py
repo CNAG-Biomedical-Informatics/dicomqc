@@ -161,23 +161,20 @@ def _parse_rule(data: object) -> PolicyRule:
     )
 
 
-def load_policy(path: Path) -> Policy:
-    """Load a strict YAML policy without exposing its contents in errors."""
-    try:
-        if not path.is_file():
-            raise ValueError("Policy input must be a readable regular file.")
-        with path.open("rb") as handle:
-            source = handle.read(_MAX_BYTES + 1)
-    except OSError:
-        raise ValueError("Unable to read policy file.") from None
+def parse_policy(source: bytes) -> Policy:
+    """Validate policy bytes without exposing configured values in errors."""
     if len(source) > _MAX_BYTES:
         raise ValueError("Policy files must not exceed 64 KiB.")
     try:
         decoded = source.decode("utf-8")
         _validate_tokens(decoded)
         data = yaml.load(decoded, Loader=_PolicyLoader)
-    except (UnicodeError, yaml.YAMLError):
+    except UnicodeError:
         raise ValueError("Policy file must contain valid UTF-8 YAML.") from None
+    except yaml.YAMLError as exc:
+        mark = getattr(exc, "problem_mark", None)
+        location = f" at line {mark.line + 1}, column {mark.column + 1}" if mark else ""
+        raise ValueError(f"Policy file must contain valid UTF-8 YAML{location}.") from None
     if not isinstance(data, dict) or data.keys() != {"version", "id", "rules"}:
         raise ValueError("Policy must contain exactly version, id and rules.")
     if type(data["version"]) is not int or data["version"] != 1:
@@ -191,6 +188,18 @@ def load_policy(path: Path) -> Policy:
     if len({rule.id for rule in parsed}) != len(parsed):
         raise ValueError("Policy rule IDs must be unique.")
     return Policy(id=data["id"], rules=parsed, sha256=sha256(source).hexdigest())
+
+
+def load_policy(path: Path) -> Policy:
+    """Load a strict YAML policy without exposing its contents in errors."""
+    try:
+        if not path.is_file():
+            raise ValueError("Policy input must be a readable regular file.")
+        with path.open("rb") as handle:
+            source = handle.read(_MAX_BYTES + 1)
+    except OSError:
+        raise ValueError("Unable to read policy file.") from None
+    return parse_policy(source)
 
 
 def _values(tag: DicomTag) -> tuple[object, ...]:

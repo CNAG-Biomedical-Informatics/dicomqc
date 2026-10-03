@@ -1,7 +1,7 @@
 use reqwest::blocking::{Client, Response};
 use serde_json::{json, Value};
 use std::{
-    collections::HashMap,
+    collections::{BTreeMap, HashMap},
     fs::{self, OpenOptions},
     io::{Read, Write},
     path::{Path, PathBuf},
@@ -85,6 +85,13 @@ impl Engine {
                 .map_err(|_| "Cannot inspect the API process.")?
                 .is_some()
             {
+                if let Ok(bytes) = fs::read(&ready) {
+                    if let Ok(value) = serde_json::from_slice::<Value>(&bytes) {
+                        if let Some(error) = value["error"].as_str() {
+                            return Err(error.to_string());
+                        }
+                    }
+                }
                 return Err("The local API stopped during startup. Check that the workspace is available and not already open.".into());
             }
             if let Ok(bytes) = fs::read(&ready) {
@@ -137,6 +144,9 @@ impl Engine {
             .client
             .request(method, format!("{}{path}", self.url))
             .bearer_auth(&self.token);
+        if path.starts_with("/api/v1/projects/") {
+            request = request.timeout(Duration::from_secs(600));
+        }
         if privileged {
             request = request.header("X-Dicomqc-Local", &self.local_token);
         }
@@ -170,6 +180,11 @@ impl Engine {
         serde_json::from_slice(&bytes).map_err(|_| "Invalid API response.".into())
     }
 
+    pub fn project_request(&self, operation: &str, body: &Value) -> Result<Value, String> {
+        self.response(&format!("/api/v1/projects/{operation}/local"), "POST", body, true)?
+            .json().map_err(|_| "Invalid project response.".into())
+    }
+
     pub fn register(&self, path: &Path) -> Result<Value, String> {
         let path = path
             .canonicalize()
@@ -190,38 +205,93 @@ impl Engine {
         Ok(input)
     }
 
-    pub fn validate_output(&self, root: &Path, ids: &[String]) -> Result<(), String> {
+    pub fn input_text(&self, id: &str, maximum: usize) -> Result<String, String> {
+        let path = self
+            .inputs
+            .lock()
+            .map_err(|_| "Input selection is unavailable.")?
+            .get(id)
+            .cloned()
+            .ok_or("Select the policy file again.")?;
+        if !path.is_file()
+            || path.canonicalize().map_err(|_| "The selected policy is unavailable.")? != path
+        {
+            return Err("The selected policy is unavailable.".into());
+        }
+        let mut bytes = Vec::new();
+        fs::File::open(path)
+            .and_then(|file| file.take(maximum as u64 + 1).read_to_end(&mut bytes))
+            .map_err(|_| "Cannot read the selected policy.")?;
+        if bytes.len() > maximum {
+            return Err("Policy files must not exceed 64 KiB.".into());
+        }
+        String::from_utf8(bytes).map_err(|_| "Policy files must contain UTF-8 text.".into())
+    }
+
+    pub fn policy_target_allowed(&self, target: &Path) -> Result<(), String> {
+        if target.starts_with(&self.root) || self.root.starts_with(target) {
+            return Err("Keep policy files separate from the output folder.".into());
+        }
         let paths = self
             .inputs
             .lock()
             .map_err(|_| "Input selection is unavailable.")?;
-        for id in ids {
-            let path = paths
-                .get(id)
-                .ok_or("Select the input again before changing the output folder.")?;
-            let path = path
-                .canonicalize()
-                .map_err(|_| "The selected input is unavailable.")?;
-            if path.starts_with(root) || root.starts_with(&path) {
-                return Err("Choose an output folder separate from the selected inputs.".into());
-            }
+        if paths
+            .values()
+            .filter(|path| path.is_dir())
+            .any(|path| target.starts_with(path))
+        {
+            return Err("Keep policy files outside the selected DICOM folders.".into());
         }
         Ok(())
     }
 
-    pub fn transfer_inputs(&self, replacement: &Engine, ids: &[String]) -> Result<Value, String> {
-        let paths = self
+
+    pub fn input_paths(
+        &self,
+        groups: &BTreeMap<String, Vec<String>>,
+    ) -> Result<BTreeMap<String, Vec<PathBuf>>, String> {
+        let inputs = self
             .inputs
             .lock()
             .map_err(|_| "Input selection is unavailable.")?;
-        let mut inputs = serde_json::Map::new();
-        for id in ids {
-            let path = paths
-                .get(id)
-                .ok_or("Select the input again before changing the output folder.")?;
-            inputs.insert(id.clone(), replacement.register(path)?);
+        groups
+            .iter()
+            .map(|(group, ids)| {
+                let paths = ids
+                    .iter()
+                    .map(|id| {
+                        inputs.get(id).cloned().ok_or_else(|| {
+                            "Select the input again before saving the project.".into()
+                        })
+                    })
+                    .collect::<Result<Vec<_>, String>>()?;
+                Ok((group.clone(), paths))
+            })
+            .collect()
+    }
+
+    pub fn register_paths(
+        &self,
+        groups: &BTreeMap<String, Vec<PathBuf>>,
+    ) -> Result<(Value, Vec<String>), String> {
+        let mut registered = serde_json::Map::new();
+        let mut missing = Vec::new();
+        for (group, paths) in groups {
+            let mut values = Vec::new();
+            for path in paths {
+                if !path.is_absolute() {
+                    missing.push(path.to_string_lossy().into_owned());
+                    continue;
+                }
+                match self.register(path) {
+                    Ok(value) => values.push(value),
+                    Err(_) => missing.push(path.to_string_lossy().into_owned()),
+                }
+            }
+            registered.insert(group.clone(), Value::Array(values));
         }
-        Ok(Value::Object(inputs))
+        Ok((Value::Object(registered), missing))
     }
 
     pub fn delete_run(&self, id: &str) -> Result<(), String> {
@@ -258,8 +328,11 @@ impl Engine {
 
     pub fn preview(&self, id: &str, index: usize) -> Result<String, String> {
         let name = self.artifact_name(id, index)?;
-        if !name.ends_with(".html") {
-            return Err("Only HTML reports can be previewed.".into());
+        if ![".html", ".json", ".csv", ".yaml", ".yml"]
+            .iter()
+            .any(|extension| name.to_ascii_lowercase().ends_with(extension))
+        {
+            return Err("This report format cannot be previewed.".into());
         }
         let mut bytes = Vec::new();
         self.response(
@@ -303,6 +376,47 @@ impl Engine {
         if result.is_err() {
             let _ = fs::remove_file(target);
             return Err("Could not save the complete report.".into());
+        }
+        Ok(())
+    }
+
+    pub fn export_job_record(&self, id: &str, target: &Path) -> Result<(), String> {
+        if !crate::protocol::valid_id(id) {
+            return Err("Invalid run identifier.".into());
+        }
+        let job = self.request(&format!("/api/v1/jobs/{id}"), "GET", &Value::Null)?;
+        let record = json!({
+            "format": "dicomqc-job-record",
+            "version": 1,
+            "id": job["id"],
+            "name": job["name"],
+            "created": job["created"],
+            "mode": job["mode"],
+            "example": job["example"],
+            "status": job["status"],
+            "audit_exit_code": job["audit_exit_code"],
+            "summary": job["summary"],
+            "parameters": job["parameters"],
+            "policy": job["policy"],
+            "log": job["log"],
+        });
+        let bytes =
+            serde_json::to_vec_pretty(&record).map_err(|_| "Could not encode the job record.")?;
+        let mut options = OpenOptions::new();
+        options.write(true).create_new(true);
+        #[cfg(unix)]
+        {
+            use std::os::unix::fs::OpenOptionsExt;
+            options.mode(0o600);
+        }
+        let mut file = options.open(target).map_err(|_| {
+            "Choose a new filename in a writable folder; existing files are not overwritten."
+        })?;
+        let result = file.write_all(&bytes).and_then(|_| file.sync_all());
+        drop(file);
+        if result.is_err() {
+            let _ = fs::remove_file(target);
+            return Err("Could not save the job record.".into());
         }
         Ok(())
     }
@@ -377,6 +491,7 @@ pub fn read_workspace(settings: &Path, default: &Path) -> Result<PathBuf, String
     Ok(path)
 }
 
+
 pub fn write_workspace(settings: &Path, root: &Path) -> Result<(), String> {
     let parent = settings.parent().ok_or("Invalid settings location.")?;
     let mut file =
@@ -411,14 +526,16 @@ mod tests {
         assert!(read_workspace(&file, &default).is_err());
     }
 
+
     #[test]
     #[ignore = "requires the bundled Python engine and loopback networking"]
     fn bundled_api_bridge_examples_exports_and_restart() {
-        let program = std::env::var_os("DICOMQC_TEST_ENGINE")
-            .expect("Set DICOMQC_TEST_ENGINE to the bundled executable");
+        let python = std::env::var_os("DICOMQC_TEST_PYTHON");
+        let program = python.clone().or_else(|| std::env::var_os("DICOMQC_TEST_ENGINE"))
+            .expect("Set DICOMQC_TEST_ENGINE or DICOMQC_TEST_PYTHON");
         let launch = Launch {
-            program: PathBuf::from(program).canonicalize().unwrap(),
-            arguments: vec![],
+            program: if python.is_some() {PathBuf::from(program)} else {PathBuf::from(program).canonicalize().unwrap()},
+            arguments: if python.is_some() {vec!["-m".into(), "dicomqc.api.server".into()]} else {vec![]},
         };
         let data = tempfile::tempdir().unwrap();
         let root = data.path().join("runs");
@@ -429,15 +546,13 @@ mod tests {
         let handle = engine.register(&input).unwrap();
         assert!(handle["id"].as_str().is_some());
         let input_ids = vec![handle["id"].as_str().unwrap().to_string()];
-        assert!(engine.validate_output(data.path(), &input_ids).is_err());
-        assert!(engine
-            .validate_output(&data.path().join("other-runs"), &["unknown".into()])
-            .is_err());
         let destination = data.path().join("other-runs");
-        engine.validate_output(&destination, &input_ids).unwrap();
         let mut replacement = Engine::start(&launch, &destination, data.path()).unwrap();
-        let transferred = engine.transfer_inputs(&replacement, &input_ids).unwrap();
-        let new_handle = &transferred[&input_ids[0]];
+        let groups = BTreeMap::from([("paths".into(), input_ids)]);
+        let paths = engine.input_paths(&groups).unwrap();
+        let (transferred, missing) = replacement.register_paths(&paths).unwrap();
+        assert!(missing.is_empty());
+        let new_handle = &transferred["paths"][0];
         assert_ne!(new_handle["id"], handle["id"]);
         assert_eq!(new_handle["display_path"], input.to_string_lossy().as_ref());
         let mut transferred_job = replacement
@@ -474,7 +589,7 @@ mod tests {
         assert_eq!(fs::read_to_string(&input).unwrap(), "unchanged input");
         replacement.stop();
         assert!(engine.register(&root).is_err());
-        for example in ["scan", "compare", "policy", "uid", "vendor"] {
+        for example in ["scan", "compare", "policy", "uid", "vendor", "large"] {
             let mut job = engine
                 .request(
                     "/api/v1/jobs",
@@ -516,7 +631,18 @@ mod tests {
             assert!(engine.preview(&id, usize::MAX).is_err());
         }
         assert!(engine.run_directory("../escape").is_err());
+        let saved_count = engine.request("/api/v1/jobs", "GET", &Value::Null).unwrap().as_array().unwrap().len();
+        let package = data.path().join("Study.dicomqc");
+        engine.project_request("save", &json!({"path": package, "project": {
+            "format": "dicomqc-project", "version": 1, "mode": "scan", "inputs": {},
+            "options": {"threads": 1, "uid_checks": false, "vendor_summary": false, "multiqc": false}
+        }})).unwrap();
+        let moved = data.path().join("Moved.dicomqc");
+        fs::rename(package, &moved).unwrap();
+        let imported = engine.project_request("open", &json!({"path": moved, "storage": data.path()})).unwrap();
         engine.stop();
+        fs::remove_dir_all(&root).unwrap();
+        let root = PathBuf::from(imported["output"].as_str().unwrap());
         let mut reopened = Engine::start(&launch, &root, data.path()).unwrap();
         assert_eq!(
             reopened
@@ -525,7 +651,7 @@ mod tests {
                 .as_array()
                 .unwrap()
                 .len(),
-            5
+            saved_count
         );
         let jobs = reopened
             .request("/api/v1/jobs", "GET", &Value::Null)
@@ -544,7 +670,7 @@ mod tests {
                 .as_array()
                 .unwrap()
                 .len(),
-            4
+            saved_count - 1
         );
         assert_eq!(fs::read_to_string(&input).unwrap(), "unchanged input");
         // Closing the native supervisor pipe must also stop the Python service.

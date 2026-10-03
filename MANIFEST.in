@@ -1,4 +1,5 @@
 include CHANGELOG.md
+include CITATION.cff
 include scripts/smoke_distribution.py
 exclude README
 exclude SESSION_NOTES.md

@@ -9,7 +9,7 @@ pub fn valid_id(value: &str) -> bool {
 
 /// Only user-facing operations may cross the renderer boundary.
 pub fn allowed(path: &str, method: &str, body: &Value) -> bool {
-    if path.len() > 256 || (method != "POST" && !body.is_null()) {
+    if path.len() > 256 || (!matches!(method, "POST" | "PATCH") && !body.is_null()) {
         return false;
     }
     if method == "GET"
@@ -23,6 +23,14 @@ pub fn allowed(path: &str, method: &str, body: &Value) -> bool {
     if method == "POST" && path == "/api/v1/jobs" {
         return body.is_object();
     }
+    if method == "POST" && path == "/api/v1/policies/validate" {
+        return body.as_object().is_some_and(|value| {
+            value.len() == 1
+                && value["text"]
+                    .as_str()
+                    .is_some_and(|text| !text.is_empty() && text.len() <= 64 * 1024)
+        });
+    }
     let Some(suffix) = path.strip_prefix("/api/v1/jobs/") else {
         return false;
     };
@@ -32,6 +40,12 @@ pub fn allowed(path: &str, method: &str, body: &Value) -> bool {
     }
     if method == "POST" {
         return rest == "cancel" && body.is_null();
+    }
+    if method == "PATCH" {
+        return rest.is_empty()
+            && body
+                .as_object()
+                .is_some_and(|value| value.len() == 1 && value["name"].is_string());
     }
     if method != "GET" {
         return false;
@@ -78,7 +92,13 @@ mod tests {
             assert!(allowed(path, "GET", &Value::Null), "{path}");
         }
         assert!(allowed("/api/v1/jobs", "POST", &json!({"mode":"demo"})));
+        assert!(allowed(
+            "/api/v1/policies/validate",
+            "POST",
+            &json!({"text": "version: 1"})
+        ));
         assert!(allowed(&format!("{root}/cancel"), "POST", &Value::Null));
+        assert!(allowed(&root, "PATCH", &json!({"name": "Baseline audit"})));
     }
 
     #[test]
@@ -113,5 +133,15 @@ mod tests {
         }
         assert!(!allowed("/api/v1/jobs", "DELETE", &Value::Null));
         assert!(!allowed("/api/v1/jobs", "GET", &json!({})));
+        assert!(!allowed(
+            &root,
+            "PATCH",
+            &json!({"name": "x", "extra": true})
+        ));
+        assert!(!allowed(
+            "/api/v1/policies/validate",
+            "POST",
+            &json!({"text": "", "extra": true})
+        ));
     }
 }
