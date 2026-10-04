@@ -68,13 +68,12 @@ class Jobs:
         self.closed = False
         # An advisory file lock survives crashes and excludes another supervisor.
         fd = os.open(self.root / "owner.lock", os.O_RDWR | os.O_CREAT | getattr(os, "O_NOFOLLOW", 0), 0o600)
-        self.lock_file = os.fdopen(fd, "r+b")
+        self.lock_file = os.fdopen(fd, "r+b", buffering=0)
         try:
             if os.name == "nt":
                 import msvcrt
-                self.lock_file.seek(0)
-                self.lock_file.write(b"0")
-                self.lock_file.flush()
+                if os.fstat(self.lock_file.fileno()).st_size == 0:
+                    self.lock_file.write(b"0")
                 self.lock_file.seek(0)
                 msvcrt.locking(self.lock_file.fileno(), msvcrt.LK_NBLCK, 1)
             else:

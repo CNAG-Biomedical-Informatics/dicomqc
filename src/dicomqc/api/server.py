@@ -74,7 +74,10 @@ def main(argv=None) -> int:
         # Uvicorn otherwise logs lifespan tracebacks containing local paths.
         server = ReadyServer(uvicorn.Config(app, log_level="critical", access_log=False))
         if args.parent_stdin:
-            threading.Thread(target=watch_parent, args=(sys.stdin.buffer, lambda: setattr(server, "should_exit", True)), daemon=True).start()
+            # Avoid holding BufferedReader's internal lock when an API-requested
+            # shutdown finalizes the frozen interpreter while stdin stays open.
+            parent_stream = getattr(sys.stdin.buffer, "raw", sys.stdin.buffer)
+            threading.Thread(target=watch_parent, args=(parent_stream, lambda: setattr(server, "should_exit", True)), daemon=True).start()
         server.run(sockets=[listener])
         if not server.started:
             publish_startup_failure(args.ready_file, app)
