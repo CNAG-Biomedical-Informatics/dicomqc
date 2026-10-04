@@ -168,7 +168,7 @@ def test_examples(client, example, multiqc):
 def test_large_example_uses_production_cohort_size(client):
     response = client.post("/api/v1/jobs", headers=AUTH, json={"mode": "demo", "example": "large"})
     job = finish(client, response.json(), timeout=120)
-    assert job["status"] == "completed"
+    assert job["status"] == "completed", job
     assert job["audit_exit_code"] == 2
     assert job["summary"]["files_scanned"] == 10_000
     assert job["summary"]["errors"] == 150

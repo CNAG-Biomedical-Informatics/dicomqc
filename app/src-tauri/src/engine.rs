@@ -588,7 +588,7 @@ mod tests {
         assert!(replacement
             .run_directory(&transferred_id)
             .unwrap()
-            .starts_with(&destination));
+            .starts_with(destination.canonicalize().unwrap()));
         assert_eq!(fs::read_to_string(&input).unwrap(), "unchanged input");
         replacement.stop();
         assert!(engine.register(&root).is_err());

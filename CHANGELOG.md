@@ -9,30 +9,21 @@ and this project follows [Semantic Versioning](https://semver.org/spec/v2.0.0.ht
 
 ### Added
 
-- Dataset comparisons for file completeness and patient pseudonym consistency,
-  with explicit CSV pairing manifests and a before/after demo.
-- Offline HTML reports with grouped findings, charts, filters, and print support.
-- YAML project policies for metadata checks in scans and comparisons.
-- Opt-in scanner/software and private-tag inventory, with a synthetic demo.
-- UID syntax, role reuse, and hierarchy checks, with a before/after demo.
-- Native desktop source with a bundled local Python API, audit queue, run history,
-  cancellation, report previews and exports, and synthetic examples.
-- Desktop navigation, policy editing, searchable run history, job logs, and
-  portable `.dicomqc` projects with reports and settings; DICOM inputs stay external.
-- Desktop installer builds for macOS, Windows, and Linux, with packaged-engine
-  checks, checksums, manual platform selection, and tag-triggered draft Releases.
+- Desktop application for macOS, Windows, and Linux, with portable `.dicomqc`
+  projects, run history, report previews, and synthetic examples.
+- Dataset comparison for file completeness and patient pseudonym consistency.
+- YAML project policies, UID integrity checks, and scanner/private-tag inventory.
+- Interactive offline HTML reports and MultiQC-compatible output.
 
 ### Changed
 
-- Simplified documentation and demos; require pydicom 3.0 or newer.
-- Safer demo overwrite checks and automated wheel/sdist release validation.
-- Align HTML and MultiQC status wording and styling; refresh report screenshots.
-- Separate Desktop and CLI documentation and distinguish the two audit modes.
+- Reorganized documentation around the Desktop application and the two audit types.
+- Require pydicom 3.0 or newer.
 
 ### Fixed
 
-- Preserve repeated metadata tags and use the correct patient-ID issuer.
-- Fail safely on incomplete inventories and unreadable metadata.
+- Preserve repeated metadata tags, use the correct patient-ID issuer, and fail
+  safely on incomplete or unreadable metadata.
 
 Comparisons check metadata and file pairing, not pixels, date shifts, or UID references.
 
