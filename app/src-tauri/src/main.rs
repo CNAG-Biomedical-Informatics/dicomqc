@@ -816,14 +816,14 @@ fn launch_config(app: &tauri::App) -> Result<Launch, Box<dyn std::error::Error>>
 mod project_tests {
     use super::*;
 
-    fn example() -> ProjectFile {
+    fn example(root: &Path) -> ProjectFile {
         ProjectFile {
             format: "dicomqc-project".into(),
             version: 1,
             saved_runs: Vec::new(),
-            output: PathBuf::from("/tmp/dicomqc-runs"),
+            output: root.join("dicomqc-runs"),
             mode: "scan".into(),
-            inputs: BTreeMap::from([("paths".into(), vec![PathBuf::from("/data/study")])]),
+            inputs: BTreeMap::from([("paths".into(), vec![root.join("study")])]),
             options: ProjectOptions {
                 uid_checks: true,
                 vendor_summary: false,
@@ -837,12 +837,12 @@ mod project_tests {
     fn project_manifest_round_trip_and_save_as() {
         let temporary = tempfile::tempdir().unwrap();
         let source = temporary.path().join("Study.dicomqc");
-        write_project(&source, &example()).unwrap();
+        write_project(&source, &example(temporary.path())).unwrap();
 
         let loaded = read_project(&source).unwrap();
         assert_eq!(loaded.mode, "scan");
-        assert_eq!(loaded.inputs["paths"], [PathBuf::from("/data/study")]);
-        assert_eq!(loaded.output, PathBuf::from("/tmp/dicomqc-runs"));
+        assert_eq!(loaded.inputs["paths"], [temporary.path().join("study")]);
+        assert_eq!(loaded.output, temporary.path().join("dicomqc-runs"));
         assert!(loaded.options.uid_checks);
         assert_eq!(loaded.options.threads, 8.min(max_threads()));
 
@@ -856,7 +856,9 @@ mod project_tests {
     fn older_project_defaults_to_four_threads() {
         let temporary = tempfile::tempdir().unwrap();
         let project = temporary.path().join("Study.dicomqc");
-        fs::write(&project, r#"{"format":"dicomqc-project","version":1,"output":"/tmp/runs","mode":"scan","inputs":{},"options":{"uid_checks":false,"vendor_summary":false,"multiqc":false}}"#).unwrap();
+        let mut document = serde_json::to_value(example(temporary.path())).unwrap();
+        document["options"].as_object_mut().unwrap().remove("threads");
+        fs::write(&project, serde_json::to_vec(&document).unwrap()).unwrap();
 
         assert_eq!(read_project(&project).unwrap().options.threads, default_threads());
     }
@@ -865,10 +867,12 @@ mod project_tests {
     fn project_manifest_rejects_wrong_extension_and_unknown_fields() {
         let temporary = tempfile::tempdir().unwrap();
         let wrong = temporary.path().join("Study");
-        assert!(write_project(&wrong, &example()).is_err());
+        assert!(write_project(&wrong, &example(temporary.path())).is_err());
 
         let project = temporary.path().join("Study.dicomqc");
-        fs::write(&project, r#"{"format":"dicomqc-project","version":1,"output":"/tmp/runs","mode":"scan","inputs":{},"options":{"uid_checks":false,"vendor_summary":false,"multiqc":false},"unexpected":true}"#).unwrap();
+        let mut document = serde_json::to_value(example(temporary.path())).unwrap();
+        document["unexpected"] = serde_json::json!(true);
+        fs::write(&project, serde_json::to_vec(&document).unwrap()).unwrap();
         assert!(read_project(&project).is_err());
     }
 
