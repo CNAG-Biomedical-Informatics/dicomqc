@@ -2,6 +2,40 @@
 
 ## Current direction
 
+### Installer candidate verified - 2026-10-04
+
+- Unified installer run `37217534293` passed all five targets from commit
+  `0b915258ebda595ee38e4f2f6daaaec4aa92f09b`: macOS Intel/Apple Silicon,
+  Windows x64, Linux x64/ARM64.
+  https://github.com/CNAG-Biomedical-Informatics/dicomqc/actions/runs/37217534293
+- Python results: Windows 630 passed/9 skipped, 97.62% coverage; other targets
+  631 passed/8 skipped, 97.96% coverage. Frontend, frozen-engine, native-bridge,
+  installer inspection and platform startup checks also passed.
+- Windows CI installs and launches the actual package and checks for a window.
+  macOS checks packaged startup. Linux checks the native GUI under Xvfb and
+  extracted/packaged AppImage startup. These are not full manual UI reviews.
+- Downloaded all five installers and verified their SHA-256 checksums in ignored
+  `build/desktop-0.2.0-0b91525/`, with one subdirectory per platform.
+  Workflow installer artifacts are retained for 30 days.
+- Fixes uncovered by cross-platform testing include Windows atomic progress-file
+  replacement conflicts, workspace path aliases, read-only SQLite URI encoding,
+  run ownership checks after reopening, and comparison reference/count handling.
+  macOS workspace identities use canonical paths. Platform-specific test fixtures
+  were corrected; the native 10,000-file example has a bounded 120-second timeout.
+- Keep one authoritative installer workflow. Platform-selected diagnostic runs
+  are useful during development; a complete same-revision matrix is required
+  before release. C-P and DGW received local handoff notes about this approach;
+  their workflows were not changed or dispatched.
+- Next gate: user installation tests on at least two real machines. Check example
+  privacy/comparison audits, report previews/export, project save/reopen after
+  quitting, run rename/delete, cancellation and clean exit. These installers do
+  not establish performance or audit validity on the forthcoming real DICOM data.
+- Windows builds are unsigned; macOS builds are not Apple-notarized. Successful
+  CI does not remove platform trust prompts or replace clean-machine testing.
+- No release tag, GitHub Release or PyPI publication was created. Version 0.2.0
+  remains unreleased. Do not tag/publish until the user approves the manual tests.
+- Untracked root files `README` and `project` were left untouched.
+
 ### Portable project sessions
 
 The user explicitly wants a DAW-style session: one `.dicomqc` file containing
