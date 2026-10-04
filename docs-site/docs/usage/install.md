@@ -1,12 +1,19 @@
 ---
 title: Install
+hide_table_of_contents: true
 ---
+
+import Tabs from '@theme/Tabs';
+import TabItem from '@theme/TabItem';
 
 # Install
 
 The desktop app is the recommended **dicomqc** interface. The CLI supports
 automation and scripted workflows; both use the same
 Python audit engine.
+
+<Tabs defaultValue="desktop" queryString="interface">
+<TabItem value="desktop" label="Desktop App">
 
 ## Desktop App
 
@@ -31,6 +38,9 @@ Each package has a matching `.sha256` checksum file. **Desktop bundles its Pytho
 engine**; you do not need to install Python, Node.js, or Rust separately.
 The Windows package is x64; there is no native Windows ARM64 package.
 
+<Tabs defaultValue="macos">
+<TabItem value="macos" label="macOS">
+
 ### macOS
 
 1. Check **About This Mac** and choose the Apple Silicon or Intel download.
@@ -50,6 +60,9 @@ Do not disable Gatekeeper; report unexpected security or damaged-app warnings.
 
 :::
 
+</TabItem>
+<TabItem value="windows" label="Windows">
+
 ### Windows
 
 1. Download and run `dicomqc-0.2.0-windows-x64-setup.exe`.
@@ -65,6 +78,9 @@ software policy. Do not disable Windows security protections to install it.
 See [Microsoft's SmartScreen explanation](https://learn.microsoft.com/en-us/windows/security/operating-system-security/virus-and-threat-protection/microsoft-defender-smartscreen/).
 
 :::
+
+</TabItem>
+<TabItem value="linux" label="Linux">
 
 ### Linux AppImage
 
@@ -89,12 +105,17 @@ baselines. An AppImage still needs compatible system libraries. If it fails with
 a FUSE or `GLIBC` error, report the message and your distribution/version; do not
 replace system libraries manually.
 
+</TabItem>
+</Tabs>
+
 ### First audit
 
 Once it is running, try the [Desktop privacy audit example](desktop-privacy.md).
 Use **Load example data** beside **DICOM inputs** to try a synthetic dataset
 before selecting your own files. Finish the audit and use **File > Save Project**
 to save a `.dicomqc` project wherever you choose.
+
+### Storage and removal
 
 :::info Where dicomqc stores application data
 
@@ -105,17 +126,18 @@ from the application:
 - **macOS:** `~/Library/Application Support/org.cnag.dicomqc/`.
 - **Windows:** `%LOCALAPPDATA%\org.cnag.dicomqc\`.
 
-This is persistent storage, not disposable temporary data. `workspace.json` in
-this folder records the active working folder, which an existing configuration
-may place elsewhere. Saved `.dicomqc` projects go wherever you choose; original
-DICOM inputs remain in their original locations.
+This folder keeps your settings and audit results between sessions, along with
+example data and working copies of projects. These files are not automatically
+deleted when you close the app.
 
-Save your project and quit the app before removing working data. See
-[Storage and removal](desktop.md#storage-and-removal) for cleanup instructions.
+You choose where to save `.dicomqc` project files. Your original DICOM files
+stay where they are and are never modified by dicomqc.
+
+Save your project and quit the app before removing working data.
 
 :::
 
-### Update or remove Desktop
+#### Update Desktop
 
 Save your project and quit dicomqc before updating:
 
@@ -123,9 +145,32 @@ Save your project and quit dicomqc before updating:
 - **Windows:** run the newer setup executable and follow its wizard.
 - **Linux:** replace the AppImage and enable executable permission again if needed.
 
-The app maintains a local working folder for settings and audit results. See
-[Storage and removal](desktop.md#storage-and-removal) for its location on each
-operating system and how to remove application data when uninstalling.
+#### Uninstall or reset
+
+1. Save projects and export any reports you want to keep **outside application
+   storage**. Unsaved results may exist only in the working folder.
+2. Quit dicomqc. If you previously used a different working folder, its location
+   is recorded in `workspace.json` inside the application data folder.
+3. To uninstall, delete the AppImage on Linux, remove the app from Applications
+   on macOS, or use Installed apps on Windows.
+4. To remove saved settings and local history too, delete the application data
+   folder listed above, if it remains. Review and separately remove any external
+   dicomqc working folder recorded in step 2. Do not delete your input datasets.
+
+Deleting application data without uninstalling resets the local working state;
+dicomqc recreates it on the next launch. Separately saved `.dicomqc` projects,
+exported reports, and original DICOM datasets are not removed by this cleanup.
+
+:::caution Save before cleaning up
+
+Deleting working storage removes its run history and reports, including unsaved
+work. Save the project first; a saved project contains reports and settings but
+does not embed the original DICOM inputs.
+
+:::
+
+</TabItem>
+<TabItem value="cli" label="CLI">
 
 ## CLI
 
@@ -192,6 +237,9 @@ The `test` extra is not needed for normal use.
 For the complete suite, including the optional local API, install
 `".[test,api,api-test]"`. The [desktop app](desktop.md) has separate native build
 requirements; installing the PyPI package provides the CLI.
+
+</TabItem>
+</Tabs>
 
 ## External DICOM tools
 

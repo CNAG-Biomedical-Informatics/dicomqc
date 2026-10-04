@@ -2,6 +2,9 @@
 title: Compare datasets
 ---
 
+import Tabs from '@theme/Tabs';
+import TabItem from '@theme/TabItem';
+
 # Compare source and de-identified files
 
 `dicomqc compare` compares original source DICOM files with processed candidate
@@ -70,8 +73,10 @@ shown in the input table above.
 
 ### JSON and CSV from this comparison
 
-<details>
-<summary>Example JSON finding — synthetic comparison demo</summary>
+<Tabs defaultValue="json">
+<TabItem value="json" label="JSON">
+
+**Example JSON finding** from the synthetic comparison demo.
 
 This is the missing-file entry in `before.json`'s `findings` array, not the full
 report. `pair-000003/candidate` identifies the third manifest row without
@@ -92,10 +97,10 @@ exposing the source patient ID.
 }
 ```
 
-</details>
+</TabItem>
+<TabItem value="csv" label="CSV">
 
-<details>
-<summary>Example CSV rows — synthetic comparison demo</summary>
+**Example CSV rows** from the synthetic comparison demo.
 
 The three findings in `before.csv`, shown as a table with selected columns for
 readability. The CSV also includes rule and profile IDs, tag, keyword, value
@@ -107,7 +112,8 @@ state, and standards references.
 | pair-000001/candidate | error | One source patient maps to multiple PatientIDs. | Use the same pseudonym for every file belonging to this source patient. |
 | pair-000002/candidate | error | One source patient maps to multiple PatientIDs. | Use the same pseudonym for every file belonging to this source patient. |
 
-</details>
+</TabItem>
+</Tabs>
 
 ### 3. Inspect the corrected comparison
 

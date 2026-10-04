@@ -62,10 +62,17 @@ if (!existsSync(join(root, 'static/img/3tr-funding.png'))) {
 
 const install = read('docs/usage/install.md');
 for (const expected of [
+  '<Tabs defaultValue="desktop" queryString="interface">',
+  '<TabItem value="desktop" label="Desktop App">',
+  '<TabItem value="cli" label="CLI">',
+]) {
+  requireText(install, expected, 'docs/usage/install.md');
+}
+for (const expected of [
   '### macOS', '### Windows', '### Linux AppImage',
   'dicomqc-0.2.0-macos-arm64.dmg', 'dicomqc-0.2.0-macos-x64.dmg',
   'dicomqc-0.2.0-windows-x64-setup.exe', 'dicomqc-0.2.0-linux-x64.AppImage',
-  'dicomqc-0.2.0-linux-arm64.AppImage', 'desktop.md#storage-and-removal',
+  'dicomqc-0.2.0-linux-arm64.AppImage', '#### Uninstall or reset',
   ':::info Where dicomqc stores application data',
   '~/.local/share/org.cnag.dicomqc/', '~/Library/Application Support/org.cnag.dicomqc/',
   '%LOCALAPPDATA%\\org.cnag.dicomqc\\',

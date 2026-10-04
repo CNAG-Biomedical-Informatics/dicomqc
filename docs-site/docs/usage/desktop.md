@@ -186,47 +186,10 @@ sharing, just as you would review individual reports.
 
 ## Storage and removal
 
-The Desktop app keeps settings, run history, reports, generated examples, and
-working copies of opened projects in application storage. This is **persistent
-data**, not disposable `/tmp` space. It is separate from the `.dicomqc` files
-you save with **Save Project**.
-
-| System | Default application data folder |
-| --- | --- |
-| Linux | `~/.local/share/org.cnag.dicomqc/` |
-| macOS | `~/Library/Application Support/org.cnag.dicomqc/` |
-| Windows | `%LOCALAPPDATA%\org.cnag.dicomqc\` |
-
-On Linux, a configured `XDG_DATA_HOME` replaces `~/.local/share`.
-The `workspace.json` file in this folder records the active working folder.
-An existing configuration may point elsewhere; new installations normally use
-the `runs` subfolder. Opening or creating projects also creates working folders
-under application storage. Old project-session folders are not automatically
-cleaned up yet.
-
-### Uninstall or reset
-
-1. Save projects and export any reports you want to keep **outside application
-   storage**. Unsaved results may exist only in the working folder.
-2. Check `workspace.json` for a working folder outside application storage, then
-   quit dicomqc so its service and workers stop.
-3. To uninstall, delete the AppImage on Linux, remove the app from Applications
-   on macOS, or use Installed apps on Windows.
-4. To remove saved settings and local history too, delete the application data
-   folder listed above, if it remains. Review and separately remove any external
-   dicomqc working folder recorded in step 2. Do not delete your input datasets.
-
-Deleting application data without uninstalling resets the local working state;
-dicomqc recreates it on the next launch. Separately saved `.dicomqc` projects,
-exported reports, and original DICOM datasets are not removed by this cleanup.
-
-:::caution Save before cleaning up
-
-Deleting working storage removes its run history and reports, including unsaved
-work. Save the project first; a saved project contains reports and settings but
-does not embed the original DICOM inputs.
-
-:::
+Working data is stored separately from saved `.dicomqc` projects. See
+[Install: storage and removal](install.md?interface=desktop#storage-and-removal)
+for default locations and instructions for updating, uninstalling, or resetting
+the app.
 
 ## Menus and local operation
 
