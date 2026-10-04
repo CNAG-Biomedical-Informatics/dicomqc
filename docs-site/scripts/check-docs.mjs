@@ -61,6 +61,17 @@ if (!existsSync(join(root, 'static/img/3tr-funding.png'))) {
 }
 
 const install = read('docs/usage/install.md');
+for (const expected of [
+  '### macOS', '### Windows', '### Linux AppImage',
+  'dicomqc-0.2.0-macos-arm64.dmg', 'dicomqc-0.2.0-macos-x64.dmg',
+  'dicomqc-0.2.0-windows-x64-setup.exe', 'dicomqc-0.2.0-linux-x64.AppImage',
+  'dicomqc-0.2.0-linux-arm64.AppImage', 'desktop.md#storage-and-removal',
+  ':::info Where dicomqc stores application data',
+  '~/.local/share/org.cnag.dicomqc/', '~/Library/Application Support/org.cnag.dicomqc/',
+  '%LOCALAPPDATA%\\org.cnag.dicomqc\\',
+]) {
+  requireText(install, expected, 'docs/usage/install.md');
+}
 requireText(install, 'python -m pip install dicomqc', 'docs/usage/install.md');
 requireText(install, 'python -m pip install multiqc', 'docs/usage/install.md');
 requireText(install, 'python -m pip install -e ".[test]"', 'docs/usage/install.md');

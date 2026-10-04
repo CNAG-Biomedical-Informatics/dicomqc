@@ -8,8 +8,8 @@ The desktop app runs the same Python audit engine as the CLI. Start with a
 **Privacy audit**, review the findings, and save the session as a `.dicomqc`
 project. Original DICOM files are never modified.
 
-Desktop builds are currently for testing; installers have not been published.
-See [Build from source](#build-from-source) below.
+See [Install](install.md) for macOS, Windows, and Linux packages.
+Developers can also [build from source](#build-from-source).
 
 ## Choose a workflow
 
@@ -263,7 +263,7 @@ interpreter. The frontend is built and embedded in the native app.
 Packaged builds bundle Python and dependencies. Their intended users do not need
 a separate Python installation. The repository's **Build desktop installers**
 workflow supports manual platform selection and targets macOS Intel and Apple Silicon,
-Windows x64, and Linux x64 and ARM64. Each platform still needs installer and
-workflow testing before a public desktop release. Stable version tags build all
+Windows x64, and Linux x64 and ARM64. It tests the bundled engine and native
+integration, then checks each packaged application. Stable version tags build all
 platforms into a draft GitHub Release for review; manual runs provide workflow
 artifacts only.

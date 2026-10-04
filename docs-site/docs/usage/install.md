@@ -10,12 +10,59 @@ Python audit engine.
 
 ## Desktop App
 
-:::info Desktop availability
+Download the Desktop package for your operating system from
+[GitHub Releases](https://github.com/CNAG-Biomedical-Informatics/dicomqc/releases).
+You do not need to build the app from source.
 
-Installers have not been published. Testers with access to a draft Release or
-workflow artifact can use those packages. Alternatively, follow the
-[desktop source-build instructions](desktop.md#build-from-source), which require
-Python, Node.js, Rust, and the operating system's Tauri prerequisites.
+### Choose a download
+
+Expand **Assets** on the release page. Download the package for your
+computer, not the automatically generated **Source code** archives.
+
+| Computer | Package for 0.2.0 |
+| --- | --- |
+| Mac, Apple Silicon (M-series) | `dicomqc-0.2.0-macos-arm64.dmg` |
+| Mac, Intel | `dicomqc-0.2.0-macos-x64.dmg` |
+| Windows, Intel/AMD 64-bit | `dicomqc-0.2.0-windows-x64-setup.exe` |
+| Linux, Intel/AMD 64-bit | `dicomqc-0.2.0-linux-x64.AppImage` |
+| Linux, ARM64 | `dicomqc-0.2.0-linux-arm64.AppImage` |
+
+Each package has a matching `.sha256` checksum file. **Desktop bundles its Python
+engine**; you do not need to install Python, Node.js, or Rust separately.
+The Windows package is x64; there is no native Windows ARM64 package.
+
+### macOS
+
+1. Check **About This Mac** and choose the Apple Silicon or Intel download.
+2. Open the `.dmg` and drag **dicomqc** into **Applications**.
+3. Eject the disk image, then open dicomqc from Applications.
+
+There is no installer wizard on macOS: copying the app into Applications is the
+installation step. Use the ARM64 build on an M-series Mac.
+
+:::warning First launch on macOS
+
+These builds are not Apple-notarized. If macOS blocks the app, review
+[Apple's guidance](https://support.apple.com/en-us/102445). After attempting to
+open it, macOS may offer **Open Anyway** under **System Settings > Privacy &
+Security**. Approve only the app you intentionally downloaded from this repository.
+Do not disable Gatekeeper; report unexpected security or damaged-app warnings.
+
+:::
+
+### Windows
+
+1. Download and run `dicomqc-0.2.0-windows-x64-setup.exe`.
+2. Follow the installation wizard. The package is configured to install for
+   your current user.
+3. Open **dicomqc** from the Start menu when setup finishes.
+
+:::warning First launch on Windows
+
+The installer is not code-signed, so Windows may display an unknown-publisher or
+SmartScreen warning. Check the download source and follow your institution's
+software policy. Do not disable Windows security protections to install it.
+See [Microsoft's SmartScreen explanation](https://learn.microsoft.com/en-us/windows/security/operating-system-security/virus-and-threat-protection/microsoft-defender-smartscreen/).
 
 :::
 
@@ -37,7 +84,44 @@ For ARM64, use `dicomqc-0.2.0-linux-arm64.AppImage` in both commands.
 Neither command needs `sudo`. Keep the AppImage wherever you want to run it;
 settings and working data are stored separately, as described below.
 
+Linux builds use Ubuntu 22.04 for x64 and Ubuntu 24.04 for ARM64 as build
+baselines. An AppImage still needs compatible system libraries. If it fails with
+a FUSE or `GLIBC` error, report the message and your distribution/version; do not
+replace system libraries manually.
+
+### First audit
+
 Once it is running, try the [Desktop privacy audit example](desktop-privacy.md).
+Use **Load example data** beside **DICOM inputs** to try a synthetic dataset
+before selecting your own files. Finish the audit and use **File > Save Project**
+to save a `.dicomqc` project wherever you choose.
+
+:::info Where dicomqc stores application data
+
+Settings, run history, reports, and working project data are stored separately
+from the application:
+
+- **Linux:** `~/.local/share/org.cnag.dicomqc/` (or `$XDG_DATA_HOME/org.cnag.dicomqc/` if configured).
+- **macOS:** `~/Library/Application Support/org.cnag.dicomqc/`.
+- **Windows:** `%LOCALAPPDATA%\org.cnag.dicomqc\`.
+
+This is persistent storage, not disposable temporary data. `workspace.json` in
+this folder records the active working folder, which an existing configuration
+may place elsewhere. Saved `.dicomqc` projects go wherever you choose; original
+DICOM inputs remain in their original locations.
+
+Save your project and quit the app before removing working data. See
+[Storage and removal](desktop.md#storage-and-removal) for cleanup instructions.
+
+:::
+
+### Update or remove Desktop
+
+Save your project and quit dicomqc before updating:
+
+- **macOS:** replace the app in Applications with the copy from the new DMG.
+- **Windows:** run the newer setup executable and follow its wizard.
+- **Linux:** replace the AppImage and enable executable permission again if needed.
 
 The app maintains a local working folder for settings and audit results. See
 [Storage and removal](desktop.md#storage-and-removal) for its location on each

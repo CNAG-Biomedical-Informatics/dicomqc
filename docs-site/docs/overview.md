@@ -64,8 +64,9 @@ including an adjustable 1,000- to 100,000-file cohort with deterministic
 privacy findings generated on demand.
 Privacy audit is the primary workflow. Policies and UID checks extend it;
 scanner inventory is optional output. Dataset comparison is a separate mode.
-The app and its audit service run locally. See [Desktop app](usage/desktop.md)
-for source-build instructions; installers have not been published.
+The app and its audit service run locally. See [Install](usage/install.md)
+for macOS, Windows, and Linux packages, then follow the
+[Desktop app guide](usage/desktop.md).
 
 ## Automate from the command line
 
