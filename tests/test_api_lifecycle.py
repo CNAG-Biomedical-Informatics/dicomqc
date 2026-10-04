@@ -66,6 +66,22 @@ def test_unrelated_workspace_rejected_without_writes(tmp_path):
         Jobs(link)
 
 
+@pytest.mark.skipif(os.name != "nt", reason="Windows extended path aliases")
+@pytest.mark.parametrize("selected", ["workspace", "child", "parent"])
+def test_extended_windows_paths_cannot_overlap_workspace(tmp_path, selected):
+    jobs = stopped_jobs(tmp_path)
+    paths = {"workspace": jobs.root, "child": jobs.root / "owner.lock", "parent": tmp_path}
+    alias = "\\\\?\\" + str(paths[selected].resolve())
+    try:
+        with pytest.raises(ValueError, match="Keep inputs separate"):
+            jobs.register(alias)
+        outside = tmp_path / "input.dcm"
+        outside.write_bytes(b"synthetic input")
+        assert jobs.register("\\\\?\\" + str(outside.resolve()))["kind"] == "file"
+    finally:
+        jobs.close()
+
+
 @pytest.mark.skipif(os.name == "nt", reason="Windows prevents renaming an open workspace")
 def test_root_replaced_by_symlink_blocks_reads_writes_and_worker(tmp_path):
     jobs = stopped_jobs(tmp_path)

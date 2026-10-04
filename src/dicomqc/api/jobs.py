@@ -206,7 +206,9 @@ class Jobs:
         path = Path(raw).expanduser().resolve(strict=True)
         if not (path.is_file() or path.is_dir()):
             raise ValueError("Select a regular file or directory.")
-        if path == self.root or self.root in path.parents or path in self.root.parents:
+        # Resolve alone does not unify Windows extended and ordinary path spellings.
+        if (any(self.root.samefile(parent) for parent in (path, *path.parents))
+                or any(path.samefile(parent) for parent in self.root.parents)):
             raise ValueError("Keep inputs separate from the run workspace.")
         identifier = uuid.uuid4().hex
         with self.mutex:
