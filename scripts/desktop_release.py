@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import argparse
+from datetime import date
 import hashlib
 import json
 import os
@@ -51,7 +52,85 @@ def verify_version() -> str:
             raise ValueError("Release tag must be annotated")
         if git("rev-parse", f"{ref}^{{commit}}") != git("rev-parse", "HEAD"):
             raise ValueError("Tag does not match the checked-out commit")
+        verify_release_metadata(version)
     return version
+
+
+def verify_release_metadata(version: str, root: Path = ROOT) -> None:
+    changelog = (root / "CHANGELOG.md").read_text(encoding="utf-8")
+    match = re.search(
+        rf"^## \[{re.escape(version)}\] - (\d{{4}}-\d{{2}}-\d{{2}})$",
+        changelog,
+        flags=re.MULTILINE,
+    )
+    if match is None:
+        raise ValueError(f"CHANGELOG.md must contain a dated {version} release section")
+    try:
+        date.fromisoformat(match.group(1))
+    except ValueError as exc:
+        raise ValueError(f"CHANGELOG.md has an invalid release date for {version}") from exc
+
+
+def binary_architectures(path: Path) -> set[str]:
+    data = path.read_bytes()
+    if len(data) < 64:
+        raise ValueError(f"Executable is too small to identify: {path}")
+
+    if data[:4] == b"\x7fELF":
+        if data[4] != 2 or data[5] not in (1, 2):
+            raise ValueError("Desktop Linux executables must be 64-bit ELF files")
+        byteorder = "little" if data[5] == 1 else "big"
+        machine = int.from_bytes(data[18:20], byteorder)
+        return {62: {"x64"}, 183: {"arm64"}}.get(machine, set())
+
+    if data[:2] == b"MZ":
+        offset = int.from_bytes(data[0x3C:0x40], "little")
+        if data[offset:offset + 4] != b"PE\0\0":
+            raise ValueError("Invalid PE executable")
+        machine = int.from_bytes(data[offset + 4:offset + 6], "little")
+        return {0x8664: {"x64"}, 0xAA64: {"arm64"}}.get(machine, set())
+
+    thin = {
+        b"\xcf\xfa\xed\xfe": "little",
+        b"\xfe\xed\xfa\xcf": "big",
+    }
+    if data[:4] in thin:
+        cpu = int.from_bytes(data[4:8], thin[data[:4]])
+        return {0x01000007: {"x64"}, 0x0100000C: {"arm64"}}.get(cpu, set())
+
+    fat = {
+        b"\xca\xfe\xba\xbe": ("big", 20),
+        b"\xbe\xba\xfe\xca": ("little", 20),
+        b"\xca\xfe\xba\xbf": ("big", 32),
+        b"\xbf\xba\xfe\xca": ("little", 32),
+    }
+    if data[:4] in fat:
+        byteorder, entry_size = fat[data[:4]]
+        count = int.from_bytes(data[4:8], byteorder)
+        if count == 0 or count > 32 or len(data) < 8 + count * entry_size:
+            raise ValueError("Invalid universal Mach-O executable")
+        cpus = {
+            int.from_bytes(data[8 + index * entry_size:12 + index * entry_size], byteorder)
+            for index in range(count)
+        }
+        return {
+            architecture
+            for cpu, architecture in ((0x01000007, "x64"), (0x0100000C, "arm64"))
+            if cpu in cpus
+        }
+
+    raise ValueError(f"Unsupported executable format: {path}")
+
+
+def verify_architecture(path: Path, platform: str) -> None:
+    selected = select_platforms(platform)
+    if len(selected) != 1:
+        raise ValueError("Architecture verification requires one platform")
+    expected = platform.rsplit("-", 1)[1]
+    architectures = binary_architectures(path)
+    if architectures != {expected}:
+        found = ", ".join(sorted(architectures)) or "unknown"
+        raise ValueError(f"Expected a {platform} executable, found: {found}")
 
 
 def find_engine(directory: Path) -> Path:
@@ -100,7 +179,7 @@ def collect(platform: str, root: Path = ROOT) -> Path:
 
 def main() -> None:
     parser = argparse.ArgumentParser(description=__doc__)
-    parser.add_argument("command", choices=("matrix", "version", "inspect", "collect"))
+    parser.add_argument("command", choices=("matrix", "version", "inspect", "architecture", "collect"))
     parser.add_argument("directory", nargs="?", type=Path)
     args = parser.parse_args()
     if args.command == "matrix":
@@ -111,6 +190,11 @@ def main() -> None:
         if args.directory is None:
             parser.error("inspect requires an extracted or installed package directory")
         inspect(args.directory)
+    elif args.command == "architecture":
+        if args.directory is None:
+            parser.error("architecture requires an executable")
+        verify_architecture(args.directory, os.environ["PLATFORM"])
+        print(f"Verified {os.environ['PLATFORM']} executable: {args.directory}")
     else:
         print(collect(os.environ["PLATFORM"]))
 

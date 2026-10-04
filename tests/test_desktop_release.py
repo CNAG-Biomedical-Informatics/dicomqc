@@ -39,6 +39,15 @@ def test_manual_version_check(release, monkeypatch):
     assert release.verify_version() == "0.2.0"
 
 
+def test_release_metadata_requires_dated_changelog(release, tmp_path):
+    changelog = tmp_path / "CHANGELOG.md"
+    changelog.write_text("## [0.2.0] - 2026-10-04\n", encoding="utf-8")
+    release.verify_release_metadata("0.2.0", tmp_path)
+    changelog.write_text("## [0.2.0] - Unreleased\n", encoding="utf-8")
+    with pytest.raises(ValueError, match="dated 0.2.0"):
+        release.verify_release_metadata("0.2.0", tmp_path)
+
+
 @pytest.mark.parametrize("tag", ["v0.1.0", "v0.2.0rc1", "0.2.0", "v0.2"])
 def test_reject_invalid_tag(release, monkeypatch, tag):
     monkeypatch.setattr(release, "check_versions", lambda: "0.2.0")
@@ -55,6 +64,7 @@ def test_annotated_tag_guard(release, monkeypatch, kind, target, valid):
     monkeypatch.setenv("GITHUB_REF_NAME", "v0.2.0")
     answers = iter([kind, target, "abc"])
     monkeypatch.setattr(subprocess, "check_output", lambda *a, **kw: next(answers))
+    monkeypatch.setattr(release, "verify_release_metadata", lambda version: None)
     if valid:
         assert release.verify_version() == "0.2.0"
     else:
@@ -108,3 +118,38 @@ def test_collect_checksum(release, tmp_path, monkeypatch, platform, bundle, file
 def test_collect_rejects_all(release, tmp_path):
     with pytest.raises(ValueError, match="one platform"):
         release.collect("all", tmp_path)
+
+
+def test_binary_architecture_checks(release, tmp_path):
+    elf_x64 = bytearray(64)
+    elf_x64[:6] = b"\x7fELF\x02\x01"
+    elf_x64[18:20] = (62).to_bytes(2, "little")
+    linux = tmp_path / "linux"
+    linux.write_bytes(elf_x64)
+    assert release.binary_architectures(linux) == {"x64"}
+    release.verify_architecture(linux, "linux-x64")
+    with pytest.raises(ValueError, match="linux-arm64"):
+        release.verify_architecture(linux, "linux-arm64")
+
+    pe_x64 = bytearray(128)
+    pe_x64[:2] = b"MZ"
+    pe_x64[0x3C:0x40] = (64).to_bytes(4, "little")
+    pe_x64[64:68] = b"PE\0\0"
+    pe_x64[68:70] = (0x8664).to_bytes(2, "little")
+    windows = tmp_path / "windows.exe"
+    windows.write_bytes(pe_x64)
+    release.verify_architecture(windows, "windows-x64")
+
+    macho_arm = bytearray(64)
+    macho_arm[:4] = b"\xcf\xfa\xed\xfe"
+    macho_arm[4:8] = (0x0100000C).to_bytes(4, "little")
+    macos = tmp_path / "macos"
+    macos.write_bytes(macho_arm)
+    release.verify_architecture(macos, "macos-arm64")
+
+
+def test_binary_architecture_rejects_invalid_files(release, tmp_path):
+    invalid = tmp_path / "invalid"
+    invalid.write_bytes(b"not an executable")
+    with pytest.raises(ValueError, match="too small"):
+        release.binary_architectures(invalid)

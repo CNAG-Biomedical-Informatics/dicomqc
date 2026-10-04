@@ -48,10 +48,11 @@ primary choice; the other scan examples demonstrate additions to it.*
 | Audit | Required inputs | Purpose |
 | --- | --- | --- |
 | **Privacy audit** (default) | A DICOM folder or individual files | Check metadata for identifiers, unexpected pseudonym formats, and private tags. |
-| **Dataset comparison** | Source folder, candidate folder, and [pairing CSV](compare.md#prepare-a-pairing-manifest) | Check file coverage and patient pseudonym consistency between two datasets. |
+| **Dataset comparison** | Original DICOM folder, processed candidate DICOM folder, and [pairing CSV](compare.md#prepare-a-pairing-manifest) | Check file coverage and patient pseudonym consistency between paired DICOM files. |
 
 Comparison does not create the candidate dataset. Use an external tool to
-pseudonymize it first; see [Remediation](remediation.mdx).
+pseudonymize it first; see [Remediation](remediation.mdx). It compares the DICOM
+files, not completed runs in the project history.
 Neither mode inspects pixels or decides whether data can be shared.
 
 ### Example runs

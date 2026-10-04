@@ -90,9 +90,11 @@ and ARM64. Python and the audit engine are bundled.
   draft Release containing five installers and five SHA-256 files. The tag must
   be annotated and match the Python, frontend, and native package versions.
 - **Package checks:** extract AppImages, verify and mount DMGs, or silently
-  install NSIS packages; then run the frozen-engine tests against the packaged
-  copy. These cover relocation, authentication, examples, workers, and shutdown.
-  Linux also runs the native GUI smoke test before packaging.
+  install NSIS packages; verify the executable architecture; then run the
+  frozen-engine tests against the packaged copy. These cover relocation,
+  authentication, examples, workers, and shutdown. The packaged application is
+  also launched on every platform; Linux additionally runs the full native GUI
+  smoke test before packaging.
 - **Reruns:** failed jobs can be retried; assets may be replaced only while the
   Release remains a draft. Published Release assets are not overwritten.
 

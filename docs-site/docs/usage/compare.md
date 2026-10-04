@@ -4,8 +4,10 @@ title: Compare datasets
 
 # Compare source and de-identified files
 
-`dicomqc compare` checks that a de-identification
-run accounts for every input file and uses patient pseudonyms consistently.
+`dicomqc compare` compares original source DICOM files with processed candidate
+DICOM files. It checks that de-identification accounts for every input file and
+uses patient pseudonyms consistently. It does **not** compare completed dicomqc
+runs or their reports.
 
 In the desktop app, select **Dataset comparison** in Setup and choose the source
 folder, candidate folder, and pairing CSV. This is separate from Privacy audit;

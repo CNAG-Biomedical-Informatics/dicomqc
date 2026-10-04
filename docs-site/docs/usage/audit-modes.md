@@ -9,15 +9,23 @@ when you also have its source files and want to check the de-identification
 process. Choose the mode based on the data you have.
 Desktop and CLI use the same engine and checks.
 
+:::info What Dataset comparison compares
+
+It compares **original source DICOM files** with **processed candidate DICOM
+files**, using a private pairing CSV. It does not compare two completed dicomqc
+runs, reports, or projects.
+
+:::
+
 | Mode | Inputs | Checks | Desktop | CLI |
 | --- | --- | --- | --- | --- |
 | **Privacy audit** | DICOM files or folders | Identifying metadata, pseudonym formats, private tags, unreadable files | [Example](desktop-privacy.md) | [scan](quickstart.md) |
 | **Dataset comparison** | Source folder, candidate folder, pairing CSV | File coverage and patient pseudonym consistency, plus privacy checks on readable paired candidate files | [Example](desktop-comparison.md) | [compare](compare.md) |
 
-A candidate is the output of an external de-identification tool. Comparison
-does not create it. If you receive only the candidate dataset, run a privacy
-audit. Comparison requires source access and a pairing manifest in a restricted
-environment.
+A candidate is the DICOM output of an external de-identification tool.
+Comparison does not create it. If you receive only the candidate dataset, run
+a privacy audit. Comparison requires source access and a pairing manifest in a
+restricted environment.
 
 ## Optional checks within a mode
 

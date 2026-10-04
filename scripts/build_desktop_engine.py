@@ -10,6 +10,8 @@ import shutil
 import subprocess
 import sys
 
+import yaml
+
 
 ROOT = Path(__file__).resolve().parents[1]
 
@@ -21,6 +23,8 @@ def check_versions(root: Path = ROOT) -> str:
     package = json.loads((root / "app/package.json").read_text(encoding="utf-8"))
     tauri = json.loads((root / "app/src-tauri/tauri.conf.json").read_text(encoding="utf-8"))
     cargo = tomllib.loads((root / "app/src-tauri/Cargo.toml").read_text(encoding="utf-8"))
+    cargo_lock = tomllib.loads((root / "app/src-tauri/Cargo.lock").read_text(encoding="utf-8"))
+    citation = yaml.safe_load((root / "CITATION.cff").read_text(encoding="utf-8"))
     module = ast.parse((root / "src/dicomqc/__init__.py").read_text(encoding="utf-8"))
     runtime_version = next(
         (ast.literal_eval(node.value) for node in module.body if isinstance(node, ast.Assign)
@@ -33,6 +37,12 @@ def check_versions(root: Path = ROOT) -> str:
         "app/package.json": package["version"],
         "Tauri config": tauri.get("version"),
         "Cargo package": cargo["package"]["version"],
+        "Cargo lockfile": next(
+            (package.get("version") for package in cargo_lock.get("package", [])
+             if package.get("name") == cargo["package"]["name"]),
+            None,
+        ),
+        "CITATION.cff": str(citation.get("version")),
     }
     lock_path = root / "app/package-lock.json"
     if lock_path.exists():

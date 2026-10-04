@@ -103,6 +103,10 @@ const config: Config = {
               to: '/docs/usage/install',
             },
             {
+              label: 'Video Tutorials',
+              to: '/docs/video-tutorials',
+            },
+            {
               label: 'CLI privacy audit',
               to: '/docs/usage/quickstart',
             },

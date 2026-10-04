@@ -7,6 +7,7 @@ const primaryLinks = [
   {label: 'Desktop app', to: '/docs/usage/desktop'},
   {label: 'CLI', to: '/docs/usage/quickstart'},
   {label: 'Audit modes', to: '/docs/usage/audit-modes'},
+  {label: 'Video tutorials', to: '/docs/video-tutorials'},
 ];
 
 const auditOperations = [
@@ -45,7 +46,7 @@ const documentationPaths = [
   },
   {
     title: 'Choose an audit mode',
-    text: 'Distinguish privacy checks from dataset comparison, then select optional checks.',
+    text: 'Inspect one DICOM dataset, or compare source DICOM files with their processed copies.',
     to: '/docs/usage/audit-modes',
   },
   {

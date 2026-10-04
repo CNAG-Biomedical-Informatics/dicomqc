@@ -4,6 +4,7 @@ const sidebars: SidebarsConfig = {
   docsSidebar: [
     'overview',
     'usage/install',
+    'video-tutorials',
     'usage/audit-modes',
     {type: 'category', label: 'Desktop App', items: [
       {type: 'doc', id: 'usage/desktop', label: 'Workspace and projects'},

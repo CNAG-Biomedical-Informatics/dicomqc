@@ -4,9 +4,10 @@ title: Dataset comparison example
 
 # Dataset comparison
 
-Check whether external de-identification preserved file coverage and assigned
-patient pseudonyms consistently. Privacy checks also run on readable paired
-candidate files.
+Compare original source DICOM files with the candidate DICOM copies produced by
+external de-identification. This checks whether processing preserved file
+coverage and assigned patient pseudonyms consistently. It does **not** compare
+two dicomqc runs. Privacy checks also run on readable paired candidate files.
 
 ## Run the synthetic example
 

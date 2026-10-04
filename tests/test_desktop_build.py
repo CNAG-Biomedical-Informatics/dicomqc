@@ -31,7 +31,9 @@ def version_tree(tmp_path):
         "app/package.json": '{"version":"0.2.0"}',
         "app/package-lock.json": '{"version":"0.2.0","packages":{"":{"version":"0.2.0"}}}',
         "app/src-tauri/tauri.conf.json": '{"version":"0.2.0"}',
-        "app/src-tauri/Cargo.toml": '[package]\nversion = "0.2.0"\n',
+        "app/src-tauri/Cargo.toml": '[package]\nname = "dicomqc-desktop"\nversion = "0.2.0"\n',
+        "app/src-tauri/Cargo.lock": '[[package]]\nname = "dicomqc-desktop"\nversion = "0.2.0"\n',
+        "CITATION.cff": 'cff-version: 1.2.0\nversion: 0.2.0\n',
     }
     for name, content in files.items():
         path = tmp_path / name
@@ -56,6 +58,7 @@ def test_repository_versions_and_resource_layout():
 @pytest.mark.parametrize("name", [
     "pyproject.toml", "src/dicomqc/__init__.py", "app/package.json",
     "app/package-lock.json", "app/src-tauri/tauri.conf.json", "app/src-tauri/Cargo.toml",
+    "app/src-tauri/Cargo.lock", "CITATION.cff",
 ])
 def test_version_drift_rejected(version_tree, name):
     path = version_tree / name
@@ -212,6 +215,7 @@ def test_workflow_builds_manual_artifacts_and_tagged_drafts():
     assert "sha256sum --check" in publish
     assert "permissions" not in job
     steps = job["steps"]
+    assert any(step.get("uses") == "dtolnay/rust-toolchain@1.86.0" for step in steps)
     assert any(step.get("uses", "").startswith("actions/upload-artifact@") for step in steps)
     assert any(step.get("env", {}).get("DICOMQC_DESKTOP_ENGINE") for step in steps)
     native = next(step for step in steps if step.get("name") == "Test native bridge with frozen engine")
@@ -225,6 +229,48 @@ def test_workflow_builds_manual_artifacts_and_tagged_drafts():
         inspection = next(step for step in steps if step.get("name", "").endswith(f"{platform} installer"))
         assert inspection["if"] == f"runner.os == '{platform}'"
         assert "desktop_release.py inspect" in inspection["run"]
+        assert "desktop_release.py architecture" in inspection["run"]
+    for platform in ("Linux", "macOS"):
+        inspection = next(step for step in steps if step.get("name", "").endswith(f"{platform} installer"))
+        assert "DICOMQC_DESKTOP_SMOKE_TEST=1" in inspection["run"]
+        assert "Desktop startup smoke test passed" in inspection["run"]
+    windows = next(step for step in steps if step.get("name") == "Install and inspect Windows installer")
+    assert "MainWindowHandle" in windows["run"]
+
+
+def test_platform_bundle_configs_are_explicit():
+    configs = {
+        "linux": json.loads((ROOT / "app/src-tauri/tauri.linux.conf.json").read_text()),
+        "macos": json.loads((ROOT / "app/src-tauri/tauri.macos.conf.json").read_text()),
+        "windows": json.loads((ROOT / "app/src-tauri/tauri.windows.conf.json").read_text()),
+    }
+    assert configs["linux"]["bundle"]["targets"] == ["appimage"]
+    assert configs["macos"]["bundle"]["targets"] == ["dmg"]
+    assert configs["macos"]["bundle"]["macOS"] == {
+        "minimumSystemVersion": "11.0", "signingIdentity": "-",
+    }
+    assert configs["windows"]["bundle"]["targets"] == ["nsis"]
+    assert configs["windows"]["bundle"]["windows"]["nsis"]["installMode"] == "currentUser"
+
+
+def test_pypi_workflow_uses_canonical_release_guard():
+    workflow = yaml.load((ROOT / ".github/workflows/publish-pypi.yml").read_text(), Loader=yaml.BaseLoader)
+    step = next(step for step in workflow["jobs"]["build"]["steps"]
+                if step.get("name") == "Verify annotated stable tag and release version")
+    assert step["run"] == "python scripts/desktop_release.py version"
+
+
+def test_publication_workflows_install_api_coverage_dependencies():
+    import tomllib
+
+    project = tomllib.loads((ROOT / "pyproject.toml").read_text())
+    api_test = project["project"]["optional-dependencies"]["api-test"]
+    assert len(api_test) == 1 and api_test[0].startswith("httpx>=")
+    for name in ("publish-pypi.yml", "publish-testpypi.yml"):
+        workflow = yaml.load((ROOT / ".github/workflows" / name).read_text(), Loader=yaml.BaseLoader)
+        install = next(step for step in workflow["jobs"]["build"]["steps"]
+                       if step.get("name") == "Install test and release dependencies")
+        assert ".[release,test,api,api-test]" in install["run"]
 
 
 def test_native_gui_workflow_is_linux_only_and_excludes_private_data():

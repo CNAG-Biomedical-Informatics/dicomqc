@@ -1021,6 +1021,12 @@ fn main() {
                 app,
                 &[&file, &edit, &view, &audit, &help],
             )?)?;
+            // Exercise the packaged executable, bundled engine, and setup hook in CI.
+            if std::env::var_os("DICOMQC_DESKTOP_SMOKE_TEST").is_some() {
+                app.state::<Desktop>().quitting.store(true, Ordering::SeqCst);
+                println!("Desktop startup smoke test passed");
+                app.handle().exit(0);
+            }
             Ok(())
         })
         .on_menu_event(|app, event| match event.id().as_ref() {

@@ -52,10 +52,26 @@ requireText(overview, 'Automate from the command line', 'docs/overview.md');
 requireText(overview, 'Why audit after de-identification?', 'docs/overview.md');
 requireText(overview, '## Terminology', 'docs/overview.md');
 
+const citation = read('docs/about/citation.md');
+requireText(citation, 'Rueda, M. and Gut, I.G.', 'docs/about/citation.md');
+requireText(citation, 'grant agreement No 831434 (3TR)', 'docs/about/citation.md');
+requireText(citation, '/img/3tr-funding.png', 'docs/about/citation.md');
+if (!existsSync(join(root, 'static/img/3tr-funding.png'))) {
+  throw new Error('Missing 3TR funding image');
+}
+
 const install = read('docs/usage/install.md');
 requireText(install, 'python -m pip install dicomqc', 'docs/usage/install.md');
 requireText(install, 'python -m pip install multiqc', 'docs/usage/install.md');
 requireText(install, 'python -m pip install -e ".[test]"', 'docs/usage/install.md');
+
+const videos = read('docs/video-tutorials.md');
+requireText(videos, 'https://www.youtube.com/playlist?list=PLdDTb3FmPta0', 'docs/video-tutorials.md');
+for (const title of ['Overview', 'Privacy audit', 'Dataset comparison']) {
+  requireText(videos, title, 'docs/video-tutorials.md');
+}
+requireText(home, "to: '/docs/video-tutorials'", 'src/pages/index.tsx');
+requireText(read('sidebars.ts'), "'video-tutorials'", 'sidebars.ts');
 
 const quickstart = read('docs/usage/quickstart.md');
 const desktop = read('docs/usage/desktop.md');

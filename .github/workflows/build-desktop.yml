@@ -39,6 +39,8 @@ jobs:
       - uses: actions/setup-python@v5
         with:
           python-version: '3.12'
+      - name: Install release metadata parser
+        run: python -m pip install 'PyYAML>=6'
       - name: Restore annotated tag object
         if: github.ref_type == 'tag'
         env:
@@ -74,7 +76,10 @@ jobs:
           node-version: '24'
           cache: npm
           cache-dependency-path: app/package-lock.json
-      - uses: dtolnay/rust-toolchain@stable
+      - uses: dtolnay/rust-toolchain@1.86.0
+
+      - name: Install Python engine and build dependencies
+        run: python -m pip install ".[api,desktop-build,test,api-test]"
 
       - name: Verify package, app and Tauri versions
         run: python scripts/build_desktop_engine.py --check-versions
@@ -84,9 +89,6 @@ jobs:
         run: |
           sudo apt-get update
           sudo apt-get install -y build-essential libssl-dev libgtk-3-dev libwebkit2gtk-4.1-dev libayatana-appindicator3-dev librsvg2-dev patchelf libfuse2 xvfb xauth
-
-      - name: Install Python engine and build dependencies
-        run: python -m pip install ".[api,desktop-build,test,api-test]"
 
       - name: Test Python engine and packaging
         run: python -m pytest --junitxml=build/python-tests.xml
@@ -137,6 +139,8 @@ jobs:
       - name: Inspect Linux installer
         if: runner.os == 'Linux'
         shell: bash
+        env:
+          PLATFORM: ${{ matrix.platform }}
         run: |
           set -euo pipefail
           shopt -s nullglob
@@ -145,11 +149,19 @@ jobs:
           image="$(realpath "${images[0]}")"
           unpacked="$(mktemp -d)"
           (cd "$unpacked" && "$image" --appimage-extract >/dev/null)
+          binary="$unpacked/squashfs-root/usr/bin/dicomqc-desktop"
+          test -x "$binary"
+          python scripts/desktop_release.py architecture "$binary"
           python scripts/desktop_release.py inspect "$unpacked/squashfs-root"
+          smoke_output="$(DICOMQC_DESKTOP_SMOKE_TEST=1 xvfb-run -a timeout 90s "$image" 2>&1)"
+          printf '%s\n' "$smoke_output"
+          grep -Fq 'Desktop startup smoke test passed' <<<"$smoke_output"
 
       - name: Inspect macOS installer
         if: runner.os == 'macOS'
         shell: bash
+        env:
+          PLATFORM: ${{ matrix.platform }}
         run: |
           set -euo pipefail
           shopt -s nullglob
@@ -163,11 +175,19 @@ jobs:
           test "${#apps[@]}" -eq 1
           plutil -lint "${apps[0]}/Contents/Info.plist"
           codesign --verify --deep --strict --verbose=2 "${apps[0]}"
+          binary="$(python3 -c 'from pathlib import Path; import sys; print(Path(sys.argv[1]).resolve(strict=True))' "${apps[0]}/Contents/MacOS/dicomqc-desktop")"
+          test -x "$binary"
+          python scripts/desktop_release.py architecture "$binary"
           python scripts/desktop_release.py inspect "${apps[0]}/Contents/Resources"
+          smoke_output="$(DICOMQC_DESKTOP_SMOKE_TEST=1 "$binary" 2>&1)"
+          printf '%s\n' "$smoke_output"
+          grep -Fq 'Desktop startup smoke test passed' <<<"$smoke_output"
 
       - name: Install and inspect Windows installer
         if: runner.os == 'Windows'
         shell: pwsh
+        env:
+          PLATFORM: ${{ matrix.platform }}
         run: |
           $installers = @(Get-ChildItem app/src-tauri/target/release/bundle/nsis/*-setup.exe)
           if ($installers.Count -ne 1) { throw 'Expected one Windows installer' }
@@ -177,8 +197,23 @@ jobs:
           if ($setup.ExitCode -ne 0) { throw "Installer failed: $($setup.ExitCode)" }
           python scripts/desktop_release.py inspect "$destination"
           if ($LASTEXITCODE -ne 0) { throw 'Installed engine verification failed' }
-          $binary = Join-Path $destination 'dicomqc-desktop.exe'
-          if (-not (Test-Path $binary)) { throw 'Installed application is missing' }
+          $binary = Get-ChildItem $destination -Filter dicomqc-desktop.exe -Recurse | Select-Object -First 1
+          if (-not $binary) { throw 'Installed application is missing' }
+          python scripts/desktop_release.py architecture $binary.FullName
+          if ($LASTEXITCODE -ne 0) { throw 'Installed application architecture is incorrect' }
+          $application = Start-Process -FilePath $binary.FullName -PassThru
+          try {
+            $windowFound = $false
+            for ($attempt = 0; $attempt -lt 30; $attempt++) {
+              Start-Sleep -Seconds 1
+              $application.Refresh()
+              if ($application.HasExited) { throw "Installed application exited: $($application.ExitCode)" }
+              if ($application.MainWindowHandle -ne 0) { $windowFound = $true; break }
+            }
+            if (-not $windowFound) { throw 'Installed application did not create a window' }
+          } finally {
+            if (-not $application.HasExited) { Stop-Process -Id $application.Id }
+          }
           Get-AuthenticodeSignature $installers[0].FullName | Format-List Status, StatusMessage
 
       - name: Collect installer and checksum

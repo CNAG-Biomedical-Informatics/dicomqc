@@ -1,9 +1,9 @@
 <div align="center">
   <a href="https://github.com/CNAG-Biomedical-Informatics/dicomqc">
-    <img src="docs-site/static/img/dicomqc-symbol.png"
+    <img src="https://raw.githubusercontent.com/CNAG-Biomedical-Informatics/dicomqc/main/docs-site/static/img/dicomqc-symbol.png"
          width="200" alt="dicomqc: imaging slices and metadata inspection">
   </a>
-  <h1><img src="docs-site/static/img/dicomqc-wordmark.svg" width="240" height="64" alt="dicomqc"></h1>
+  <h1><img src="https://raw.githubusercontent.com/CNAG-Biomedical-Informatics/dicomqc/main/docs-site/static/img/dicomqc-wordmark.svg" width="240" height="64" alt="dicomqc"></h1>
   <p><em>Audit de-identified DICOM metadata for privacy risks</em></p>
 </div>
 
@@ -33,7 +33,7 @@ unreadable files. It writes HTML, JSON, CSV, and MultiQC-compatible reports.
 Findings omit raw tag values; the optional scanner inventory exports observed
 labels and must be reviewed before sharing.
 
-![How dicomqc audits metadata and writes reports.](docs-site/static/img/dicomqc-audit.svg)
+![How dicomqc audits metadata and writes reports.](https://raw.githubusercontent.com/CNAG-Biomedical-Informatics/dicomqc/main/docs-site/static/img/dicomqc-audit.svg)
 
 dicomqc is **not an anonymizer**. It never modifies original DICOM files. If it
 reports required changes, apply them with an external pseudonymization or
@@ -62,7 +62,7 @@ scanner-inventory, and adjustable large-cohort examples without patient data.
 The large cohort includes 250 deterministic privacy findings so pagination and
 review workflows can be exercised.
 
-![dicomqc desktop workspace with run history and an HTML report preview.](docs-site/static/img/desktop-workspace.png)
+![dicomqc desktop workspace with run history and an HTML report preview.](https://raw.githubusercontent.com/CNAG-Biomedical-Informatics/dicomqc/main/docs-site/static/img/desktop-workspace.png)
 
 The desktop app currently runs from source; installers are not published.
 See [Desktop setup and usage](https://cnag-biomedical-informatics.github.io/dicomqc/docs/usage/desktop).

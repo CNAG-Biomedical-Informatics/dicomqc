@@ -17,9 +17,11 @@ scripted workflows. Both use the same audit engine.
 
 ## Two audit modes
 
-**Privacy audit** inspects one dataset for identifying metadata. **Dataset
-comparison** checks source and candidate file coverage and pseudonym consistency,
-and applies privacy checks to paired candidate files. Policies and UID checks are optional additions;
+**Privacy audit** inspects one DICOM dataset for identifying metadata. **Dataset
+comparison** compares original source DICOM files with their processed candidate
+copies. It checks file coverage and pseudonym consistency, then applies privacy
+checks to paired candidate files. It does **not** compare completed dicomqc runs.
+Policies and UID checks are optional additions;
 inventory and MultiQC are optional outputs. See [Audit modes](usage/audit-modes.md)
 for which options each mode supports.
 
