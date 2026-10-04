@@ -4,7 +4,7 @@ from __future__ import annotations
 
 from dataclasses import dataclass
 from enum import Enum
-from pathlib import Path
+from pathlib import PurePath
 from typing import Any
 
 
@@ -30,7 +30,7 @@ class DicomTag:
 
 @dataclass(frozen=True)
 class MetadataRecord:
-    path: Path
+    path: PurePath
     patient_id: str | None
     study_uid: str | None
     series_uid: str | None

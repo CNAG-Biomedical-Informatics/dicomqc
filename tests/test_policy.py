@@ -75,7 +75,7 @@ def test_policy_findings_identify_rule_and_scope_without_values(tmp_path, severi
     assert finding.rule_id == "policy.project-review.patient-id"
     assert finding.profile_id == "policy.project-review"
     assert finding.severity == Severity(severity)
-    assert finding.path == "candidate/image.dcm"
+    assert finding.path == str(Path("candidate/image.dcm"))
     assert finding.keyword == "PatientID"
     assert finding.tag == "(0010,0020)"
     assert finding.value_state == ValueState.PRESENT

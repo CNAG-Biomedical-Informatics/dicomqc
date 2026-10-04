@@ -8,7 +8,7 @@ from collections import defaultdict
 from dataclasses import dataclass, field, replace
 from functools import partial
 from itertools import islice
-from pathlib import Path
+from pathlib import Path, PurePosixPath, PureWindowsPath
 
 from dicomqc.backend.base import DicomBackend, DicomReadError
 from dicomqc.backend.diagnostics import read_metadata_safely
@@ -59,7 +59,9 @@ def _manifest(path: Path) -> list[tuple[str, str]]:
                     raise ValueError(f"Manifest pair {number} must contain two paths.")
                 for index, value in enumerate(values):
                     relative = Path(value)
-                    if relative.is_absolute() or ".." in relative.parts or relative == Path("."):
+                    windows = PureWindowsPath(value)
+                    if (relative.anchor or windows.anchor or ".." in relative.parts
+                            or ".." in windows.parts or relative == Path(".")):
                         raise ValueError(f"Manifest pair {number} needs paths relative to each root.")
                     normalized = relative.as_posix()
                     if normalized in seen[index]:
@@ -229,12 +231,13 @@ def _inspect_pair(
             continue
         loaded.append(record)
         if side == 1:
-            safe_record = replace(record, path=Path(reference))
+            # Pair references are report identifiers, not native filesystem paths.
+            safe_record = replace(record, path=PurePosixPath(reference))
             local_findings.extend(evaluate_record(safe_record))
             if policy is not None:
                 local_findings.extend(evaluate_policy(safe_record, policy))
             # Do not serialize paths, UIDs, manufacturer, or other raw context.
-            local_records.append(MetadataRecord(Path(reference), None, None, None, None, None, {}))
+            local_records.append(MetadataRecord(PurePosixPath(reference), None, None, None, None, None, {}))
     before, after = loaded
     if before is None or after is None:
         return _PairInspection(tuple(local_records), tuple(local_findings), local_skipped, None, False)

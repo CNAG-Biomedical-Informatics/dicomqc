@@ -133,6 +133,7 @@ def test_inventory_cannot_silently_skip_inaccessible_directory(tmp_path, monkeyp
     assert "SECRET_PATH" not in str(error.value)
 
 
+@pytest.mark.skipif(not hasattr(os, "mkfifo"), reason="Named pipes require POSIX")
 def test_inventory_rejects_special_files(tmp_path):
     args = dataset(tmp_path)
     os.mkfifo(args[0] / "fifo")
@@ -223,6 +224,10 @@ def test_parser_warnings_fail_closed_without_leaking(tmp_path, caplog):
     ("source,candidate\na,b,c\n", "two paths"),
     ("source,candidate\n../secret,b\n", "relative"),
     ("source,candidate\n/a,b\n", "relative"),
+    ("source,candidate\nC:/a,b\n", "relative"),
+    ("source,candidate\nC:a,b\n", "relative"),
+    ("source,candidate\n\\a,b\n", "relative"),
+    ("source,candidate\n..\\secret,b\n", "relative"),
     ("source,candidate\n.,b\n", "relative"),
     ("source,candidate\na,b\na,c\n", "one-to-one"),
     ("source,candidate\na,b\nc,b\n", "one-to-one"),
