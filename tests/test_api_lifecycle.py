@@ -335,6 +335,9 @@ def test_jobs_polling_includes_live_progress(client):
 
 def test_run_log_merges_only_predefined_worker_events(client):
     jobs = client.app.state.jobs
+    jobs.stopping.set()
+    jobs.thread.join()
+    jobs.stopping.clear()
     with jobs.mutex:
         job = jobs.submit(DEMO)
         assert [event["event"] for event in job["log"]] == ["queued"]
