@@ -12,13 +12,36 @@ Python audit engine.
 
 :::info Desktop availability
 
-Installers have not been published. To run the app now, follow the
-[desktop source-build instructions](desktop.md#build-from-source).
-You need Python, Node.js, Rust, and the operating system's Tauri prerequisites.
+Installers have not been published. Testers with access to a draft Release or
+workflow artifact can use those packages. Alternatively, follow the
+[desktop source-build instructions](desktop.md#build-from-source), which require
+Python, Node.js, Rust, and the operating system's Tauri prerequisites.
 
 :::
 
+### Linux AppImage
+
+Choose `linux-x64` for Intel/AMD or `linux-arm64` for ARM64. The AppImage runs
+directly; it does not install itself into system folders or require a separate
+Python installation.
+
+Browser downloads may not retain executable permission. From the folder where
+you downloaded the file, enable execution once and launch it:
+
+```bash
+chmod +x dicomqc-0.2.0-linux-x64.AppImage
+./dicomqc-0.2.0-linux-x64.AppImage
+```
+
+For ARM64, use `dicomqc-0.2.0-linux-arm64.AppImage` in both commands.
+Neither command needs `sudo`. Keep the AppImage wherever you want to run it;
+settings and working data are stored separately, as described below.
+
 Once it is running, try the [Desktop privacy audit example](desktop-privacy.md).
+
+The app maintains a local working folder for settings and audit results. See
+[Storage and removal](desktop.md#storage-and-removal) for its location on each
+operating system and how to remove application data when uninstalling.
 
 ## CLI
 
