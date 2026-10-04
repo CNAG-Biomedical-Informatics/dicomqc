@@ -5,6 +5,7 @@ import os
 from pathlib import Path
 import stat
 import tempfile
+import time
 
 
 def write_json(path: Path, value: object) -> None:
@@ -14,7 +15,15 @@ def write_json(path: Path, value: object) -> None:
             json.dump(value, handle)
             handle.flush()
             os.fsync(handle.fileno())
-        os.replace(name, path)
+        # Windows readers can briefly deny replacement of progress/event files.
+        for attempt in range(20):
+            try:
+                os.replace(name, path)
+                break
+            except PermissionError as exc:
+                if getattr(exc, "winerror", None) not in {5, 32, 33} or attempt == 19:
+                    raise
+                time.sleep(0.025)
     finally:
         if os.path.exists(name):
             os.unlink(name)
