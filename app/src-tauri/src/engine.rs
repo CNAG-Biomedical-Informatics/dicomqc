@@ -601,9 +601,11 @@ mod tests {
                 )
                 .unwrap();
             let id = job["id"].as_str().unwrap().to_string();
-            let deadline = Instant::now() + Duration::from_secs(30);
+            // The large example generates and audits 10,000 files on shared CI hosts.
+            let deadline = Instant::now()
+                + Duration::from_secs(if example == "large" { 120 } else { 30 });
             while matches!(job["status"].as_str(), Some("queued" | "running")) {
-                assert!(Instant::now() < deadline, "{example} audit timed out");
+                assert!(Instant::now() < deadline, "{example} audit timed out: {job}");
                 std::thread::sleep(Duration::from_millis(80));
                 job = engine
                     .request(&format!("/api/v1/jobs/{id}"), "GET", &Value::Null)
