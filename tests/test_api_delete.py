@@ -64,7 +64,14 @@ def test_http_delete_preserves_inputs_other_runs_and_history(client, tmp_path):
     assert jobs.db.execute("SELECT id FROM run_directories").fetchall() == [(other["id"],)]
 
 
-@pytest.mark.parametrize("replacement", ["root_symlink", "run_symlink", "run_directory"])
+@pytest.mark.parametrize("replacement", [
+    pytest.param(
+        "root_symlink",
+        marks=pytest.mark.skipif(os.name == "nt", reason="Windows prevents renaming an open workspace"),
+    ),
+    "run_symlink",
+    "run_directory",
+])
 def test_delete_rejects_replaced_ownership(tmp_path, replacement):
     jobs = stopped_jobs(tmp_path)
     job = terminal(jobs)

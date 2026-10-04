@@ -554,7 +554,10 @@ mod tests {
         assert!(missing.is_empty());
         let new_handle = &transferred["paths"][0];
         assert_ne!(new_handle["id"], handle["id"]);
-        assert_eq!(new_handle["display_path"], input.to_string_lossy().as_ref());
+        assert_eq!(
+            new_handle["display_path"],
+            input.canonicalize().unwrap().to_string_lossy().as_ref()
+        );
         let mut transferred_job = replacement
             .request(
                 "/api/v1/jobs",
