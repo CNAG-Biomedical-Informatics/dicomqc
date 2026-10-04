@@ -32,8 +32,16 @@
   not establish performance or audit validity on the forthcoming real DICOM data.
 - Windows builds are unsigned; macOS builds are not Apple-notarized. Successful
   CI does not remove platform trust prompts or replace clean-machine testing.
-- No release tag, GitHub Release or PyPI publication was created. Version 0.2.0
-  remains unreleased. Do not tag/publish until the user approves the manual tests.
+- At the user's request, prepared an unpublished draft in Convert-Pheno's release
+  style with all five installers and five checksums:
+  https://github.com/CNAG-Biomedical-Informatics/dicomqc/releases/tag/untagged-c48f612f84200a0abee5
+- The draft has intended tag name `v0.2.0`, but no corresponding Git tag exists;
+  verified remote tags still contain only `v0.1.0`. No new PyPI workflow ran.
+  Draft target and installer source are `0b915258ebda595ee38e4f2f6daaaec4aa92f09b`.
+  Version 0.2.0 remains unreleased. After manual approval, finalize release
+  metadata and create/push the annotated tag before publishing the draft. Rebuild
+  and replace draft assets if the tagged source changes. Do not publish the draft
+  early and let GitHub create a tag automatically.
 - Untracked root files `README` and `project` were left untouched.
 
 ### Portable project sessions
