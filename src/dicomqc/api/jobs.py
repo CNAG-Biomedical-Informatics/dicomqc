@@ -16,6 +16,7 @@ import threading
 import time
 import unicodedata
 import uuid
+from urllib.parse import quote
 
 from dicomqc.api.storage import identity, read_json, regular_file, validate_identity, write_json
 from dicomqc.execution import validate_audit_inputs
@@ -57,7 +58,9 @@ class Jobs:
         for name in ("owner.lock", "runs.sqlite", "runs.sqlite-journal", "runs.sqlite-wal", "runs.sqlite-shm"):
             regular_file(self.root / name, missing=True)
         if (self.root / "runs.sqlite").exists():
-            existing = sqlite3.connect((self.root / "runs.sqlite").as_uri() + "?mode=ro", uri=True)
+            # Keep Windows extended/UNC prefixes in the URI path, not its authority.
+            filename = quote(str(self.root / "runs.sqlite"), safe="")
+            existing = sqlite3.connect(f"file:{filename}?mode=ro", uri=True)
             try:
                 if [row[1] for row in existing.execute("PRAGMA table_info(jobs)")] != ["id", "created", "value"]:
                     raise WorkspaceError("The selected output folder does not contain a valid dicomqc run database.")
@@ -389,9 +392,10 @@ class Jobs:
                 # Upgrade older runs before removing anything; a partial rmtree
                 # may remove the request file, but the database survives retries.
                 expected = json.loads(row[0]) if row else read_json(directory / "request.json").get("directory")
-                if not expected or expected.get("path") != str(directory) or not directory.is_dir():
+                if not expected or not directory.is_dir():
                     raise ValueError("Run directory ownership is unavailable.")
-                validate_identity(expected)
+                if not validate_identity(expected).samefile(directory):
+                    raise ValueError("Run directory ownership is unavailable.")
                 self.db.execute("INSERT OR REPLACE INTO run_directories VALUES (?, ?)",
                                 (identifier, json.dumps(expected)))
                 self.db.commit()

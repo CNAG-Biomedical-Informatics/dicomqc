@@ -3,6 +3,7 @@
 import io
 import json
 import os
+from pathlib import Path
 import socket
 import subprocess
 import sys
@@ -80,6 +81,24 @@ def test_extended_windows_paths_cannot_overlap_workspace(tmp_path, selected):
         assert jobs.register("\\\\?\\" + str(outside.resolve()))["kind"] == "file"
     finally:
         jobs.close()
+
+
+@pytest.mark.parametrize("extended", [False, True])
+def test_workspace_reopens_and_deletes_with_native_path_spelling(tmp_path, extended):
+    if extended and os.name != "nt":
+        pytest.skip("Windows extended path aliases")
+    jobs = stopped_jobs(tmp_path / "workspace #100%")
+    job = jobs.submit(DEMO)
+    jobs.cancel(job["id"])
+    root = jobs.root
+    jobs.close()
+    reopened = Jobs(Path("\\\\?\\" + str(root)) if extended else root)
+    try:
+        assert reopened.get(job["id"])["status"] == "cancelled"
+        assert reopened.delete(job["id"])["status"] == "deleted"
+        assert reopened.list() == []
+    finally:
+        reopened.close()
 
 
 @pytest.mark.skipif(os.name == "nt", reason="Windows prevents renaming an open workspace")
