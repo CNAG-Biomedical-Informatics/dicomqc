@@ -66,6 +66,7 @@ def test_unrelated_workspace_rejected_without_writes(tmp_path):
         Jobs(link)
 
 
+@pytest.mark.skipif(os.name == "nt", reason="Windows prevents renaming an open workspace")
 def test_root_replaced_by_symlink_blocks_reads_writes_and_worker(tmp_path):
     jobs = stopped_jobs(tmp_path)
     job = jobs.submit(DEMO)

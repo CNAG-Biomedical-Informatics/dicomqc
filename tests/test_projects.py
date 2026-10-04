@@ -1,6 +1,7 @@
 """Portable desktop sessions use the same synthetic fixtures as engine tests."""
 
 import json
+import os
 from pathlib import Path
 import shutil
 import zipfile
@@ -79,6 +80,28 @@ def test_project_endpoints_require_local_authorization(client, tmp_path):
                             ("open", {"path": str(tmp_path / "x.dicomqc"), "storage": str(tmp_path)})]:
         response = client.post(f'/api/v1/projects/{action}/local', headers=AUTH, json=payload)
         assert response.status_code == 403
+
+
+@pytest.mark.skipif(os.name == "nt", reason="requires a directory alias")
+def test_imported_run_ownership_uses_canonical_workspace_path(tmp_path):
+    source = tmp_path / "aliased.dicomqc"
+    run = {"id": "a" * 32, "created": 1, "mode": "scan", "example": None,
+           "name": None, "status": "failed", "audit_exit_code": None,
+           "summary": None, "artifacts": [], "message": "Synthetic failure", "log": []}
+    with zipfile.ZipFile(source, "w") as archive:
+        archive.writestr("project.json", json.dumps({**settings(), "version": 2}))
+        archive.writestr("runs.json", json.dumps([run]))
+    storage = tmp_path / "storage"
+    storage.mkdir()
+    alias = tmp_path / "storage-alias"
+    alias.symlink_to(storage, target_is_directory=True)
+
+    project = open_project(source, alias)
+    restored = Jobs(Path(project["output"]))
+    try:
+        assert restored.delete(run["id"])["status"] == "deleted"
+    finally:
+        restored.close()
 
 
 def test_save_rejects_active_runs_and_preserves_existing_file(client, tmp_path):

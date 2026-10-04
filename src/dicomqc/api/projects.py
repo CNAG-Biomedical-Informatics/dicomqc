@@ -156,6 +156,7 @@ def open_project(source: Path, storage: Path) -> dict:
                 project["inputs"][key] = [str(session / p) for p in paths]
         root = session / "workspace"
         root.mkdir(mode=0o700)
+        root = root.resolve(strict=True)
         with_snapshot = Jobs(root)
         try:
             with with_snapshot.mutex:
