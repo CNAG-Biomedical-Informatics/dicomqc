@@ -39,7 +39,7 @@ Changelog = "https://github.com/CNAG-Biomedical-Informatics/dicomqc/blob/main/CH
 [project.optional-dependencies]
 api = ["fastapi>=0.115,<0.143", "uvicorn>=0.30,<0.55"]
 desktop-build = ["pyinstaller>=6.11,<7"]
-api-test = ["httpx>=0.28,<0.29"]
+api-test = ["httpx>=0.28,<0.29", "httpx2>=2,<3"]
 test = [
   "pytest>=8",
   "pytest-cov>=5",

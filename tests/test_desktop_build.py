@@ -265,7 +265,8 @@ def test_publication_workflows_install_api_coverage_dependencies():
 
     project = tomllib.loads((ROOT / "pyproject.toml").read_text())
     api_test = project["project"]["optional-dependencies"]["api-test"]
-    assert len(api_test) == 1 and api_test[0].startswith("httpx>=")
+    assert any(requirement.startswith("httpx>=") for requirement in api_test)
+    assert any(requirement.startswith("httpx2>=") for requirement in api_test)
     for name in ("publish-pypi.yml", "publish-testpypi.yml"):
         workflow = yaml.load((ROOT / ".github/workflows" / name).read_text(), Loader=yaml.BaseLoader)
         install = next(step for step in workflow["jobs"]["build"]["steps"]
