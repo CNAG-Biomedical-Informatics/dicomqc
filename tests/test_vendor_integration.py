@@ -112,7 +112,7 @@ def test_default_reports_do_not_include_private_creators_models_or_software_valu
 
     # Ordinary scan JSON historically includes manufacturer, but not these
     # newly inventoried values or the raw private-element payloads.
-    combined = "\n".join(path.read_text() for path in (report_json, report_html, *bundle.iterdir()))
+    combined = "\n".join(path.read_text(encoding="utf-8") for path in (report_json, report_html, *bundle.iterdir()))
     for value in ("ACME_ACQUISITION", "ACME_PROCESSING", "Research MR", "VERSION_NOT_OPTED_IN", *PRIVATE_PAYLOADS):
         assert value not in combined
 
@@ -130,9 +130,9 @@ def test_cli_opt_in_writes_inventory_to_json_html_multiqc_but_keeps_csv_findings
     assert "Files scanned: 3" in console
     assert "Equipment combinations: 2" in console
     assert "Unassigned private elements: 1" in console
-    _assert_expected_inventory(json.loads(report_json.read_text())["vendor_summary"])
+    _assert_expected_inventory(json.loads(report_json.read_text(encoding="utf-8"))["vendor_summary"])
     for report in (report_html, bundle / "dicomqc_00_overview_mqc.html"):
-        text = report.read_text()
+        text = report.read_text(encoding="utf-8")
         assert "Example Imaging" in text and "Research MR" in text
         assert "ACME_ACQUISITION" in text and "ACME_PROCESSING" in text
         assert "Scanner and private-tag inventory" in text
@@ -148,8 +148,8 @@ def test_cli_opt_in_writes_inventory_to_json_html_multiqc_but_keeps_csv_findings
         rows = list(reader)
     assert len(rows) == 3
     assert {row["keyword"] for row in rows} == {"PrivateTags"}
-    assert "ACME_ACQUISITION" not in report_csv.read_text()
-    combined = "\n".join(path.read_text() for path in (report_json, report_html, report_csv, *bundle.iterdir()))
+    assert "ACME_ACQUISITION" not in report_csv.read_text(encoding="utf-8")
+    combined = "\n".join(path.read_text(encoding="utf-8") for path in (report_json, report_html, report_csv, *bundle.iterdir()))
     for value in PRIVATE_PAYLOADS:
         assert value not in combined
     assert _digests(paths) == original
@@ -171,12 +171,12 @@ def test_explicit_vendor_inventory_can_be_combined_with_policy_audit(tmp_path):
         "scan", str(tmp_path / "dicom"), "--policy", str(policy_path), "--vendor-summary",
         "--json", str(report), "--quiet",
     ]) == 1
-    payload = json.loads(report.read_text())
+    payload = json.loads(report.read_text(encoding="utf-8"))
     assert payload["policy"]["id"] == "inventory-policy"
     _assert_expected_inventory(payload["vendor_summary"])
     assert all("manufacturer" not in record for record in payload["records"])
     for value in PRIVATE_PAYLOADS:
-        assert value not in report.read_text()
+        assert value not in report.read_text(encoding="utf-8")
 
 
 def test_inventory_counts_only_readable_files_and_does_not_hide_read_errors(tmp_path):
@@ -203,8 +203,8 @@ def test_inventory_for_no_readable_files_is_not_a_passing_audit(tmp_path):
     write_html(result, report)
     bundle = write_multiqc(result, tmp_path / "multiqc")
     for html in (report, bundle / "dicomqc_00_overview_mqc.html"):
-        assert "No entries in the readable files." in html.read_text()
-        assert "Errors require attention" in html.read_text()
+        assert "No entries in the readable files." in html.read_text(encoding="utf-8")
+        assert "Errors require attention" in html.read_text(encoding="utf-8")
 
 
 def test_vendor_html_and_multiqc_escape_observed_metadata_labels(tmp_path):
@@ -225,7 +225,7 @@ def test_vendor_html_and_multiqc_escape_observed_metadata_labels(tmp_path):
     write_html(result, report)
     bundle = write_multiqc(result, tmp_path / "multiqc")
     for html in (report, bundle / "dicomqc_00_overview_mqc.html"):
-        content = html.read_text()
+        content = html.read_text(encoding="utf-8")
         for value in (*labels.values(), creator):
             assert value not in content
             assert escape(value) in content
@@ -249,7 +249,7 @@ def test_vendor_reports_explain_missing_equipment_and_unusable_creators(tmp_path
     write_html(result, report)
     bundle = write_multiqc(result, tmp_path / "multiqc")
     for html in (report, bundle / "dicomqc_00_overview_mqc.html"):
-        content = html.read_text()
+        content = html.read_text(encoding="utf-8")
         for explanation in ("Not recorded", "Empty creator", "No creator", "Invalid creator", "(0029,unassigned)"):
             assert explanation in content
         assert "PAYLOAD_SECRET" not in content
@@ -268,7 +268,7 @@ def test_vendor_demo_produces_expected_real_audit_and_can_be_repeated(tmp_path):
     assert demo.report_dir == output / "dicomqc"
     assert (demo.report_dir / "report.html").is_file()
     assert (demo.multiqc_dir / "dicomqc_00_overview_mqc.html").is_file()
-    payload = json.loads(demo.json_path.read_text())
+    payload = json.loads(demo.json_path.read_text(encoding="utf-8"))
     _assert_expected_inventory(payload["vendor_summary"])
     assert payload["summary"]["warnings"] == 3
     assert payload["summary"]["errors"] == 0

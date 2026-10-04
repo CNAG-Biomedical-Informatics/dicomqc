@@ -52,13 +52,13 @@ def test_clean_renamed_files_and_reports(tmp_path, capsys):
     report, findings = tmp_path / "report.json", tmp_path / "findings.csv"
     assert main(["compare", str(source), str(candidate), "--manifest", str(manifest),
                  "--json", str(report), "--csv", str(findings)]) == 0
-    payload = json.loads(report.read_text())
+    payload = json.loads(report.read_text(encoding="utf-8"))
     assert payload["comparison"] == {"source_files": 2, "candidate_files": 2,
                                       "manifest_pairs": 2, "readable_pairs": 2, "identity_pairs_checked": 2}
     assert payload["records"] == [{"path": "pair-000001/candidate"}, {"path": "pair-000002/candidate"}]
     assert "Identity pairs checked: 2" in capsys.readouterr().out
     assert all(p.read_bytes() == content for p, content in original.items())
-    assert "SECRET" not in report.read_text()
+    assert "SECRET" not in report.read_text(encoding="utf-8")
 
 
 @pytest.mark.skipif(MAX_THREADS < 2, reason="requires two logical processors")
@@ -176,7 +176,7 @@ def test_candidate_rules_and_no_sensitive_report_context(tmp_path):
     report, findings = tmp_path / "out.json", tmp_path / "out.csv"
     assert main(["compare", str(args[0]), str(args[1]), "--manifest", str(args[2]),
                  "--json", str(report), "--csv", str(findings), "--quiet"]) == 2
-    content = report.read_text() + findings.read_text()
+    content = report.read_text(encoding="utf-8") + findings.read_text(encoding="utf-8")
     for secret in ("19700101", "SECRET_VENDOR", "PRIVATE_SECRET", "LOCAL_SECRET", "source-secret", "renamed-1", ds.StudyInstanceUID):
         assert secret not in content
 
@@ -285,7 +285,7 @@ def test_compare_html_cli_and_output_protection(tmp_path):
     report = tmp_path / "report.html"
     args = ["compare", str(source), str(candidate), "--manifest", str(manifest)]
     assert main(args + ["--html", str(report)]) == 0
-    assert "Pairing coverage" in report.read_text() and "Checks passed" in report.read_text()
+    assert "Pairing coverage" in report.read_text(encoding="utf-8") and "Checks passed" in report.read_text(encoding="utf-8")
     assert main(args + ["--html", str(manifest)]) == 2
     assert main(args + ["--html", str(next(candidate.iterdir()))]) == 2
     assert main(args + ["--html", str(report), "--csv", str(report)]) == 2

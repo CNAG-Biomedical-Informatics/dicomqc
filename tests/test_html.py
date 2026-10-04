@@ -42,7 +42,7 @@ def test_report_names_match_audit_scenarios(tmp_path, runner, title, checks):
     reports = list(output.rglob("*.html"))
     assert reports
     for report in reports:
-        document = report.read_text()
+        document = report.read_text(encoding="utf-8")
         assert f"<title>dicomqc — {title}</title>" in document
         assert f'<p class="eyebrow">{title}</p>' in document
         assert f"Checks: {checks}</p>" in document
@@ -53,7 +53,7 @@ def test_report_names_match_audit_scenarios(tmp_path, runner, title, checks):
 def test_html_status_content_and_redaction(tmp_path, level, label):
     path = tmp_path / "report.html"
     write_html(sample(level), path)
-    text = path.read_text()
+    text = path.read_text(encoding="utf-8")
     assert label in text
     assert "Remove the value." in text
     assert "PatientBirthDate" in text
@@ -93,10 +93,10 @@ def test_html_empty_and_unreadable_are_not_clean_passes():
 
 def test_html_comparison_coverage_and_demo_reports(tmp_path):
     scan = run_demo(tmp_path / "scan")
-    assert "Synthetic demo" in (scan.report_dir / "report.html").read_text()
+    assert "Synthetic demo" in (scan.report_dir / "report.html").read_text(encoding="utf-8")
     comparison = run_comparison_demo(tmp_path / "compare")
     for phase, status in (("before", "Errors require attention"), ("after", "Checks passed")):
-        document = (comparison.output_dir / f"{phase}.html").read_text()
+        document = (comparison.output_dir / f"{phase}.html").read_text(encoding="utf-8")
         assert status in document
         assert "Pairing coverage" in document and "Identity pairs checked" in document
         assert "Synthetic demo" in document

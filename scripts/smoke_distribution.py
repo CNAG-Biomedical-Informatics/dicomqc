@@ -34,13 +34,13 @@ def main() -> None:
         assert cli("--version").strip() == f"dicomqc {expected}"
         cli("demo", "--output-dir", "scan-demo")
         assert (root / "scan-demo/dicomqc/dicomqc_mqc/dicomqc_summary_mqc.yaml").is_file()
-        assert "DICOM metadata audit" in (root / "scan-demo/dicomqc/report.html").read_text()
+        assert "DICOM metadata audit" in (root / "scan-demo/dicomqc/report.html").read_text(encoding="utf-8")
         cli("demo", "--compare", "--output-dir", "comparison-demo")
         for name, errors in (("before", 3), ("after", 0)):
             report = root / f"comparison-demo/{name}.json"
-            assert json.loads(report.read_text())["summary"]["errors"] == errors
+            assert json.loads(report.read_text(encoding="utf-8"))["summary"]["errors"] == errors
             assert report.with_suffix(".csv").is_file()
-            assert "Dataset comparison" in report.with_suffix(".html").read_text()
+            assert "Dataset comparison" in report.with_suffix(".html").read_text(encoding="utf-8")
         for directory, code in (("candidate", 2), ("corrected", 0)):
             cli("compare", "comparison-demo/source", f"comparison-demo/{directory}",
                 "--manifest", "comparison-demo/pairs.csv", "--json", f"{directory}.json",
@@ -49,20 +49,20 @@ def main() -> None:
         cli("demo", "--compare", "--output-dir", "comparison-demo", "--force")
         cli("demo", "--policy-demo", "--output-dir", "policy-demo")
         for phase, errors in (("before", 3), ("after", 0)):
-            payload = json.loads((root / f"policy-demo/{phase}.json").read_text())
+            payload = json.loads((root / f"policy-demo/{phase}.json").read_text(encoding="utf-8"))
             assert payload["summary"]["errors"] == errors
             assert payload["policy"]["id"] == "research-demo"
             assert len(payload["policy"]["sha256"]) == 64
         cli("scan", "policy-demo/corrected", "--policy", "policy-demo/policy.yaml",
             "--html", "policy-scan.html")
         cli("demo", "--vendor-demo", "--output-dir", "vendor-demo")
-        vendor = json.loads((root / "vendor-demo/dicomqc/report.json").read_text())
+        vendor = json.loads((root / "vendor-demo/dicomqc/report.json").read_text(encoding="utf-8"))
         assert vendor["summary"]["warnings"] == 3
         assert vendor["vendor_summary"]["unassigned_private_elements"] == 1
         assert vendor["vendor_summary"]["private_elements"] == 5
         cli("demo", "--uid-demo", "--output-dir", "uid-demo")
         for phase, errors in (("before", 7), ("after", 0)):
-            payload = json.loads((root / f"uid-demo/{phase}.json").read_text())
+            payload = json.loads((root / f"uid-demo/{phase}.json").read_text(encoding="utf-8"))
             assert payload["summary"]["errors"] == errors
             assert payload["uid_checks"]["files_checked"] == 4
         cli("scan", "uid-demo/corrected", "--uid-checks", "--html", "uid.html")

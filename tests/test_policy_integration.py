@@ -126,10 +126,10 @@ def test_all_reports_preserve_policy_provenance_without_raw_values(tmp_path):
     write_html(result, report_html)
     bundle = write_multiqc(result, tmp_path / "multiqc")
 
-    payload = json.loads(report_json.read_text())
+    payload = json.loads(report_json.read_text(encoding="utf-8"))
     assert payload["policy"] == _provenance(policy)
     for report in (report_html, bundle / "dicomqc_00_overview_mqc.html"):
-        text = report.read_text()
+        text = report.read_text(encoding="utf-8")
         assert "project-test" in text
         assert payload["policy"]["sha256"] in text
     with report_csv.open(newline="", encoding="utf-8") as handle:
@@ -138,7 +138,7 @@ def test_all_reports_preserve_policy_provenance_without_raw_values(tmp_path):
         rows = list(reader)
     assert len(rows) == 1
     assert rows[0]["keyword"] == "StudyDescription"
-    combined = "\n".join(file.read_text() for file in (report_json, report_csv, report_html, *bundle.iterdir()))
+    combined = "\n".join(file.read_text(encoding="utf-8") for file in (report_json, report_csv, report_html, *bundle.iterdir()))
     for secret in ("DESCRIPTION_SECRET", "POLICY_ALLOWLIST_SECRET"):
         assert secret not in combined
 
@@ -152,11 +152,11 @@ def test_passing_policy_is_recorded_even_with_no_findings(tmp_path):
         "scan", str(path), "--policy", str(policy), "--json", str(report_json),
         "--html", str(report_html), "--multiqc", str(bundle), "--quiet",
     ]) == 0
-    payload = json.loads(report_json.read_text())
+    payload = json.loads(report_json.read_text(encoding="utf-8"))
     assert payload["findings"] == []
     assert payload["policy"] == _provenance(policy)
-    assert payload["policy"]["sha256"] in report_html.read_text()
-    assert payload["policy"]["sha256"] in (bundle / "dicomqc_00_overview_mqc.html").read_text()
+    assert payload["policy"]["sha256"] in report_html.read_text(encoding="utf-8")
+    assert payload["policy"]["sha256"] in (bundle / "dicomqc_00_overview_mqc.html").read_text(encoding="utf-8")
 
 
 def test_policy_scan_json_omits_all_raw_record_context(tmp_path):
@@ -172,11 +172,11 @@ def test_policy_scan_json_omits_all_raw_record_context(tmp_path):
     policy = _policy(tmp_path / "policy.yaml", _description_rule())
     report = tmp_path / "policy.json"
     assert main(["scan", str(path), "--policy", str(policy), "--json", str(report), "--quiet"]) == 0
-    payload = json.loads(report.read_text())
+    payload = json.loads(report.read_text(encoding="utf-8"))
     assert payload["findings"] == []
     assert payload["policy"] == _provenance(policy)
     for value in values.values():
-        assert value not in report.read_text()
+        assert value not in report.read_text(encoding="utf-8")
     assert not {"manufacturer", "modality", "study_uid", "series_uid"}.intersection(payload["records"][0])
 
 
@@ -268,11 +268,11 @@ def test_comparison_policy_is_candidate_only_and_uses_safe_pair_references(tmp_p
         "compare", str(source), str(candidate), "--manifest", str(manifest), "--policy", str(policy),
         "--json", str(report_json), "--csv", str(report_csv), "--html", str(report_html), "--quiet",
     ]) == 2
-    payload = json.loads(report_json.read_text())
+    payload = json.loads(report_json.read_text(encoding="utf-8"))
     assert payload["policy"] == _provenance(policy)
     assert len(payload["findings"]) == 1
     assert payload["findings"][0]["path"] == "pair-000001/candidate"
-    combined = "\n".join(report.read_text() for report in (report_json, report_csv, report_html))
+    combined = "\n".join(report.read_text(encoding="utf-8") for report in (report_json, report_csv, report_html))
     for secret in (
         "SOURCE_PATIENT_SECRET", "SOURCE_DESCRIPTION_SECRET", "SOURCE_COMMENT_SECRET",
         "CANDIDATE_DESCRIPTION_SECRET", "sensitive-source-name", "sensitive-candidate-name",
@@ -396,7 +396,7 @@ def test_multiqc_bundle_cannot_overlap_dicom_inputs_or_change_existing_reports(t
         "scan", str(scan_input), "--json", str(report), "--multiqc", str(bundle), "--quiet",
     ]) == 2
     assert image.read_bytes() == original
-    assert report.read_text() == "PREEXISTING_REPORT"
+    assert report.read_text(encoding="utf-8") == "PREEXISTING_REPORT"
 
 
 @pytest.mark.parametrize("output_flag", ["--json", "--csv", "--html"])
@@ -412,8 +412,8 @@ def test_multiqc_bundle_cannot_overlap_explicit_report_outputs(tmp_path, output_
     assert main([
         "scan", str(image), output_flag, str(output), "--multiqc", str(bundle), "--quiet",
     ]) == 2
-    assert output.read_text() == "PREEXISTING_REPORT"
-    assert another_output.read_text() == "UNRELATED_EXISTING_REPORT"
+    assert output.read_text(encoding="utf-8") == "PREEXISTING_REPORT"
+    assert another_output.read_text(encoding="utf-8") == "UNRELATED_EXISTING_REPORT"
 
 
 def test_multiqc_bundle_symlink_cannot_alias_input_directory(tmp_path):
@@ -434,7 +434,7 @@ def test_policy_demo_is_reproducible_and_before_after_reports_are_real_audits(tm
     output = tmp_path / "policy-demo"
     assert main(["demo", "--policy-demo", "--output-dir", str(output)]) == 0
     assert (output / "policy.yaml").is_file()
-    before, after = (json.loads((output / f"{name}.json").read_text()) for name in ("before", "after"))
+    before, after = (json.loads((output / f"{name}.json").read_text(encoding="utf-8")) for name in ("before", "after"))
     assert before["summary"]["errors"] == 3
     assert after["summary"]["errors"] == 0
     assert after["findings"] == []

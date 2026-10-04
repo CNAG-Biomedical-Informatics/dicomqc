@@ -35,7 +35,7 @@ def test_large_demo_is_generated_on_demand_with_findings(tmp_path):
     assert result.scan_exit_code == 2
     assert len(list(result.dicom_dir.glob("*.dcm"))) == 25
     assert result.json_path.is_file()
-    report = json.loads(result.json_path.read_text())
+    report = json.loads(result.json_path.read_text(encoding="utf-8"))
     assert report["summary"]["errors"] == 25
     assert report["summary"]["warnings"] == 50
     assert len(report["findings"]) == 75
@@ -82,11 +82,11 @@ def test_comparison_demo_can_be_rerun_and_reports_explain_failures(tmp_path):
     assert compare_datasets(output / "source", output / "corrected", demo.manifest) == demo.after
     assert all(p.read_bytes() == content for p, content in original.items())
     for name, expected, readable in (("before", 3, 2), ("after", 0, 3)):
-        payload = json.loads((output / f"{name}.json").read_text())
+        payload = json.loads((output / f"{name}.json").read_text(encoding="utf-8"))
         assert payload["summary"]["errors"] == expected
         assert payload["comparison"]["manifest_pairs"] == 3
         assert payload["comparison"]["readable_pairs"] == readable
-        content = (output / f"{name}.json").read_text() + (output / f"{name}.csv").read_text()
+        content = (output / f"{name}.json").read_text(encoding="utf-8") + (output / f"{name}.csv").read_text(encoding="utf-8")
         for secret in ("LOCAL001", "LOCAL002", "Example^Patient", "19700101", "patient-a"):
             assert secret not in content
 
@@ -98,7 +98,7 @@ def test_comparison_demo_requires_force_to_replace(tmp_path):
     marker.write_text("keep")
     with pytest.raises(FileExistsError):
         run_comparison_demo(output)
-    assert marker.read_text() == "keep"
+    assert marker.read_text(encoding="utf-8") == "keep"
     assert run_comparison_demo(output, force=True).after.exit_code() == 0
     assert not marker.exists()
 

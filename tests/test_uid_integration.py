@@ -31,14 +31,14 @@ def test_demo_redacted_all_formats_and_read_only(tmp_path, capsys, caplog):
     assert result.error_count == 7
     for path in demo.output_dir.rglob("*"):
         if path.is_file() and path.suffix in {".json", ".csv", ".html", ".yaml"}:
-            assert ROOT_UID not in path.read_text()
-    before_json = json.loads((demo.output_dir / "before.json").read_text())
+            assert ROOT_UID not in path.read_text(encoding="utf-8")
+    before_json = json.loads((demo.output_dir / "before.json").read_text(encoding="utf-8"))
     assert "study_uid" not in before_json["records"][0]
     assert before_json["uid_checks"]["fields"]["SOPInstanceUID"]["invalid"] == 1
-    assert 'data-category="UID integrity"' in (demo.output_dir / "before.html").read_text()
+    assert 'data-category="UID integrity"' in (demo.output_dir / "before.html").read_text(encoding="utf-8")
     for path in (demo.output_dir / "after.html", demo.output_dir / "after_mqc/dicomqc_00_overview_mqc.html"):
-        assert "4 of 4 files" in path.read_text()
-        assert "UID integrity" in path.read_text()
+        assert "4 of 4 files" in path.read_text(encoding="utf-8")
+        assert "UID integrity" in path.read_text(encoding="utf-8")
     assert not capsys.readouterr().err
     assert ROOT_UID not in caplog.text
 
@@ -55,7 +55,7 @@ def test_cli_demo_and_scan_options_are_opt_in_and_composable(tmp_path, capsys):
     assert main(["scan", str(root / "corrected"), "--uid-checks", "--policy", str(policy),
                  "--vendor-summary", "--json", str(report), "--html", str(root / "scan.html"),
                  "--csv", str(root / "scan.csv"), "--multiqc", str(root / "scan_mqc")]) == 2
-    payload = json.loads(report.read_text())
+    payload = json.loads(report.read_text(encoding="utf-8"))
     assert payload["uid_checks"]["complete_hierarchies_checked"] == 4
     assert payload["policy"]["id"] == "research-demo"
     assert payload["vendor_summary"]["files"] == 4

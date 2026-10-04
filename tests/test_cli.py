@@ -160,7 +160,7 @@ def test_scan_html_and_output_safety(tmp_path):
     original = path.read_bytes()
     report = tmp_path / "report.html"
     assert main(["scan", str(path), "--html", str(report), "--quiet"]) == 2
-    assert "PatientBirthDate" in report.read_text() and "19700101" not in report.read_text()
+    assert "PatientBirthDate" in report.read_text(encoding="utf-8") and "19700101" not in report.read_text(encoding="utf-8")
     assert main(["scan", str(path), "--html", str(path)]) == 2
     assert main(["scan", str(tmp_path), "--html", str(path)]) == 2
     assert path.read_bytes() == original
