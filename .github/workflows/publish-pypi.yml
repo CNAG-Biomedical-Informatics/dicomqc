@@ -1,15 +1,19 @@
 name: Publish to PyPI
 
 on:
-  push:
-    tags:
-      - "v*"
+  workflow_dispatch:
+    inputs:
+      tag:
+        description: "Existing annotated release tag to publish (for example v0.2.0)"
+        required: true
+        type: string
 
 env:
   FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: true
+  RELEASE_TAG: ${{ inputs.tag }}
 
 concurrency:
-  group: pypi-${{ github.ref }}
+  group: pypi-${{ inputs.tag }}
   cancel-in-progress: false
 
 jobs:
@@ -19,11 +23,23 @@ jobs:
       contents: read
 
     steps:
+      - name: Validate release tag input
+        shell: bash
+        run: |
+          if [[ ! "$RELEASE_TAG" =~ ^v[0-9]+\.[0-9]+\.[0-9]+$ ]]; then
+            echo 'Enter an existing annotated stable tag, such as v0.2.0.'
+            exit 1
+          fi
+
       - name: Check out tagged source
         uses: actions/checkout@v5
         with:
+          ref: refs/tags/${{ inputs.tag }}
           fetch-depth: 0
           persist-credentials: false
+
+      - name: Restore annotated tag object
+        run: git fetch --force --no-tags origin "refs/tags/$RELEASE_TAG:refs/tags/$RELEASE_TAG"
 
       - name: Set up Python
         uses: actions/setup-python@v5
@@ -41,7 +57,7 @@ jobs:
           python -m pip install ".[release,test,api,api-test]"
 
       - name: Verify annotated stable tag and release version
-        run: python scripts/desktop_release.py version
+        run: env GITHUB_REF_TYPE=tag GITHUB_REF_NAME="$RELEASE_TAG" python scripts/desktop_release.py version
 
       - name: Run tests with coverage gate
         run: pytest
@@ -57,7 +73,7 @@ jobs:
           python -m venv dicomqc-pypi-wheel-test
           dicomqc-pypi-wheel-test/bin/python -m pip install --upgrade pip
           dicomqc-pypi-wheel-test/bin/python -m pip install "$GITHUB_WORKSPACE"/dist/*.whl multiqc
-          test "$(dicomqc-pypi-wheel-test/bin/dicomqc --version)" = "dicomqc ${GITHUB_REF_NAME#v}"
+          test "$(dicomqc-pypi-wheel-test/bin/dicomqc --version)" = "dicomqc ${RELEASE_TAG#v}"
           dicomqc-pypi-wheel-test/bin/dicomqc --help
           dicomqc-pypi-wheel-test/bin/dicomqc demo --output-dir /tmp/dicomqc-pypi-demo
           test -s /tmp/dicomqc-pypi-demo/dicomqc/report.json
@@ -69,7 +85,7 @@ jobs:
             --config "$GITHUB_WORKSPACE/examples/multiqc/multiqc_config.yaml"
           test -s /tmp/dicomqc-pypi-demo/multiqc_report.html
           dicomqc-pypi-wheel-test/bin/python "$GITHUB_WORKSPACE/scripts/smoke_distribution.py" \
-            --expected-version "${GITHUB_REF_NAME#v}"
+            --expected-version "${RELEASE_TAG#v}"
 
       - name: Test built source distribution
         working-directory: /tmp
@@ -77,7 +93,7 @@ jobs:
           python -m venv dicomqc-pypi-sdist-test
           dicomqc-pypi-sdist-test/bin/python -m pip install "$GITHUB_WORKSPACE"/dist/*.tar.gz
           dicomqc-pypi-sdist-test/bin/python "$GITHUB_WORKSPACE/scripts/smoke_distribution.py" \
-            --expected-version "${GITHUB_REF_NAME#v}"
+            --expected-version "${RELEASE_TAG#v}"
 
       - name: Upload distributions
         uses: actions/upload-artifact@v4

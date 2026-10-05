@@ -2,6 +2,18 @@
 
 ## Current direction
 
+### PyPI publication is manual - 2026-10-05
+
+- The user clarified the release procedure: push an annotated version tag for
+  Desktop builds, then separately select Actions > Publish to PyPI > Run workflow
+  on main and enter that existing tag in the `tag` field. Tag pushes must not
+  publish to PyPI. The workflow filename and `pypi` environment remain unchanged.
+- The PyPI workflow checks out the selected tag, verifies its annotation,
+  matching package version and dated changelog, then tests/builds before OIDC
+  publication. No publication workflow has been dispatched.
+- The unpublished local v0.2.0 tag must include this workflow correction before
+  being pushed; its previous target contained automatic PyPI publication.
+
 ### Final installer validation - 2026-10-05
 
 - All five platform jobs passed in run `37277146176`, built from
@@ -14,8 +26,8 @@
   a location choice; its default is `%LOCALAPPDATA%\dicomqc`.
 - Release wording and citation/changelog dates are finalized for 2026-10-05.
   The user approved committing this metadata and creating local annotated tag
-  `v0.2.0`. Pushing the tag triggers PyPI publication and release installer builds;
-  that push and publication of the GitHub draft remain pending. Release builds
+  `v0.2.0`. Pushing the tag triggers release installer builds only; PyPI is
+  dispatched separately with that tag. The push and GitHub publication remain pending. Release builds
   must use the final tagged revision, including these metadata changes.
 
 ### Desktop update check - 2026-10-05
