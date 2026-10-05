@@ -2,6 +2,7 @@
 
 mod engine;
 mod protocol;
+mod release_check;
 #[cfg(all(feature = "native-smoke", target_os = "linux"))]
 mod smoke;
 
@@ -34,6 +35,7 @@ struct Desktop {
     project: Mutex<Option<PathBuf>>,
     quitting: AtomicBool,
     confirming: AtomicBool,
+    checking_updates: AtomicBool,
     dirty: AtomicBool,
 }
 
@@ -722,6 +724,7 @@ fn open_external(url: String) -> Result<(), String> {
         "https://cnag-biomedical-informatics.github.io/dicomqc/",
         "https://github.com/CNAG-Biomedical-Informatics/dicomqc",
         "https://github.com/CNAG-Biomedical-Informatics/dicomqc/issues/new",
+        release_check::DOWNLOADS,
     ].contains(&url.as_str()) {
         return Err("This external link is not allowed.".into());
     }
@@ -946,8 +949,18 @@ fn main() {
                 project: Mutex::new(project.map(|(path, _)| path)),
                 quitting: AtomicBool::new(false),
                 confirming: AtomicBool::new(false),
+                checking_updates: AtomicBool::new(false),
                 dirty: AtomicBool::new(false),
             });
+            let settings = MenuItem::with_id(app, "settings", "Settings...", true, Some("CmdOrCtrl+,"))?;
+            let about = MenuItem::with_id(app, "about", "About dicomqc", true, None::<&str>)?;
+            let quit = MenuItem::with_id(
+                app, "quit",
+                if cfg!(target_os = "windows") { "Exit" }
+                else if cfg!(target_os = "macos") { "Quit dicomqc" }
+                else { "Quit" },
+                true, Some("CmdOrCtrl+Q"),
+            )?;
             let file = Submenu::with_items(
                 app,
                 "File",
@@ -967,8 +980,6 @@ fn main() {
                         true,
                         None::<&str>,
                     )?,
-                    &PredefinedMenuItem::separator(app)?,
-                    &MenuItem::with_id(app, "quit", if cfg!(target_os = "windows") { "Exit" } else { "Quit" }, true, Some("CmdOrCtrl+Q"))?,
                 ],
             )?;
             let edit = Submenu::with_items(
@@ -995,8 +1006,6 @@ fn main() {
                     &MenuItem::with_id(app, "findings", "Findings", true, Some("CmdOrCtrl+2"))?,
                     &MenuItem::with_id(app, "reports", "Reports", true, Some("CmdOrCtrl+3"))?,
                     &MenuItem::with_id(app, "log", "Job Log", false, Some("CmdOrCtrl+5"))?,
-                    &PredefinedMenuItem::separator(app)?,
-                    &MenuItem::with_id(app, "settings", "Settings", true, Some("CmdOrCtrl+,"))?,
                 ],
             )?;
             let audit = Submenu::with_items(
@@ -1018,13 +1027,35 @@ fn main() {
                 &[
                     &MenuItem::with_id(app, "documentation", "Documentation", true, None::<&str>)?,
                     &MenuItem::with_id(app, "report-issue", "Report an Issue...", true, None::<&str>)?,
-                    &MenuItem::with_id(app, "about", "About dicomqc", true, None::<&str>)?,
+                    &MenuItem::with_id(app, "updates", "Check for Updates...", true, None::<&str>)?,
                 ],
             )?;
-            app.set_menu(Menu::with_items(
-                app,
-                &[&file, &edit, &view, &audit, &help],
-            )?)?;
+            #[cfg(target_os = "macos")]
+            {
+                let application = Submenu::with_items(app, "dicomqc", true, &[
+                    &about,
+                    &PredefinedMenuItem::separator(app)?,
+                    &settings,
+                    &PredefinedMenuItem::separator(app)?,
+                    &PredefinedMenuItem::services(app, None)?,
+                    &PredefinedMenuItem::separator(app)?,
+                    &PredefinedMenuItem::hide(app, None)?,
+                    &PredefinedMenuItem::hide_others(app, None)?,
+                    &PredefinedMenuItem::show_all(app, None)?,
+                    &PredefinedMenuItem::separator(app)?,
+                    &quit,
+                ])?;
+                app.set_menu(Menu::with_items(app, &[&application, &file, &edit, &view, &audit, &help])?)?;
+            }
+            #[cfg(not(target_os = "macos"))]
+            {
+                file.append(&PredefinedMenuItem::separator(app)?)?;
+                file.append(&quit)?;
+                view.append(&PredefinedMenuItem::separator(app)?)?;
+                view.append(&settings)?;
+                help.append(&about)?;
+                app.set_menu(Menu::with_items(app, &[&file, &edit, &view, &audit, &help])?)?;
+            }
             // Exercise the packaged executable, bundled engine, and setup hook in CI.
             if std::env::var_os("DICOMQC_DESKTOP_SMOKE_TEST").is_some() {
                 app.state::<Desktop>().quitting.store(true, Ordering::SeqCst);
@@ -1034,6 +1065,25 @@ fn main() {
             Ok(())
         })
         .on_menu_event(|app, event| match event.id().as_ref() {
+            "updates" => {
+                if app.state::<Desktop>().checking_updates.swap(true, Ordering::SeqCst) {
+                    return;
+                }
+                let app = app.clone();
+                tauri::async_runtime::spawn_blocking(move || {
+                    let message = release_check::check(env!("CARGO_PKG_VERSION"))
+                        .unwrap_or_else(|error| format!("Could not check for updates. {error}\n\nTry again later. Downloads: {}", release_check::DOWNLOADS));
+                    let open_downloads = app.dialog().message(message).title("dicomqc updates")
+                        .buttons(MessageDialogButtons::OkCancelCustom("Open Downloads".into(), "Close".into()))
+                        .blocking_show();
+                    if open_downloads {
+                        if let Err(error) = open_external(release_check::DOWNLOADS.to_owned()) {
+                            app.dialog().message(error).title("dicomqc updates").blocking_show();
+                        }
+                    }
+                    app.state::<Desktop>().checking_updates.store(false, Ordering::SeqCst);
+                });
+            }
             "quit" => request_exit(app),
             "documentation" => {
                 #[cfg(target_os = "linux")]

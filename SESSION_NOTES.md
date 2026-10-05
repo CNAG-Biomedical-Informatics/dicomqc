@@ -2,6 +2,22 @@
 
 ## Current direction
 
+### Desktop update check - 2026-10-05
+
+- Added Help > Check for Updates, following Convert-Pheno's on-demand native
+  dialog pattern. Queries GitHub's latest published stable release rather than
+  tags, so a tag with draft installers is not announced as available.
+- Uses a separate HTTPS client with a 15-second timeout and semantic version
+  comparison. No audit data or local API credentials are sent. Open Downloads
+  opens the fixed GitHub releases page; installation remains manual.
+- Existing 0.2.0 installer candidates predate this change and must be rebuilt
+  before release to include the new menu item.
+- macOS now places About, Settings, and Quit under the dicomqc application
+  menu, with Services and Hide actions. Quit still uses the existing unsaved
+  project/active-audit confirmation. Windows and Linux retain their menu layout.
+- Fixed the development logo by allowing its shared image through Vite's file
+  restrictions. The user confirmed the logo displays after relaunch.
+
 ### Installer candidate verified - 2026-10-04
 
 - Unified installer run `37217534293` passed all five targets from commit

@@ -117,7 +117,8 @@ to save a `.dicomqc` project wherever you choose.
 
 ### Storage and removal
 
-:::info Where dicomqc stores application data
+<details className="alert alert--info">
+<summary><strong>Where dicomqc stores application data</strong></summary>
 
 Settings, run history, reports, and working project data are stored separately
 from the application:
@@ -135,7 +136,7 @@ stay where they are and are never modified by dicomqc.
 
 Save your project and quit the app before removing working data.
 
-:::
+</details>
 
 #### Update Desktop
 

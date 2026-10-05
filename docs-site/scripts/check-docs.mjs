@@ -73,7 +73,8 @@ for (const expected of [
   'dicomqc-0.2.0-macos-arm64.dmg', 'dicomqc-0.2.0-macos-x64.dmg',
   'dicomqc-0.2.0-windows-x64-setup.exe', 'dicomqc-0.2.0-linux-x64.AppImage',
   'dicomqc-0.2.0-linux-arm64.AppImage', '#### Uninstall or reset',
-  ':::info Where dicomqc stores application data',
+  '<details className="alert alert--info">',
+  '<summary><strong>Where dicomqc stores application data</strong></summary>',
   '~/.local/share/org.cnag.dicomqc/', '~/Library/Application Support/org.cnag.dicomqc/',
   '%LOCALAPPDATA%\\org.cnag.dicomqc\\',
 ]) {

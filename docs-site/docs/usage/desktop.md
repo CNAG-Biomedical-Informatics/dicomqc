@@ -194,15 +194,20 @@ the app.
 ## Menus and local operation
 
 **View** opens Audit Setup, Project Policy, Findings, Reports, or Job Log.
-**Help** provides Documentation, Report an Issue, and About dicomqc.
+**Help** provides Documentation, Report an Issue, and Check for Updates.
+**Check for Updates** contacts GitHub only when selected and compares your Desktop
+version with the latest public stable release. It sends no DICOM data or reports
+and does not download or install updates automatically.
 Reporting an issue opens GitHub; it does not automatically attach data or logs.
 
 The native shell starts an authenticated FastAPI service on loopback. It calls
 the Python audit functions directly, not the CLI, and runs each audit in a
 separate worker process. No remote audit server is required.
-**Help > About dicomqc** lists the DICOM and reporting components.
+**About dicomqc** lists the DICOM and reporting components. On macOS, About,
+Settings, and Quit are in the **dicomqc** application menu. On Windows and Linux,
+About is under **Help**, Settings under **View**, and Exit or Quit under **File**.
 
-Use **File > Quit** (**Exit** on Windows) or close the window. Active audits and
+Use **Quit** (**Exit** on Windows) or close the window. Active audits and
 unsaved changes require confirmation. Closing the app stops its service and
 workers. An audit interrupted by an unexpected shutdown is marked as interrupted
 when the working session is reopened.
