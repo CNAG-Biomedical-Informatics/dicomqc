@@ -1,11 +1,11 @@
 <svg xmlns="http://www.w3.org/2000/svg" width="240" height="64" viewBox="0 0 240 64" role="img" aria-labelledby="title desc">
   <title id="title">dicomqc</title>
-  <desc id="desc">dicom in black and qc in muted green, adapted for dark backgrounds.</desc>
+  <desc id="desc">dicom in black and qc in muted green, with high-contrast colors on dark backgrounds.</desc>
   <style>
     .dicom { fill: #000000; }
     .qc { fill: #35745a; }
     @media (prefers-color-scheme: dark) {
-      .dicom { fill: #f2f2f2; }
+      .dicom { fill: #ffffff; }
       .qc { fill: #8fc4a8; }
     }
   </style>
