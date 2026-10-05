@@ -32,3 +32,4 @@ tests/fixtures/dicom/generated/
 dicomqc-demo/
 examples/multiqc/output/
 examples/multiqc/output-test/
+SESSION_NOTES.md
