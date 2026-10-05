@@ -2,6 +2,16 @@
 
 ## Current direction
 
+### Separate PyPI description - 2026-10-05
+
+- PyPI 0.2.0 is published and its stored package description cannot be changed.
+  Do not reuse version 0.2.0 or move its tag for documentation changes.
+- Future packages use `PYPI_README.md`, focused on CLI installation, audits,
+  reports, dataset comparison, and MultiQC. It links briefly to Desktop releases.
+  The repository `README.md` remains the full project overview with Desktop UI.
+- `pyproject.toml` now selects `PYPI_README.md`; verify that the next sdist and
+  wheel contain its text before publishing the next version.
+
 ### Both release workflows are manual - 2026-10-05
 
 - This supersedes previous tag-triggered installer instructions. Publish to

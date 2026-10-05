@@ -6,7 +6,7 @@ build-backend = "setuptools.build_meta"
 name = "dicomqc"
 version = "0.2.0"
 description = "Audit de-identified DICOM metadata for privacy risks and dataset consistency."
-readme = "README.md"
+readme = "PYPI_README.md"
 requires-python = ">=3.10"
 license = "Apache-2.0"
 license-files = ["LICENSE"]
