@@ -22,6 +22,7 @@ and this project follows [Semantic Versioning](https://semver.org/spec/v2.0.0.ht
 
 ### Fixed
 
+- Run deletion on Python 3.10, preserving input files and linked directories.
 - Preserve repeated metadata tags, use the correct patient-ID issuer, and fail
   safely on incomplete or unreadable metadata.
 

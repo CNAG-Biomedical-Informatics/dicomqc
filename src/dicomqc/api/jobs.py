@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import json
+import inspect
 import math
 import os
 from pathlib import Path
@@ -24,6 +25,31 @@ from dicomqc.execution import validate_audit_inputs
 ACTIVE = {"queued", "running"}
 WORKER_EVENTS = {"synthetic demo", "generation", "discovery", "reading", "relationships", "reports"}
 MAX_LOG_EVENTS = 32
+RMTREE_HAS_DIR_FD = "dir_fd" in inspect.signature(shutil.rmtree).parameters
+
+
+def remove_run_tree(path, *, dir_fd=None):
+    if dir_fd is None:
+        shutil.rmtree(path)
+    elif RMTREE_HAS_DIR_FD:
+        shutil.rmtree(path, dir_fd=dir_fd)
+    else:
+        # Python 3.10 lacks rmtree(dir_fd=...). Keep every operation relative to
+        # open directories, and refuse directory links or replacements.
+        expected = os.stat(path, dir_fd=dir_fd, follow_symlinks=False)
+        fd = os.open(path, os.O_RDONLY | os.O_DIRECTORY | os.O_NOFOLLOW, dir_fd=dir_fd)
+        try:
+            if not os.path.samestat(expected, os.fstat(fd)):
+                raise ValueError("Run directory changed during deletion.")
+            with os.scandir(fd) as entries:
+                for entry in entries:
+                    if entry.is_dir(follow_symlinks=False):
+                        remove_run_tree(entry.name, dir_fd=fd)
+                    else:
+                        os.unlink(entry.name, dir_fd=fd)
+        finally:
+            os.close(fd)
+        os.rmdir(path, dir_fd=dir_fd)
 
 
 class WorkspaceError(ValueError):
@@ -406,13 +432,13 @@ class Jobs:
                         info = os.fstat(fd)
                         if (info.st_dev, info.st_ino) != (self.root_identity["device"], self.root_identity["inode"]):
                             raise ValueError("Workspace changed.")
-                        shutil.rmtree(identifier, dir_fd=fd)
+                        remove_run_tree(identifier, dir_fd=fd)
                     finally:
                         os.close(fd)
                 else:
                     # Windows rmtree removes directory links/junctions themselves,
                     # not their targets. Top-level redirects were rejected above.
-                    shutil.rmtree(directory)
+                    remove_run_tree(directory)
             validate_identity(self.root_identity)
             with self.db:
                 self.db.execute("DELETE FROM run_directories WHERE id = ?", (identifier,))

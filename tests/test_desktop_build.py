@@ -255,13 +255,20 @@ def test_platform_bundle_configs_are_explicit():
 
 def test_pypi_workflow_uses_canonical_release_guard():
     workflow = yaml.load((ROOT / ".github/workflows/publish-pypi.yml").read_text(), Loader=yaml.BaseLoader)
+    assert set(workflow["on"]) == {"workflow_dispatch"}
+    assert workflow["on"]["workflow_dispatch"]["inputs"]["tag"]["required"] == "true"
+    assert workflow["env"]["RELEASE_TAG"] == "${{ inputs.tag }}"
+    checkout = next(step for step in workflow["jobs"]["build"]["steps"]
+                    if step.get("uses", "").startswith("actions/checkout@"))
+    assert checkout["with"]["ref"] == "refs/tags/${{ inputs.tag }}"
     step = next(step for step in workflow["jobs"]["build"]["steps"]
                 if step.get("name") == "Verify annotated stable tag and release version")
-    assert step["run"] == "python scripts/desktop_release.py version"
+    assert step["run"] == 'env GITHUB_REF_TYPE=tag GITHUB_REF_NAME="$RELEASE_TAG" python scripts/desktop_release.py version'
+    assert workflow["jobs"]["publish"]["needs"] == "build"
 
 
 def test_publication_workflows_install_api_coverage_dependencies():
-    import tomllib
+    tomllib = pytest.importorskip("tomllib")
 
     project = tomllib.loads((ROOT / "pyproject.toml").read_text())
     api_test = project["project"]["optional-dependencies"]["api-test"]

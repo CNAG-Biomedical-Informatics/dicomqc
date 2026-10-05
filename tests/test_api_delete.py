@@ -113,14 +113,17 @@ def test_delete_rejects_traversal_and_unknown_runs(tmp_path, identifier):
 
 
 @pytest.mark.parametrize("remove_all", [False, True])
-def test_failed_delete_retains_row_and_retries_after_restart(tmp_path, monkeypatch, remove_all):
+@pytest.mark.parametrize("compatibility", [False, True])
+def test_failed_delete_retains_row_and_retries_after_restart(tmp_path, monkeypatch, remove_all, compatibility):
+    if compatibility:
+        monkeypatch.setattr(jobs_module, "RMTREE_HAS_DIR_FD", False)
     jobs = stopped_jobs(tmp_path)
     job = terminal(jobs)
     directory = jobs.directory(job["id"])
     # Simulate a pre-migration run, whose identity is still in request.json.
     jobs.db.execute("DELETE FROM run_directories WHERE id = ?", (job["id"],))
     jobs.db.commit()
-    original = shutil.rmtree
+    original = jobs_module.remove_run_tree
 
     def fail(path, **kwargs):
         if remove_all:
@@ -129,9 +132,8 @@ def test_failed_delete_retains_row_and_retries_after_restart(tmp_path, monkeypat
             (directory / "request.json").unlink()
         raise OSError("interrupted deletion")
 
-    fail.avoids_symlink_attacks = original.avoids_symlink_attacks
     with monkeypatch.context() as patch:
-        patch.setattr(jobs_module.shutil, "rmtree", fail)
+        patch.setattr(jobs_module, "remove_run_tree", fail)
         with pytest.raises(OSError):
             jobs.delete(job["id"])
     assert jobs.get(job["id"])["status"] == "cancelled"
@@ -200,3 +202,57 @@ def test_delete_checks_open_workspace_identity(tmp_path, monkeypatch):
         assert len(jobs.list()) == 1
     finally:
         jobs.close()
+
+
+@pytest.mark.skipif(not shutil.rmtree.avoids_symlink_attacks, reason="Descriptor operations required")
+def test_python310_delete_preserves_link_targets(tmp_path, monkeypatch):
+    monkeypatch.setattr(jobs_module, "RMTREE_HAS_DIR_FD", False)
+    jobs = stopped_jobs(tmp_path)
+    job = terminal(jobs)
+    directory = jobs.directory(job["id"])
+    outside = tmp_path / "input.dcm"
+    outside.write_bytes(b"original DICOM")
+    nested = directory / "reports" / "nested"
+    nested.mkdir(parents=True)
+    (nested / "report.txt").write_text("report")
+    (nested / "input-link").symlink_to(outside)
+    (nested / "directory-link").symlink_to(tmp_path, target_is_directory=True)
+    (nested / "broken-link").symlink_to(tmp_path / "missing")
+    try:
+        assert jobs.delete(job["id"])["status"] == "deleted"
+        assert not directory.exists()
+        assert outside.read_bytes() == b"original DICOM"
+        assert jobs.list() == []
+    finally:
+        jobs.close()
+
+
+@pytest.mark.skipif(not shutil.rmtree.avoids_symlink_attacks, reason="Descriptor operations required")
+@pytest.mark.parametrize("replacement", ["directory", "symlink"])
+def test_python310_delete_rejects_directory_swap(tmp_path, monkeypatch, replacement):
+    monkeypatch.setattr(jobs_module, "RMTREE_HAS_DIR_FD", False)
+    parent = tmp_path / "parent"
+    parent.mkdir()
+    target = parent / "run"
+    target.mkdir()
+    moved = parent / "moved"
+    original_open = os.open
+    fd = os.open(parent, os.O_RDONLY | os.O_DIRECTORY)
+
+    def swap(path, flags, **kwargs):
+        target.rename(moved)
+        if replacement == "symlink":
+            target.symlink_to(moved, target_is_directory=True)
+        else:
+            target.mkdir()
+        return original_open(path, flags, **kwargs)
+
+    try:
+        with monkeypatch.context() as patch:
+            patch.setattr(jobs_module.os, "open", swap)
+            with pytest.raises((ValueError, OSError)):
+                jobs_module.remove_run_tree("run", dir_fd=fd)
+        assert moved.is_dir()
+        assert target.exists()
+    finally:
+        os.close(fd)

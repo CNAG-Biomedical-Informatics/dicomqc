@@ -2,6 +2,18 @@
 
 ## Current direction
 
+### Python 3.10 release blocker - 2026-10-05
+
+- Build and test run `37296746672` failed on Python 3.10 because run deletion
+  used `shutil.rmtree(dir_fd=...)`, introduced in Python 3.11. The five-platform
+  installer workflow tests Python 3.12, so its earlier success did not catch this.
+- Added a descriptor-relative compatibility path for Python 3.10, retaining
+  directory identity checks and refusing links/replacements. Tests cover nested
+  files, outside and broken links, swapped directories, and interrupted retries.
+- The user cancelled tagged installer run `37296908278`. Remote `v0.2.0` still
+  points to `bdf8937` and does not include this fix. Do not publish that revision.
+  Validate the Python matrix before deciding how to update the release tag.
+
 ### PyPI publication is manual - 2026-10-05
 
 - The user clarified the release procedure: push an annotated version tag for
