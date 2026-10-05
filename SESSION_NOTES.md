@@ -2,6 +2,22 @@
 
 ## Current direction
 
+### Final installer validation - 2026-10-05
+
+- All five platform jobs passed in run `37277146176`, built from
+  `4d2f7bd67afa63cc566e11bf431d470d98000cf2`. Downloaded installers and verified
+  all five SHA-256 checksums under `build/desktop-0.2.0-4d2f7bd/`.
+- Replaced the unpublished 0.2.0 draft's older installers and checksums with
+  these builds and set its target to that commit. No 0.2.0 tag was created.
+- The user confirmed Windows, macOS, and Linux work. Windows installation,
+  application launch, and an example audit succeeded. The installer does offer
+  a location choice; its default is `%LOCALAPPDATA%\dicomqc`.
+- Release wording and citation/changelog dates are finalized for 2026-10-05.
+  The user approved committing this metadata and creating local annotated tag
+  `v0.2.0`. Pushing the tag triggers PyPI publication and release installer builds;
+  that push and publication of the GitHub draft remain pending. Release builds
+  must use the final tagged revision, including these metadata changes.
+
 ### Desktop update check - 2026-10-05
 
 - Added Help > Check for Updates, following Convert-Pheno's on-demand native

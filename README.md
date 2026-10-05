@@ -64,8 +64,11 @@ review workflows can be exercised.
 
 ![dicomqc desktop workspace with run history and an HTML report preview.](https://raw.githubusercontent.com/CNAG-Biomedical-Informatics/dicomqc/main/docs-site/static/img/desktop-workspace.png)
 
-The desktop app currently runs from source; installers are not published.
-See [Desktop setup and usage](https://cnag-biomedical-informatics.github.io/dicomqc/docs/usage/desktop).
+Download the Desktop app for Windows, macOS, or Linux from
+[GitHub Releases](https://github.com/CNAG-Biomedical-Informatics/dicomqc/releases).
+See [Install](https://cnag-biomedical-informatics.github.io/dicomqc/docs/usage/install)
+for platform-specific instructions and [Desktop usage](https://cnag-biomedical-informatics.github.io/dicomqc/docs/usage/desktop)
+for the audit workflow.
 The app starts its audit service locally; no remote server is required.
 
 ### Command line

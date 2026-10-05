@@ -5,7 +5,7 @@ All notable changes to dicomqc are documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project follows [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
-## [0.2.0] - Unreleased
+## [0.2.0] - 2026-10-05
 
 ### Added
 
@@ -49,5 +49,5 @@ Comparisons check metadata and file pairing, not pixels, date shifts, or UID ref
 - The built-in profile does not certify DICOM PS3.15, BIDS, HIPAA, or GDPR
   compliance.
 
-[0.2.0]: https://github.com/CNAG-Biomedical-Informatics/dicomqc/compare/v0.1.0...HEAD
+[0.2.0]: https://github.com/CNAG-Biomedical-Informatics/dicomqc/compare/v0.1.0...v0.2.0
 [0.1.0]: https://github.com/CNAG-Biomedical-Informatics/dicomqc/tree/v0.1.0
