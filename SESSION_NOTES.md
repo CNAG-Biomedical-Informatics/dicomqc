@@ -2,6 +2,23 @@
 
 ## Current direction
 
+### Both release workflows are manual - 2026-10-05
+
+- This supersedes previous tag-triggered installer instructions. Publish to
+  PyPI and Build desktop installers are both workflow_dispatch-only, launched
+  from main with an existing annotated release `tag`. Neither runs on a push.
+- Installer builds retain the platform selector. `all` attaches five installers
+  to an unpublished draft; individual platforms provide artifacts only. Matrix
+  jobs use the commit resolved from the selected tag by the preparation job.
+- PyPI run `37300782162` passed package tests and MultiQC rendering but failed
+  because smoke_distribution.py expected the obsolete HTML heading "DICOM
+  metadata audit". Corrected it to "Privacy audit"; complete installed wheel
+  and source-distribution smoke checks passed in clean temporary environments.
+- Existing remote v0.2.0 points to `0927fa3`, whose workflow and smoke script
+  predate these changes. Do not rerun publication until the corrected revision
+  is committed, validated, and selected by the release tag. No publication or
+  installer workflows should be dispatched automatically during this repair.
+
 ### Python 3.10 release blocker - 2026-10-05
 
 - Build and test run `37296746672` failed on Python 3.10 because run deletion

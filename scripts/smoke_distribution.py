@@ -34,7 +34,7 @@ def main() -> None:
         assert cli("--version").strip() == f"dicomqc {expected}"
         cli("demo", "--output-dir", "scan-demo")
         assert (root / "scan-demo/dicomqc/dicomqc_mqc/dicomqc_summary_mqc.yaml").is_file()
-        assert "DICOM metadata audit" in (root / "scan-demo/dicomqc/report.html").read_text(encoding="utf-8")
+        assert "Privacy audit" in (root / "scan-demo/dicomqc/report.html").read_text(encoding="utf-8")
         cli("demo", "--compare", "--output-dir", "comparison-demo")
         for name, errors in (("before", 3), ("after", 0)):
             report = root / f"comparison-demo/{name}.json"

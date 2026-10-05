@@ -232,6 +232,8 @@ Packaged builds bundle Python and dependencies. Their intended users do not need
 a separate Python installation. The repository's **Build desktop installers**
 workflow supports manual platform selection and targets macOS Intel and Apple Silicon,
 Windows x64, and Linux x64 and ARM64. It tests the bundled engine and native
-integration, then checks each packaged application. Stable version tags build all
-platforms into a draft GitHub Release for review; manual runs provide workflow
-artifacts only.
+integration, then checks each packaged application. Run it manually from Actions
+and enter an existing release tag. Selecting **all** builds the five platforms
+and attaches them to a draft GitHub Release; selecting one platform produces
+workflow artifacts only. Pushing a tag does not start installer builds or PyPI
+publication. PyPI has its own manual workflow with a release-tag input.

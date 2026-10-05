@@ -194,11 +194,17 @@ def test_entry_delegates_arguments(monkeypatch, arguments):
     assert calls == ["freeze", arguments]
 
 
-def test_workflow_builds_manual_artifacts_and_tagged_drafts():
+def test_workflow_builds_selected_tag_only_on_manual_dispatch():
     # BaseLoader preserves GitHub's "on" key (YAML 1.1 treats it as a boolean).
     workflow = yaml.load((ROOT / ".github/workflows/build-desktop.yml").read_text(), Loader=yaml.BaseLoader)
-    assert set(workflow["on"]) == {"workflow_dispatch", "push"}
-    assert workflow["on"]["push"]["tags"] == ["v*"]
+    assert set(workflow["on"]) == {"workflow_dispatch"}
+    assert workflow["on"]["workflow_dispatch"]["inputs"]["tag"]["required"] == "true"
+    assert workflow["env"]["RELEASE_TAG"] == "${{ inputs.tag }}"
+    prepare = workflow["jobs"]["prepare"]["steps"]
+    checkout = next(step for step in prepare if step.get("uses", "").startswith("actions/checkout@"))
+    assert checkout["with"]["ref"] == "refs/tags/${{ inputs.tag }}"
+    guard = next(step for step in prepare if step.get("name") == "Verify annotated stable tag and release version")
+    assert guard["run"] == 'env GITHUB_REF_TYPE=tag GITHUB_REF_NAME="$RELEASE_TAG" python scripts/desktop_release.py version'
     assert workflow["permissions"] == {"contents": "read"}
     assert set(workflow["jobs"]) == {"prepare", "desktop", "release"}
     job = workflow["jobs"]["desktop"]
@@ -207,7 +213,7 @@ def test_workflow_builds_manual_artifacts_and_tagged_drafts():
     assert workflow["on"]["workflow_dispatch"]["inputs"]["platform"]["default"] == "all"
     release = workflow["jobs"]["release"]
     assert release["needs"] == ["prepare", "desktop"]
-    assert "github.event_name == 'push'" in release["if"]
+    assert release["if"] == "inputs.platform == 'all'"
     assert release["permissions"] == {"contents": "write"}
     publish = release["steps"][-1]["run"]
     assert "--verify-tag --draft" in publish
@@ -215,6 +221,7 @@ def test_workflow_builds_manual_artifacts_and_tagged_drafts():
     assert "sha256sum --check" in publish
     assert "permissions" not in job
     steps = job["steps"]
+    assert steps[0]["with"]["ref"] == "${{ needs.prepare.outputs.source_sha }}"
     assert any(step.get("uses") == "dtolnay/rust-toolchain@1.86.0" for step in steps)
     assert any(step.get("uses", "").startswith("actions/upload-artifact@") for step in steps)
     assert any(step.get("env", {}).get("DICOMQC_DESKTOP_ENGINE") for step in steps)
