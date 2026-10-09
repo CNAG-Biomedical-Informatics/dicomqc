@@ -153,10 +153,21 @@ Save your project and quit dicomqc before updating:
 2. Quit dicomqc. If you previously used a different working folder, its location
    is recorded in `workspace.json` inside the application data folder.
 3. To uninstall, delete the AppImage on Linux, remove the app from Applications
-   on macOS, or use Installed apps on Windows.
-4. To remove saved settings and local history too, delete the application data
-   folder listed above, if it remains. Review and separately remove any external
-   dicomqc working folder recorded in step 2. Do not delete your input datasets.
+   on macOS, or run the dicomqc uninstaller from the Windows Start menu or
+   **Settings > Apps > Installed apps**.
+4. On Windows, the uninstaller asks whether to **Delete app data**. Leave this
+   unchecked to preserve settings and run history for a later reinstall. Select
+   it only when you also want to remove reports and working data stored in the
+   application-data folder listed above.
+5. On Linux or macOS, delete the application-data folder listed above only when
+   you also want to reset settings and local history. Review and separately
+   remove any external dicomqc working folder recorded in step 2. Do not delete
+   your input datasets.
+
+On Windows, the installed program directory under `%LOCALAPPDATA%` is separate
+from `%LOCALAPPDATA%\org.cnag.dicomqc\`. The program directory is removed during
+uninstall; the application-data directory is removed when **Delete app data**
+is selected.
 
 Deleting application data without uninstalling resets the local working state;
 dicomqc recreates it on the next launch. Separately saved `.dicomqc` projects,
