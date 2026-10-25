@@ -47,9 +47,10 @@ engine.
 
 ## Citation
 
-A manuscript describing **dicomqc** is in preparation. Until publication,
-please cite the software using [CITATION.cff](CITATION.cff) and record the
+Please cite the software using [CITATION.cff](CITATION.cff) and report the
 version used in your analysis.
+
+A manuscript describing **dicomqc** is in preparation.
 
 ## License
 

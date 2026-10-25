@@ -1,7 +1,6 @@
 cff-version: 1.2.0
 message: >-
-  A manuscript describing dicomqc is in preparation. Until publication,
-  please cite the software using this metadata and record the version
+  Please cite the software using this metadata and report the version
   used in your analysis.
 type: software
 title: "dicomqc: Auditing privacy risks in de-identified DICOM metadata"

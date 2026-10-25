@@ -13,11 +13,14 @@ title: Citation
   </p>
 </div>
 
-A manuscript describing **dicomqc** is in preparation. Until publication, cite
-the software using
+Please cite the software using
 [`CITATION.cff`](https://github.com/CNAG-Biomedical-Informatics/dicomqc/blob/main/CITATION.cff),
 which contains machine-readable metadata for version **0.2.0**. Record the
 version actually used in your analysis.
+
+## Manuscript
+
+A manuscript describing **dicomqc** is in preparation.
 
 ## Funding and Support
 
