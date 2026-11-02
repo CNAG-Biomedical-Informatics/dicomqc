@@ -1,5 +1,6 @@
 """Packaging contracts and opt-in end-to-end tests of a native frozen engine."""
 
+import hashlib
 import importlib.util
 import json
 import os
@@ -20,6 +21,38 @@ ROOT = Path(__file__).resolve().parents[1]
 SPEC = importlib.util.spec_from_file_location("build_desktop_engine", ROOT / "scripts/build_desktop_engine.py")
 build = importlib.util.module_from_spec(SPEC)
 SPEC.loader.exec_module(build)
+
+
+@pytest.mark.skipif(not shutil.which("bash") or not shutil.which("sha256sum"), reason="Requires Bash and sha256sum")
+@pytest.mark.parametrize("invalid", [None, "corrupt", "missing"])
+def test_release_checksum_manifest(tmp_path, invalid):
+    workflow = yaml.load((ROOT / ".github/workflows/build-desktop.yml").read_text(), Loader=yaml.BaseLoader)
+    publish = workflow["jobs"]["release"]["steps"][-1]["run"]
+    verification = publish.split('if gh release view', 1)[0]
+    names = ["linux-arm64.AppImage", "linux-x64.AppImage", "macos-arm64.dmg", "macos-x64.dmg", "windows.exe"]
+    expected = {}
+    for name in names:
+        content = name.encode()
+        (tmp_path / name).write_bytes(content)
+        expected[name] = hashlib.sha256(content).hexdigest()
+        (tmp_path / (name + ".sha256")).write_text(f"{expected[name]}  {name}\n")
+    if invalid == "corrupt":
+        (tmp_path / names[0]).write_bytes(b"damaged")
+    elif invalid == "missing":
+        (tmp_path / names[0]).unlink()
+    result = subprocess.run(
+        ["bash", "-c", verification + '\nprintf "%s\\n" "${assets[@]}"'],
+        cwd=tmp_path, capture_output=True, text=True,
+    )
+    if invalid:
+        assert result.returncode != 0
+        assert not (tmp_path / "SHA256SUMS").exists()
+    else:
+        assert result.returncode == 0, result.stderr
+        assert (tmp_path / "SHA256SUMS").read_text() == "".join(
+            f"{expected[name]}  {name}\n" for name in names
+        )
+        assert result.stdout.splitlines()[-6:] == names + ["SHA256SUMS"]
 
 
 @pytest.fixture

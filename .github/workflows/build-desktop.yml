@@ -286,17 +286,26 @@ jobs:
         run: |
           set -euo pipefail
           shopt -s nullglob
-          assets=(*)
+          installers=(*.AppImage *.dmg *.exe)
           checksums=(*.sha256)
-          test "${#assets[@]}" -eq 10
+          test "${#installers[@]}" -eq 5
           test "${#checksums[@]}" -eq 5
           sha256sum --check "${checksums[@]}"
+          sha256sum "${installers[@]}" > SHA256SUMS
+          sha256sum --check SHA256SUMS
+          assets=("${installers[@]}" SHA256SUMS)
           if gh release view "$RELEASE_TAG" --repo "$GITHUB_REPOSITORY" >/dev/null 2>&1; then
             test "$(gh release view "$RELEASE_TAG" --repo "$GITHUB_REPOSITORY" --json isDraft --jq .isDraft)" = true || {
               echo 'Refusing to replace assets on a published release' >&2
               exit 1
             }
             gh release upload "$RELEASE_TAG" "${assets[@]}" --repo "$GITHUB_REPOSITORY" --clobber
+            # Remove checksum sidecars left by an earlier draft build.
+            gh release view "$RELEASE_TAG" --repo "$GITHUB_REPOSITORY" --json assets \
+              --jq '.assets[].name | select(endswith(".sha256"))' |
+              while IFS= read -r name; do
+                gh release delete-asset "$RELEASE_TAG" "$name" --repo "$GITHUB_REPOSITORY" --yes
+              done
           else
             gh release create "$RELEASE_TAG" "${assets[@]}" \
               --repo "$GITHUB_REPOSITORY" --verify-tag --draft \

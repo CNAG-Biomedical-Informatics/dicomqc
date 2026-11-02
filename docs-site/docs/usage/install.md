@@ -34,9 +34,26 @@ computer, not the automatically generated **Source code** archives.
 | Linux, Intel/AMD 64-bit | `dicomqc-0.2.0-linux-x64.AppImage` |
 | Linux, ARM64 | `dicomqc-0.2.0-linux-arm64.AppImage` |
 
-Each package has a matching `.sha256` checksum file. **Desktop bundles its Python
-engine**; you do not need to install Python, Node.js, or Rust separately.
+**Desktop bundles its Python engine**; you do not need to install Python,
+Node.js, or Rust separately.
 The Windows package is x64; there is no native Windows ARM64 package.
+
+<details>
+<summary>Verify a download (optional)</summary>
+
+Download `SHA256SUMS` from the same release. Replace `FILE` below with your
+downloaded package's filename and run the command from its folder.
+
+| Platform | Command |
+| --- | --- |
+| Linux | `sha256sum FILE` |
+| macOS | `shasum -a 256 FILE` |
+| Windows PowerShell | `Get-FileHash FILE -Algorithm SHA256` |
+
+Compare the result with the matching filename in `SHA256SUMS`. Checksums detect
+damaged or changed downloads; they do not replace code signing.
+
+</details>
 
 <Tabs defaultValue="macos">
 <TabItem value="macos" label="macOS">
